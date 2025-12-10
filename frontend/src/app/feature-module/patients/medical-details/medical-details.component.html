@@ -1,0 +1,169 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+<!-- Page Content -->
+<div class="content">
+  <div class="container">
+
+    <div class="row">
+
+      <!-- Profile Sidebar -->
+      <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+      <!-- / Profile Sidebar -->
+
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header">
+          <h3>Medical Details</h3>
+        </div>
+        <div class="dashboard-card w-100 medical-details-item">
+          <div class="dashboard-card-head medical-detail-head">
+            <div class="header-title">
+              <h6>Latest updated medical details</h6>
+            </div>
+            <div class="latest-update">
+              <p><i class="fa-solid fa-calendar-check me-2"></i>Last update on : {{ vitals[0]?.recorded_at | date:'dd MMM y' }}</p>
+            </div>
+
+          </div>
+          <div class="dashboard-card-body">
+            <div class="row">
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-red">
+                  <span><i class="fa-solid fa-syringe"></i>Blood Pressure</span>
+                  <h3>{{ vitals[0]?.blood_pressure || '--' }}</h3>
+                </div>
+              </div>
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-orange">
+                  <span><i class="fa-solid fa-heart"></i>Heart Rate</span>
+                  <h3>{{ vitals[0]?.heart_rate || '--' }}</h3>
+                </div>
+              </div>
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-dark-blue">
+                  <span><i class="fa-solid fa-notes-medical"></i>Glucose Level</span>
+                  <h3>{{ vitals[0]?.glucose_level || '--' }}</h3>
+                </div>
+              </div>
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-amber">
+                  <span><i class="fa-solid fa-temperature-high"></i>Body Temprature</span>
+                  <h3>{{ vitals[0]?.body_temperature || '--' }}</h3>
+                </div>
+              </div>
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-purple">
+                  <span><i class="fa-solid fa-user-pen"></i>BMI </span>
+                  <h3>{{ vitals[0]?.bmi || '--' }}</h3>
+                </div>
+              </div>
+              <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="health-records icon-blue">
+                  <span><i class="fa-solid fa-highlighter"></i>SPo2</span>
+                  <h3>{{ vitals[0]?.spo2 || '--' }}</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="dashboard-header border-0 m-0">
+          <ul class="header-list-btns">
+            <li>
+              <div class="input-block dash-search-input">
+                <input type="text" class="form-control" placeholder="Search">
+                <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+              </div>
+            </li>
+          </ul>
+          <a href="javascript:void(0);" class="btn btn-md btn-primary-gradient rounded-pill" (click)="showAddForm = !showAddForm">Add Vitals</a>
+        </div>
+        <div class="card mb-3" *ngIf="showAddForm">
+          <div class="card-body">
+            <h6 class="mb-3">Add Vitals</h6>
+            <form [formGroup]="vitalForm" (ngSubmit)="addVital()">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Recorded At</label>
+                  <input type="date" class="form-control" formControlName="recorded_at">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Blood Pressure</label>
+                  <input type="text" class="form-control" formControlName="blood_pressure" placeholder="e.g. 100 mg/dl">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Heart Rate</label>
+                  <input type="text" class="form-control" formControlName="heart_rate" placeholder="e.g. 80 bpm">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Glucose Level</label>
+                  <input type="text" class="form-control" formControlName="glucose_level" placeholder="e.g. 70-90">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Body Temperature</label>
+                  <input type="text" class="form-control" formControlName="body_temperature" placeholder="e.g. 37.5">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">SPo2</label>
+                  <input type="text" class="form-control" formControlName="spo2" placeholder="e.g. 96%">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">BMI</label>
+                  <input type="text" class="form-control" formControlName="bmi" placeholder="e.g. 23.5">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Weight</label>
+                  <input type="text" class="form-control" formControlName="weight" placeholder="e.g. 74">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">FBC Status</label>
+                  <input type="text" class="form-control" formControlName="fbc_status">
+                </div>
+              </div>
+              <div class="text-end mt-3">
+                <button type="button" class="btn btn-light me-2" (click)="showAddForm = false">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="saving">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="custom-table">
+              <div class="table-responsive">
+                <table class="table table-center mb-0">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Blood Pressure</th>
+                      <th>Heart Rate</th>
+                      <th>Glucose Level</th>
+                      <th>Temperature</th>
+                      <th>SPo2</th>
+                      <th>BMI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="!vitals?.length">
+                      <td colspan="7" class="text-center">No vitals found</td>
+                    </tr>
+                    <tr *ngFor="let v of vitals">
+                      <td>{{ v.recorded_at | date:'dd MMM y' }}</td>
+                      <td>{{ v.blood_pressure || '--' }}</td>
+                      <td>{{ v.heart_rate || '--' }}</td>
+                      <td>{{ v.glucose_level || '--' }}</td>
+                      <td>{{ v.body_temperature || '--' }}</td>
+                      <td>{{ v.spo2 || '--' }}</td>
+                      <td>{{ v.bmi || '--' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<!-- /Page Content -->

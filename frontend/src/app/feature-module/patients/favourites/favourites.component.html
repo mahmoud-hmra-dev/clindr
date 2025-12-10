@@ -1,0 +1,93 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+<!-- Page Content -->
+<div class="content doctor-content">
+  <div class="container">
+    <div class="row">
+      <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header">
+          <h3>Favourites</h3>
+          <ul class="header-list-btns">
+            <li>
+              <div class="input-block dash-search-input">
+                <input type="text" class="form-control" placeholder="Search" disabled>
+                <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="row">
+          <div class="col-12" *ngIf="loading">
+            <div class="d-flex justify-content-center my-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4" *ngFor="let doc of favourites">
+            <div class="profile-widget patient-favour">
+              <div class="fav-head">
+                <a href="javascript:void(0)" class="fav-btn favourite-btn" (click)="toggleFavourite(doc.id)">
+                  <span class="favourite-icon" [ngClass]="{ 'favourite': isFavourite[doc.id] }"><i class="fa-solid fa-heart"></i></span>
+                </a>
+                <div class="doc-img">
+                  <a [routerLink]="routes.doctorProfile1" [queryParams]="{ id: doc.id }">
+                    <img class="img-fluid" alt="User Image" [src]="doc.profile_image_path || 'assets/img/doctors/doctor-thumb-21.jpg'">
+                  </a>
+                </div>
+                <div class="pro-content">
+                  <h3 class="title">
+                    <a [routerLink]="routes.doctorProfile1" [queryParams]="{ id: doc.id }">{{ getDoctorName(doc) }}</a>
+                    <i class="fas fa-check-circle verified"></i>
+                  </h3>
+                  <p class="speciality">{{ doc.designation || '' }}</p>
+                  <div class="rating">
+                    <i class="fas fa-star" [class.filled]="(doc.rating_avg || 0) >= 1"></i>
+                    <i class="fas fa-star" [class.filled]="(doc.rating_avg || 0) >= 2"></i>
+                    <i class="fas fa-star" [class.filled]="(doc.rating_avg || 0) >= 3"></i>
+                    <i class="fas fa-star" [class.filled]="(doc.rating_avg || 0) >= 4"></i>
+                    <i class="fas fa-star" [class.filled]="(doc.rating_avg || 0) >= 5"></i>
+                    <span class="d-inline-block average-rating">{{ doc.rating_avg ? (doc.rating_avg | number:'1.1-1') : '0.0' }}</span>
+                  </div>
+                  <ul class="available-info">
+                    <li *ngIf="doc.clinics?.length">
+                      <span><i class="isax isax-location5 me-1"></i></span>Location : {{ doc.clinics[0].city || doc.city || '' }}
+                    </li>
+                  </ul>
+                  <div class="last-book" *ngIf="doc.services?.length">
+                    <!-- <p>{{ doc.services[0].name || '' }} - ${{ doc.services[0].price || doc.default_fee }}</p> -->
+                    <!-- <p *ngFor="doc?.services let service; let i = index" >
+                      {{service}}
+                      {{ service.name || '' }} - ${{ service.price || doc.default_fee }}<span *ngIf="i < doc.services.length - 1">, </span>
+                    </p> -->
+                    <ng-container *ngFor="let service of doc.services; let i = index">
+                      <p>{{ service.name || '' }} - ${{ service.price || doc.default_fee }}</p><p *ngIf="i < doc.services.length - 1">, </p>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+              <div class="fav-footer">
+                <div class="row row-sm">
+                  <div class="col-6">
+                    <a [routerLink]="routes.doctorProfile1" [queryParams]="{ id: doc.id }" class="btn btn-md btn-light w-100">View Profile</a>
+                  </div>
+                  <div class="col-6">
+                    <a [routerLink]="routes.booking" [queryParams]="{ id: doc.id }" class="btn btn-md btn-outline-primary w-100">Book Now</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12" *ngIf="!loading && !favourites.length">
+            <div class="alert alert-info">No favourites yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Page Content -->

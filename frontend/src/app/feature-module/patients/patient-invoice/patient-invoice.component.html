@@ -1,0 +1,24 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+
+<div class="content">
+  <div class="container">
+    <div class="row">
+      <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+
+      <div class="col-lg-8 col-xl-9">
+        <div *ngIf="loading" class="alert alert-info">Loading invoice...</div>
+        <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+        <div class="card" *ngIf="invoice">
+          <div class="card-body">
+            <h4>Invoice #{{ invoice.id }}</h4>
+            <p>Amount: {{ invoice.total_amount || invoice.amount }}</p>
+            <p>Status: {{ invoice.status || 'N/A' }}</p>
+            <p>Appointment: {{ invoice.appointment?.scheduled_at | date:'medium' }}</p>
+          </div>
+        </div>
+        <p *ngIf="!loading && !invoice">No invoice found.</p>
+      </div>
+    </div>
+  </div>
+</div>

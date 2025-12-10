@@ -1,0 +1,67 @@
+<app-doctor-breadcrumb></app-doctor-breadcrumb>
+<div class="content doctor-content">
+  <div class="container">
+    <div class="row">
+      <app-doctor-sidebar class="col-md-5 col-lg-4 col-xl-3"></app-doctor-sidebar>
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header d-flex justify-content-between align-items-center">
+          <h3>Speciality & Services</h3>
+          <button type="button" class="btn btn-primary prime-btn" (click)="addService()">Add New Service</button>
+        </div>
+
+        <div *ngIf="loading" class="alert alert-info">Loading...</div>
+        <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+        <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="setting-card" formArrayName="services">
+            <div class="add-info membership-infos">
+              <div class="row membership-content">
+                <ng-container *ngFor="let svc of services.controls; let i = index" [formGroupName]="i">
+                  <div class="col-lg-12">
+                    <div class="setting-title d-flex align-items-center justify-content-between">
+                      <h6 class="mb-0">Service {{ i + 1 }}</h6>
+                      <a href="javascript:void(0);" class="text-danger" (click)="removeService(i)">Delete</a>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-wrap">
+                      <label class="col-form-label">Main Specialty <span class="text-danger">*</span></label>
+                      <select class="form-control" formControlName="specialty_id">
+                        <option value="">Select specialty</option>
+                        <option *ngFor="let spec of specialties" [value]="spec.id">{{ spec.name }}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-wrap">
+                      <label class="col-form-label">Service Name <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" formControlName="name" />
+                    </div>
+                  </div>
+                  <div class="col-lg-4 col-md-6">
+                    <div class="form-wrap">
+                      <label class="col-form-label">Price <span class="text-danger">*</span></label>
+                      <input type="number" class="form-control" formControlName="price" />
+                    </div>
+                  </div>
+                  <div class="col-lg-12">
+                    <div class="form-wrap">
+                      <label class="col-form-label">Description</label>
+                      <textarea rows="2" class="form-control" formControlName="description"></textarea>
+                    </div>
+                  </div>
+                  <div class="col-12"><hr /></div>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-btn text-end">
+            <button type="submit" class="btn btn-primary prime-btn" [disabled]="loading">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

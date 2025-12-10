@@ -1,0 +1,329 @@
+<app-doctor-breadcrumb></app-doctor-breadcrumb>
+
+<!-- Page Content -->
+<div class="content">
+  <div class="container">
+
+    <div class="row">
+      <app-doctor-sidebar class="col-md-5 col-lg-4 col-xl-3"></app-doctor-sidebar>
+
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header">
+          <div class="header-back">
+            <a [routerLink]="routes.appointmentsListUser" class="back-arrow">
+              <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h3>Appointment Details</h3>
+          </div>
+        </div>
+
+        <div *ngIf="loading" class="alert alert-info">Loading appointment...</div>
+        <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+        <div class="appointment-details-wrap" *ngIf="appointment">
+
+          <!-- Appointment Detail Card -->
+          <div class="appointment-wrap appointment-detail-card mb-4">
+            <ul>
+              <li>
+                <div class="patinet-information">
+                  <a href="javascript:void(0);">
+                    <img src="assets/img/doctors-dashboard/profile-02.jpg" alt="User Image">
+                  </a>
+                  <div class="patient-info">
+                    <p>#Apt{{ appointment.id }}</p>
+                    <h6>
+                      <a href="javascript:void(0);">
+                        {{ appointment.patient?.user?.name
+                        || (appointment.patient?.first_name + ' ' + appointment.patient?.last_name)
+                        || 'Patient' }}
+                      </a>
+                    </h6>
+                    <div class="mail-info-patient">
+                      <ul>
+                        <li>
+                          <i class="fa-solid fa-envelope"></i>
+                          {{ appointment.patient?.user?.email || appointment.patient?.email || '' }}
+                        </li>
+                        <li>
+                          <i class="fa-solid fa-phone"></i>
+                          {{ appointment.patient?.phone || '' }}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="appointment-info">
+                <div class="person-info">
+                  <p>Type of Appointment</p>
+                  <ul class="d-flex apponitment-types">
+                    <li>
+                      <i class="fa-solid" [ngClass]="{
+                          'fa-hospital text-green': appointment?.appointment_type === 'in_clinic',
+                          'fa-video text-indigo': appointment?.appointment_type === 'online'
+                        }"></i>
+                      {{ appointmentTypeLabel }}
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="appointment-action">
+                <div class="detail-badge-info">
+                  <span [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
+                </div>
+                  <div class="d-flex align-items-center">
+                  <label class="me-2 mb-0 fw-medium">Status:</label>
+                  <select class="form-select form-select-sm w-auto"
+                          [(ngModel)]="selectedStatus"
+                          (change)="onStatusChange()">
+                    <option *ngFor="let s of statusOptions" [value]="s.value">
+                      {{ s.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="consult-fees">
+                  <h6>
+                    Consultation Fees :
+                    <ng-container *ngIf="appointment?.invoice?.amount; else noFee">
+                      {{ appointment?.invoice?.currency || 'USD' }} {{ appointment?.invoice?.amount }}
+                    </ng-container>
+                    <ng-template #noFee>
+                      <span>N/A</span>
+                    </ng-template>
+                  </h6>
+                </div>
+              </li>
+            </ul>
+            <ul class="detail-card-bottom-info">
+              <li>
+                <h6>Appointment Date &amp; Time</h6>
+                <span>{{ appointment.scheduled_at | date:'medium' }}</span>
+              </li>
+              <li>
+                <h6>Clinic Location</h6>
+                <span>
+                  {{
+                  appointment.clinic_location
+                  || (appointment.appointment_type === 'online' ? 'Online session' : 'Clinic')
+                  }}
+                </span>
+              </li>
+              <li>
+                <h6>Location</h6>
+                <span>
+                  {{ appointment.patient?.city || appointment.clinic_location || 'N/A' }}
+                </span>
+              </li>
+              <li>
+                <h6>Visit Type</h6>
+                <span>{{ visitTypeLabel }}</span>
+              </li>
+              <li>
+                <div class="start-btn" *ngIf="appointment.appointment_type === 'online'
+                            && (appointment.status === 'confirmed' || appointment.status === 'pending')">
+                  <a href="{{appointment.online_meeting_url}}"
+                    class="btn btn-secondary">
+                    Start Session
+                  </a>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <!-- /Appointment Detail Card -->
+
+          <!-- Medical Records Section -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Medical Records</h5>
+            </div>
+            <div class="card-body">
+              <!-- List -->
+              <div *ngIf="medicalRecords.length; else noRecords">
+                <div class="table-responsive">
+                  <table class="table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                        <th>Comments</th>
+                        <th>File</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let rec of medicalRecords">
+                        <td>{{ rec.title }}</td>
+                        <td>{{ rec.record_type }}</td>
+                        <td>{{ rec.recorded_at | date:'short' }}</td>
+                        <td>{{ rec.comments || '-' }}</td>
+                        <td>
+                          <a *ngIf="rec.file_url" [href]="rec.file_url" target="_blank">View</a>
+                          <span *ngIf="!rec.file_url">-</span>
+                        </td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-secondary me-1" (click)="startEditMedicalRecord(rec)">
+                            Edit
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" (click)="deleteMedicalRecord(rec)"
+                            [disabled]="savingRecord">
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+              </div>
+              <ng-template #noRecords>
+                <p class="text-muted mb-3">No medical records for this appointment yet.</p>
+              </ng-template>
+
+              <hr>
+
+              <!-- Create Form -->
+              <h6 class="mb-3">
+                {{ editingRecord ? 'Edit Medical Record' : 'Add Medical Record' }}
+              </h6>
+              <div *ngIf="recordError" class="alert alert-danger py-2">{{ recordError }}</div>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Record Type</label>
+                  <select class="form-control" [(ngModel)]="newRecord.record_type">
+                    <option value="">Select type</option>
+                    <option value="Diagnosis">Diagnosis</option>
+                    <option value="Lab">Lab</option>
+                    <option value="Imaging">Imaging</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="col-md-8 mb-3">
+                  <label class="form-label">Title</label>
+                  <input type="text" class="form-control" [(ngModel)]="newRecord.title">
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">Comments</label>
+                  <textarea rows="3" class="form-control" [(ngModel)]="newRecord.comments"></textarea>
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">File (optional)</label>
+                  <input type="file" class="form-control" (change)="onRecordFileSelected($event)">
+                  <small class="text-muted">Allowed: PDF, JPG, PNG (max 5MB)</small>
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">Or External File URL (optional)</label>
+                  <input type="text" class="form-control" [(ngModel)]="newRecord.file_url">
+                </div>
+              </div>
+
+              <button class="btn btn-primary me-2" [disabled]="savingRecord" (click)="saveMedicalRecord()">
+                <span *ngIf="!savingRecord">
+                  {{ editingRecord ? 'Update Medical Record' : 'Save Medical Record' }}
+                </span>
+                <span *ngIf="savingRecord">Saving...</span>
+              </button>
+
+              <button *ngIf="editingRecord" class="btn btn-light" type="button" (click)="cancelEditMedicalRecord()">
+                Cancel
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Prescriptions Section -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Prescriptions</h5>
+            </div>
+            <div class="card-body">
+              <!-- List -->
+              <div *ngIf="prescriptions.length; else noPresc">
+                <div class="table-responsive">
+<table class="table mb-0">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Issued At</th>
+      <th>File</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let p of prescriptions">
+      <td>{{ p.name }}</td>
+      <td>{{ p.issued_at | date:'short' }}</td>
+      <td>
+        <a *ngIf="p.file_url" [href]="p.file_url" target="_blank">Download</a>
+        <span *ngIf="!p.file_url">-</span>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-outline-secondary me-1"
+                (click)="startEditPrescription(p)">
+          Edit
+        </button>
+        <button class="btn btn-sm btn-outline-danger"
+                (click)="deletePrescription(p)"
+                [disabled]="savingPrescription">
+          Delete
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+                </div>
+              </div>
+              <ng-template #noPresc>
+                <p class="text-muted mb-3">No prescriptions for this appointment yet.</p>
+              </ng-template>
+
+              <hr>
+
+              <!-- Create Form -->
+<h6 class="mb-3">
+  {{ editingPrescription ? 'Edit Prescription' : 'Add Prescription' }}
+</h6>
+<div *ngIf="prescriptionError" class="alert alert-danger py-2">{{ prescriptionError }}</div>
+<div class="row">
+  <div class="col-md-8 mb-3">
+    <label class="form-label">Prescription Name</label>
+    <input type="text" class="form-control" [(ngModel)]="newPrescription.name">
+  </div>
+  <div class="col-md-12 mb-3">
+    <label class="form-label">File (optional)</label>
+    <input type="file" class="form-control" (change)="onPrescriptionFileSelected($event)">
+    <small class="text-muted">Allowed: PDF, JPG, PNG (max 5MB)</small>
+  </div>
+  <div class="col-md-12 mb-3">
+    <label class="form-label">Or External File URL (optional)</label>
+    <input type="text" class="form-control" [(ngModel)]="newPrescription.file_url">
+  </div>
+</div>
+<button class="btn btn-primary me-2"
+        [disabled]="savingPrescription"
+        (click)="savePrescription()">
+  <span *ngIf="!savingPrescription">
+    {{ editingPrescription ? 'Update Prescription' : 'Save Prescription' }}
+  </span>
+  <span *ngIf="savingPrescription">Saving...</span>
+</button>
+
+<button *ngIf="editingPrescription"
+        class="btn btn-light"
+        type="button"
+        (click)="cancelEditPrescription()">
+  Cancel
+</button>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /Page Content -->

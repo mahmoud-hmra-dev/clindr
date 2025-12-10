@@ -1,0 +1,706 @@
+<!-- Header -->
+<header class="header header-custom header-fixed inner-header relative">
+  <div class="container">
+    <nav class="navbar navbar-expand-lg header-nav">
+      <div class="navbar-header">
+        <a id="mobile_btn" href="javascript:void(0);">
+          <span class="bar-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </a>
+        <a [routerLink]="routes.index" class="navbar-brand logo">
+          <img src="assets/clindoctor-logo.png" class="img-fluid" alt="Logo">
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+<!-- /Header -->
+
+
+<!-- Terms -->
+<div class="doctor-content">
+      <div class="col-12" *ngIf="loading">
+            <div class="d-flex justify-content-center my-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+      </div>
+  <div class="container" *ngIf="!loading && doctor">
+    <div class="row">
+      <div class="col-lg-9 mx-auto">
+        <div class="booking-wizard">
+          <ul class="form-wizard-steps d-sm-flex align-items-center justify-content-center" id="progressbar2">
+            <li class="progress-active"
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 0, 'progress-activated': selectedFieldSet[0] > 0 }">
+              <div class="profile-step">
+                <span class="multi-steps">1</span>
+                <div class="step-section">
+                  <h6>Specialty</h6>
+                </div>
+              </div>
+            </li>
+            <li
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 1, 'progress-activated': selectedFieldSet[0] > 1 }">
+              <div class="profile-step">
+                <span class="multi-steps">2</span>
+                <div class="step-section">
+                  <h6>Appointment Type</h6>
+                </div>
+              </div>
+            </li>
+            <li
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 2, 'progress-activated': selectedFieldSet[0] > 2 }">
+              <div class="profile-step">
+                <span class="multi-steps">3</span>
+                <div class="step-section">
+                  <h6>Date & Time</h6>
+                </div>
+              </div>
+            </li>
+            <li
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 3, 'progress-activated': selectedFieldSet[0] > 3 }">
+              <div class="profile-step">
+                <span class="multi-steps">4</span>
+                <div class="step-section">
+                  <h6>Basic Information</h6>
+                </div>
+              </div>
+            </li>
+            <li
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 4, 'progress-activated': selectedFieldSet[0] > 4 }">
+              <div class="profile-step">
+                <span class="multi-steps">5</span>
+                <div class="step-section">
+                  <h6>Payment</h6>
+                </div>
+              </div>
+            </li>
+            <li
+              [ngClass]="{ 'progress-active': selectedFieldSet[0] === 5, 'progress-activated': selectedFieldSet[0] > 5 }">
+              <div class="profile-step">
+                <span class="multi-steps">6</span>
+                <div class="step-section">
+                  <h6>Confirmation</h6>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="booking-widget multistep-form mb-5">
+          <fieldset id="first"
+            [ngClass]="{ 'd-block': selectedFieldSet[0] === 0, 'd-none': selectedFieldSet[0] !== 0 }">
+            <div class="card booking-card mb-0">
+              <div class="card-header">
+                <div class="booking-header pb-0">
+                  <div class="card mb-0">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center flex-wrap rpw-gap-2 flex-wrap row-gap-2">
+                        <span class="avatar avatar-xxxl avatar-rounded me-2 flex-shrink-0"><img
+                            [src]="doctor?.profile_image_path || 'assets/img/clients/client-15.jpg'" alt=""></span>
+                        <div>
+                          <h4 class="mb-1">{{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) }}
+                            <span class="badge bg-orange fs-12"><i class="fa-solid fa-star me-1"></i>{{
+                              doctor?.rating_avg || '5.0' }}</span></h4>
+                          <p class="text-indigo mb-3 fw-medium">{{ doctor?.designation || doctor?.services?.[0]?.name }}
+                          </p>
+                          <p class="mb-0"><i class="isax isax-location me-2"></i>{{ selectedAppointmentType === 'online'
+                            ? 'Online session'
+                            : (selectedClinic?.address || doctor?.clinics?.[0]?.address || doctor?.city) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body booking-body">
+                <div class="card mb-0">
+                  <div class="card-body pb-1">
+                    <!-- <div class="mb-4 pb-4 border-bottom">
+                      <label class="form-label">Select Speciality</label>
+                      <mat-select class="custom-mat-select select" placeholder="Select speciality">
+                        <mat-option *ngFor="let svc of doctor?.services" [value]="svc.specialty_id">{{ svc.name
+                          }}</mat-option>
+                      </mat-select>
+                    </div> -->
+                    <h6 class="mb-3">Services</h6>
+                    <div class="row">
+                      <div class="col-lg-4 col-md-6" *ngFor="let svc of doctor?.services" (click)="selectService(svc.id, svc.price)">
+                        <div class="service-item" [class.active]="svc.id === selectedServiceId">
+                          <input class="form-check-input ms-0 mt-0" name="service1" type="radio"
+                            [checked]="svc.id === selectedServiceId" (change)="selectService(svc.id, svc.price)">
+                          <label class="form-check-label ms-2">
+                            <span class="service-title d-block mb-1">{{ svc.name }}</span>
+                            <span class="fs-14 d-block">${{ svc.price }}</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+                  <a href="javascript:void(0);" class="btn btn-md btn-dark inline-flex align-items-center rounded-pill">
+                    <i class="isax isax-arrow-left-2 me-1"></i>
+                    Back
+                  </a>
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 1"
+                    class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill">
+                    Select Appointment Type
+                    <i class="isax isax-arrow-right-3 ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset [class.d-block]="selectedFieldSet[0] === 1">
+            <div class="card booking-card mb-0">
+              <div class="card-header">
+                <div class="booking-header pb-0">
+                  <div class="card mb-0">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center flex-wrap rpw-gap-2 flex-wrap row-gap-2">
+                        <span class="avatar avatar-xxxl avatar-rounded me-2 flex-shrink-0"><img
+                            [src]="doctor?.profile_image_path || 'assets/img/clients/client-15.jpg'" alt=""></span>
+                        <div>
+                          <h4 class="mb-1">{{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) }}
+                            <span class="badge bg-orange fs-12"><i class="fa-solid fa-star me-1"></i>{{
+                              doctor?.rating_avg || '5.0' }}</span></h4>
+                          <p class="text-indigo mb-3 fw-medium">{{ doctor?.designation || doctor?.services?.[0]?.name }}
+                          </p>
+                          <p class="mb-0"><i class="isax isax-location me-2"></i>{{ doctor?.clinics?.[0]?.address ||
+                            doctor?.city }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body booking-body">
+                <div class="card mb-0">
+                  <div class="card-body pb-1">
+                    <h6 class="mb-3">Select Appointment Type</h6>
+                    <div class="row">
+                      <div class="col-xl col-md-3 col-sm-4" *ngIf="doctor?.clinics?.length">
+                        <div class="radio-select text-center" [class.active]="selectedAppointmentType === 'in_clinic'"
+                          (click)="showClinic()">
+                          <input class="form-check-input ms-0 mt-0" name="service2" type="radio" id="service7"
+                            [checked]="selectedAppointmentType === 'in_clinic'">
+                          <label class="form-check-label" for="service7">
+                            <i class="isax isax-hospital5"></i>
+                            <span class="service-title d-block">Clinic</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-xl col-md-3 col-sm-4">
+                        <div class="radio-select text-center" [class.active]="selectedAppointmentType === 'online'"
+                          (click)="offClinic()">
+                          <input class="form-check-input ms-0 mt-0" name="service2" type="radio" id="service8"
+                            [checked]="selectedAppointmentType === 'online'">
+                          <label class="form-check-label" for="service8">
+                            <i class="isax isax-video5"></i>
+                            <span class="service-title d-block">Video Call</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <h6 class="mb-3" *ngIf="selectedAppointmentType === 'in_clinic'">Select Clinics</h6>
+                    <div *ngIf="isClinic && doctor?.clinics?.length">
+                      <div class="service-item" *ngFor="let clinic of doctor?.clinics"
+                        [class.active]="selectedClinicId === clinic.id" (click)="selectClinic(clinic.id)">
+                        <input class="form-check-input ms-0 mt-0" name="clinicSelect" type="radio"
+                          [checked]="selectedClinicId === clinic.id">
+                        <label class="form-check-label ms-2">
+                          <span class="d-flex align-items-center flex-wrap rpw-gap-2">
+                            <span class="d-inline-block me-2"><img src="assets/hdf.png" alt="" width="200px"></span>
+                            <span>
+                              <span class="service-title d-block mb-1">{{ clinic.name }}</span>
+                              <span class="fs-14">{{ clinic.address }}</span>
+                              <i class="fa-solid fa-circle fs-5 text-primary mx-2 me-1"></i>
+                              <span class="fs-14">{{ clinic.city }}</span>
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 0"
+                    class="btn btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill">
+                    <i class="isax isax-arrow-left-2 me-1"></i>
+                    Back
+                  </a>
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 2"
+                    class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill">
+                    Select Date & Time
+                    <i class="isax isax-arrow-right-3 ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset [class.d-block]="selectedFieldSet[0] === 2">
+            <div class="card booking-card mb-0">
+              <div class="card-header">
+                <div class="booking-header pb-0">
+                  <div class="card mb-0">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center flex-wrap rpw-gap-2 mb-4 flex-wrap row-gap-2">
+                        <span class="avatar avatar-xxxl avatar-rounded me-2 flex-shrink-0"><img
+                            src="assets/img/clients/client-15.jpg" alt=""></span>
+                        <div>
+                          <h4 class="mb-1">{{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) }}
+                            <span class="badge bg-orange fs-12"><i class="fa-solid fa-star me-1"></i>{{
+                              doctor?.rating_avg || '5.0' }}</span></h4>
+                          <p class="text-indigo mb-3 fw-medium">{{ doctor?.designation || doctor?.services?.[0]?.name }}
+                          </p>
+                          <p class="mb-0"><i class="isax isax-location me-2"></i>{{ doctor?.clinics?.[0]?.address ||
+                            doctor?.city }}</p>
+                        </div>
+                      </div>
+                      <h6 class="mb-2">Booking Info</h6>
+                      <div class="row gx-2 gy-3">
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Service</h6>
+                            <p class="mb-0">{{ selectedService?.name }}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Price</h6>
+                            <p class="mb-0">{{ selectedService?.price ? ('$' + selectedService?.price) : '—' }}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Date & Time</h6>
+                            <p class="mb-0">{{ selectedDateTime | date:'medium'}}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Appointment type</h6>
+                            <p class="mb-0">{{ selectedAppointmentType === 'online' ? 'Online' : 'Clinic' }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body booking-body">
+                <div class="card mb-0">
+                  <div class="card-body pb-1">
+                    <div class="row">
+                      <div class="col-lg-5">
+                        <div class="card">
+                          <div class="card-body p-2 pt-3">
+                            <bs-datepicker-inline [bsValue]="bsInlineValue"></bs-datepicker-inline>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-7">
+                        <div class="card booking-wizard-slots">
+                          <div class="card-body">
+                            <div class="book-title">
+                              <h6 class="fs-14 mb-2">Slots</h6>
+                            </div>
+                            <div class="token-slot mt-2 mb-2">
+                              {{filteredAvailabilities |json}}
+                              <div class="form-check-inline visits me-0" *ngFor="let av of filteredAvailabilities">
+                                <label class="visit-btns">
+                                  <input type="radio" class="form-check-input" name="appointmentSlot"
+                                    (change)="selectSlot(av.start_time)"
+                                    [checked]="selectedDateTime === av.start_time">
+                                  <span class="visit-rsn">{{ av.start_time | date:'shortTime' }}</span>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 1"
+                    class="btn btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill">
+                    <i class="isax isax-arrow-left-2 me-1"></i>
+                    Back
+                  </a>
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 3"
+                    class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill">
+                    Add Basic Information
+                    <i class="isax isax-arrow-right-3 ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset [class.d-block]="selectedFieldSet[0] === 3">
+            <div class="card booking-card mb-0">
+              <div class="card-header">
+                <div class="booking-header pb-0">
+                  <div class="card mb-0">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center flex-wrap rpw-gap-2 mb-4 flex-wrap row-gap-2">
+                        <span class="avatar avatar-xxxl avatar-rounded me-2 flex-shrink-0"><img
+                            [src]="doctor?.profile_image_path || 'assets/img/clients/client-15.jpg'" alt=""></span>
+                        <div>
+                          <h4 class="mb-1">{{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) }}
+                            <span class="badge bg-orange fs-12"><i class="fa-solid fa-star me-1"></i>{{
+                              doctor?.rating_avg || '5.0' }}</span></h4>
+                          <p class="text-indigo mb-3 fw-medium">{{ doctor?.designation || doctor?.services?.[0]?.name }}
+                          </p>
+                          <p class="mb-0"><i class="isax isax-location me-2"></i>{{ selectedAppointmentType === 'online'
+                            ? 'Online session'
+                            : (selectedClinic?.address || doctor?.clinics?.[0]?.address || doctor?.city) }}</p>
+                        </div>
+                      </div>
+                      <h6 class="mb-2">Booking Info</h6>
+                      <div class="row gx-2 gy-3">
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Service</h6>
+                            <p class="mb-0">{{ selectedService?.name }}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Price</h6>
+                            <p class="mb-0">{{ selectedService?.price ? ('$' + selectedService?.price) : '—' }}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Date & Time</h6>
+                            <p class="mb-0">{{ selectedDateTime | date}}</p>
+                          </div>
+                        </div>
+                        <div class="col-lg-3 col-sm-6">
+                          <div>
+                            <h6 class="fs-14 fw-medium mb-1">Appointment type</h6>
+                            <p class="mb-0">{{ selectedAppointmentType === 'online' ? 'Online' : 'Clinic' }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body booking-body">
+                <div class="card mb-0">
+                  <div class="card-body pb-1">
+                    <div class="row">
+
+                      <div class="col-lg-12">
+                        <div class="mb-3">
+                          <label class="form-label">Attachment</label>
+                          <input type="file" class="form-control">
+                        </div>
+                      </div>
+                      <div class="col-lg-12">
+                        <div class="mb-3">
+                          <label class="form-label">Reason for Visit</label>
+                          <textarea class="form-control" rows="3"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 2"
+                    class="btn btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill">
+                    <i class="isax isax-arrow-left-2 me-1"></i>
+                    Back
+                  </a>
+                  <a href="javascript:void(0);" (click)="selectedFieldSet[0] = 4"
+                    class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill">
+                    Select Payment
+                    <i class="isax isax-arrow-right-3 ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+<fieldset [class.d-block]="selectedFieldSet[0] === 4">
+  <div class="card booking-card mb-0">
+    <div class="card-header">
+      <div class="booking-header pb-0">
+        <div class="card mb-0">
+          <div class="card-body">
+            <div class="d-flex align-items-center flex-wrap rpw-gap-2 flex-wrap row-gap-2">
+              <span class="avatar avatar-xxxl avatar-rounded me-2 flex-shrink-0">
+                <img
+                  [src]="doctor?.profile_image_path || 'assets/img/clients/client-15.jpg'"
+                  alt=""
+                />
+              </span>
+              <div>
+                <h4 class="mb-1">
+                  {{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) }}
+                  <span class="badge bg-orange fs-12">
+                    <i class="fa-solid fa-star me-1"></i>
+                    {{ doctor?.rating_avg || '5.0' }}
+                  </span>
+                </h4>
+
+                <p class="text-indigo mb-3 fw-medium">
+                  {{ doctor?.designation || doctor?.services?.[0]?.name }}
+                </p>
+
+                <p class="mb-0">
+                  <i class="isax isax-location me-2"></i>
+                  {{ selectedAppointmentType === 'online'
+                      ? 'Online session'
+                      : (selectedClinic?.address || doctor?.clinics?.[0]?.address || doctor?.city) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body booking-body">
+      <div class="row">
+        <div class="col-lg-6 d-flex">
+          <div class="card flex-fill mb-0">
+            <div class="card-body">
+              <h6 class="mb-3">Booking Info</h6>
+
+              <!-- Date & Time -->
+              <div class="mb-3">
+                <label class="form-label">Date & Time</label>
+                <div class="form-plain-text">
+                  {{ selectedDateTime ? (selectedDateTime | date:'medium') : '—' }}
+                </div>
+              </div>
+
+              <!-- Appointment type -->
+              <div class="mb-3">
+                <label class="form-label">Appointment type</label>
+                <div class="form-plain-text">
+                  {{ selectedAppointmentType === 'online' ? 'Online' : 'Clinic' }}
+                  <ng-container *ngIf="selectedAppointmentType === 'in_clinic' && selectedClinic">
+                    ({{ selectedClinic.name }})
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Payment Info -->
+              <div class="pt-3 border-top booking-more-info">
+                <h6 class="mb-3">Payment Info</h6>
+
+                <!-- Service price -->
+                <div
+                  class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between mb-2"
+                  *ngIf="selectedService"
+                >
+                  <p class="mb-0">{{ selectedService.name }}</p>
+                  <span class="fw-medium d-block">
+                    {{ selectedService.price | currency:'USD':'symbol' }}
+                  </span>
+                </div>
+
+                <!-- Booking fees (اختياري) -->
+                <div
+                  class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between mb-2"
+                  *ngIf="bookingFee"
+                >
+                  <p class="mb-0">Booking Fees</p>
+                  <span class="fw-medium d-block">
+                    {{ bookingFee | currency:'USD':'symbol' }}
+                  </span>
+                </div>
+
+                <!-- Tax (اختياري) -->
+                <div
+                  class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between mb-2"
+                  *ngIf="taxAmount"
+                >
+                  <p class="mb-0">Tax</p>
+                  <span class="fw-medium d-block">
+                    {{ taxAmount | currency:'USD':'symbol' }}
+                  </span>
+                </div>
+
+                <!-- Discount (اختياري) -->
+                <div
+                  class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between mb-2"
+                  *ngIf="discountAmount"
+                >
+                  <p class="mb-0">Discount</p>
+                  <span class="fw-medium text-danger d-block">
+                    -{{ discountAmount | currency:'USD':'symbol' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Total -->
+              <div
+                class="bg-primary d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between p-3 rounded"
+              >
+                <h6 class="text-white">Total</h6>
+                <h6 class="text-white">
+                  {{ amount | currency:'USD':'symbol' }}
+                </h6>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+        <a
+          href="javascript:void(0);"
+          (click)="selectedFieldSet[0] = 3"
+          class="btn btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill"
+        >
+          <i class="isax isax-arrow-left-2 me-1"></i>
+          Back
+        </a>
+        <a
+          href="javascript:void(0);"
+          (click)="confirmAndPay()"
+          class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill"
+        >
+          Confirm & Pay
+          <i class="isax isax-arrow-right-3 ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</fieldset>
+
+          <fieldset [class.d-block]="selectedFieldSet[0] === 5">
+            <div class="card booking-card">
+              <div class="card-body booking-body pb-1">
+                <div class="row">
+                  <div class="col-lg-8 d-flex">
+                    <div class="flex-fill">
+                      <div class="card ">
+                        <div class="card-header">
+                          <h5 class="d-flex align-items-center flex-wrap rpw-gap-2">
+                            <i class="isax isax-tick-circle5 text-success me-2"></i>
+                            Booking Confirmed
+                          </h5>
+                        </div>
+                        <div class="card-header d-flex align-items-center flex-wrap rpw-gap-2">
+                          <span class="avatar avatar-lg avatar-rounded me-2 flex-shrink-0"><img
+                              src="assets/img/clients/client-16.jpg" alt=""></span>
+                          <p class="mb-0">Your Booking has been Confirmed with <span class="text-dark">Dr. Michael Brown
+                            </span> be on time before <span class="text-dark">15 Mins </span> From the appointment Time
+                          </p>
+                        </div>
+                        <div class="card-body pb-1">
+                          <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between mb-3">
+                            <h6>Booking Info</h6>
+                            <a href="javascript:void(0);" class="btn btn-light rounded-pill"><i
+                                class="isax isax-calendar me-1"></i>Reschedule</a>
+                          </div>
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label">Service</label>
+                                <div class="form-plain-text">Cardiology (30 Mins)</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label">Additional Service</label>
+                                <div class="form-plain-text">Echocardiograms</div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label">Date & Time</label>
+                                <div class="form-plain-text">10:00 - 11:00 AM, 15, Oct 2025 </div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label">Appointment type</label>
+                                <div class="form-plain-text">Clinic </div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="mb-3">
+                                <label class="form-label">Clinic Name & Location</label>
+                                <div class="form-plain-text">Wellness Path <a href="javascript:void(0);"
+                                    class="text-primary">View Location</a></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="card">
+                        <div class="card-body d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
+                          <div>
+                            <h6 class="mb-1">Need Our Assistance</h6>
+                            <p class="mb-0">Call us in case you face any Issue on Booking / Cancellation</p>
+                          </div>
+                          <a href="javascript:void(0);" class="btn btn-light rounded-pill"><i
+                              class="isax isax-call5 me-1"></i>Call Us</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-4 d-flex">
+                    <div class="card flex-fill">
+                      <div class="card-body d-flex flex-column justify-content-between">
+                        <div class="text-center">
+                          <h6 class="fs-14 mb-2">Booking Number</h6>
+                          <span class="booking-id-badge mb-3">DCRA12565</span>
+                          <span class="d-block mb-3"><img src="assets/img/icons/payment-qr.svg" alt=""></span>
+                          <p>Scan this QR Code to Download the details of Appointment</p>
+                        </div>
+                        <div>
+                          <a href="javascript:void(0);"
+                            class="btn w-100 mb-3 btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill">
+                            Add To Calendar
+                          </a>
+                          <a [routerLink]="routes.search1"
+                            class="btn w-100 btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill">
+                            Start New Booking
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <a [routerLink]="routes.booking" class="" (click)="selectedFieldSet[0] = 0">
+                <i class="isax isax-arrow-left-2 me-1"></i>
+                Back to Bookings
+              </a>
+            </div>
+          </fieldset>
+        </div>
+        <div class="text-center">
+          <p class="mb-0">Copyright © 2025. All Rights Reserved, Clindoctor</p>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+<!-- /Terms -->

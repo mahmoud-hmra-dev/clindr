@@ -1,0 +1,333 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+
+<!-- Page Content -->
+<div class="content doctor-content">
+    <div class="container">
+
+        <div class="row">
+
+            <!-- Profile Sidebar -->
+            <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+            <!-- / Profile Sidebar -->
+
+            <div class="col-lg-8 col-xl-9">
+                <div class="dashboard-header">
+                    <h3>Appointments</h3>
+                    <ul class="header-list-btns">
+                        <li>
+                            <div class="input-block dash-search-input">
+                                <input type="text" class="form-control" placeholder="Search">
+                                <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="view-icons">
+                                <a [routerLink] = "routes.patientAppointment" class="active"><i class="isax isax-grid-7"></i></a>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="view-icons">
+                                <a [routerLink] = "routes.patientAppointmentsGrid"><i class="fa-solid fa-th"></i></a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="appointment-tab-head">
+                    <div class="appointment-tabs">
+                        <ul class="nav nav-pills inner-tab " id="pills-tab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="pills-upcoming-tab" data-bs-toggle="pill" data-bs-target="#pills-upcoming" type="button" role="tab" aria-controls="pills-upcoming" aria-selected="false">Upcoming<span>{{ upcoming.length }}</span></button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pills-cancel-tab" data-bs-toggle="pill" data-bs-target="#pills-cancel" type="button" role="tab" aria-controls="pills-cancel" aria-selected="true">Cancelled<span>{{ cancelled.length }}</span></button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pills-complete-tab" data-bs-toggle="pill" data-bs-target="#pills-complete" type="button" role="tab" aria-controls="pills-complete" aria-selected="true">Completed<span>{{ completed.length }}</span></button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="filter-head">
+                        <div class="position-relative daterange-wraper me-2">
+                            <div class="input-groupicon calender-input">
+                                <input type="text" class="form-control  date-range bookingrange" placeholder="From Date - To Date " bsDaterangepicker [(ngModel)]="bsRangeValue">
+                            </div>
+                            <i class="isax isax-calendar-1"></i>
+                        </div>
+                        <div class="form-sorts dropdown" [ngClass]="{'table-filter-show': filter === true}">
+                            <a (click)="showFilter()" href="javascript:void(0);" class="dropdown-toggle" id="table-filter"><i class="isax isax-filter me-2"></i>Filter By</a>
+                            <div class="filter-dropdown-menu">
+                                <div class="filter-set-view">
+                                    <div class="accordion" id="accordionExample">
+                                        <div class="filter-set-content">
+                                            <div class="filter-set-content-head">
+                                                <a href="javascript:void(0);" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">Name<i class="fa-solid fa-chevron-right"></i></a>
+                                            </div>
+                                            <div class="filter-set-contents accordion-collapse collapse show" id="collapseTwo" data-bs-parent="#accordionExample">
+                                                <ul>
+                                                    <li>
+                                                        <div class="input-block dash-search-input w-100">
+                                                            <input type="text" class="form-control" placeholder="Search">
+                                                            <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="filter-set-content">
+                                            <div class="filter-set-content-head">
+                                                <a href="javascript:void(0);" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Appointment Type<i class="fa-solid fa-chevron-right"></i></a>
+                                            </div>
+                                            <div class="filter-set-contents accordion-collapse collapse show" id="collapseOne" data-bs-parent="#accordionExample">
+                                                <ul>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox" checked>
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">All Type</span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Video Call</span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Audio Call</span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Chat</span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Direct Visit</span>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="filter-set-content">
+                                            <div class="filter-set-content-head">
+                                                <a href="javascript:void(0);" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">Visit Type<i class="fa-solid fa-chevron-right"></i></a>
+                                            </div>
+                                            <div class="filter-set-contents accordion-collapse collapse show" id="collapseThree" data-bs-parent="#accordionExample">
+                                                <ul>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox" checked>
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">All Visit</span>
+                                                            </label>
+                                                        </div>
+
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">General</span>
+                                                            </label>
+                                                        </div>
+
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Consultation</span>
+                                                            </label>
+                                                        </div>
+
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Follow-up</span>
+                                                            </label>
+                                                        </div>
+
+                                                    </li>
+                                                    <li>
+                                                        <div class="filter-checks">
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox">
+                                                                <span class="checkmarks"></span>
+                                                                <span class="check-title">Direct Visit</span>
+                                                            </label>
+                                                        </div>
+
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="filter-reset-btns">
+                                        <a href="javascript:void(0);" class="btn btn-light">Reset</a>
+                                        <a href="javascript:void(0);" class="btn btn-primary">Filter Now</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content appointment-tab-content grid-patient">
+                    <div class="tab-pane fade show active" id="pills-upcoming" role="tabpanel"
+                        aria-labelledby="pills-upcoming-tab">
+                        <div class="row">
+                            <div class="col-xl-4 col-lg-6 col-md-6 d-flex" *ngFor="let appt of upcoming">
+                                <div class="appointment-wrap">
+                                    <ul>
+                                        <li>
+                                            <div class="patinet-information">
+                                                <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">
+                                                    <img src="assets/img/doctors/doctor-01.jpg" alt="User Image">
+                                                </a>
+                                                <div class="patient-info">
+                                                    <p>Dr.</p>
+                                                    <h6><a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">{{ appt?.doctor?.display_name || appt?.doctor_name || 'Doctor' }}</a></h6>
+                                                    <ul>
+                                                        <li>{{ appt?.appointment_type || '' }}</li>
+                                                        <li>{{ appt?.visit_type || '' }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="appointment-info">
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
+                                        </li>
+                                        <li class="appointment-action">
+                                            <div class="apt-btn">
+                                              <a
+  [routerLink]="routes.patientAppointmentDetails"
+  [queryParams]="{ id: appt?.id }"
+  class="btn btn-secondary-light"
+>
+  Appointment Details
+</a>
+
+                                                <a href="javascript:void(0);" class="btn btn-primary">Reschedule</a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pills-cancel" role="tabpanel" aria-labelledby="pills-cancel-tab">
+                        <div class="row">
+                            <div class="col-xl-4 col-lg-6 col-md-6 d-flex" *ngFor="let appt of cancelled">
+                                <div class="appointment-wrap">
+                                    <ul>
+                                        <li>
+                                            <div class="patinet-information">
+                                                <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">
+                                                    <img src="assets/img/doctors/doctor-05.jpg" alt="User Image">
+                                                </a>
+                                                <div class="patient-info">
+                                                    <p>Dr.</p>
+                                                    <h6><a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">{{ appt?.doctor?.display_name || appt?.doctor_name || 'Doctor' }}</a></h6>
+                                                    <ul>
+                                                        <li>{{ appt?.appointment_type || '' }}</li>
+                                                        <li>{{ appt?.visit_type || '' }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="appointment-info">
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
+                                        </li>
+                                        <li class="appointment-action">
+                                            <div class="apt-btn">
+<a
+  [routerLink]="routes.patientAppointmentDetails"
+  [queryParams]="{ id: appt?.id }"
+  class="btn btn-secondary-light"
+>
+  Appointment Details
+</a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pills-complete" role="tabpanel" aria-labelledby="pills-complete-tab">
+                        <div class="row">
+                            <div class="col-xl-4 col-lg-6 col-md-6 d-flex" *ngFor="let appt of completed">
+                                <div class="appointment-wrap">
+                                    <ul>
+                                        <li>
+                                            <div class="patinet-information">
+                                                <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">
+                                                    <img src="assets/img/doctors/doctor-06.jpg" alt="User Image">
+                                                </a>
+                                                <div class="patient-info">
+                                                    <p>Dr.</p>
+                                                    <h6><a [routerLink]="routes.doctorProfile1" [queryParams]="{id: appt?.doctor_id}">{{ appt?.doctor?.display_name || appt?.doctor_name || 'Doctor' }}</a></h6>
+                                                    <ul>
+                                                        <li>{{ appt?.appointment_type || '' }}</li>
+                                                        <li>{{ appt?.visit_type || '' }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="appointment-info">
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
+                                        </li>
+                                        <li class="appointment-action">
+                                            <div class="apt-btn">
+<a
+  [routerLink]="routes.patientAppointmentDetails"
+  [queryParams]="{ id: appt?.id }"
+  class="btn btn-secondary-light"
+>
+  Appointment Details
+</a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+<!-- /Page Content -->

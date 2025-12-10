@@ -1,0 +1,283 @@
+<app-patient-breadcrumb />
+<div class="content">
+  <div class="container">
+    <div *ngIf="loading" class="alert alert-info">Loading doctor profile...</div>
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <div class="card doc-profile-card" *ngIf="doctor">
+      <div class="card-body">
+        <div class="doctor-widget doctor-profile-two">
+          <div class="doc-info-left">
+            <div class="doctor-img">
+              <img [src]="doctor?.profile_image_path || 'assets/img/doctors/doc-profile-02.jpg'" class="img-fluid" alt="Doctor" />
+            </div>
+            <div class="doc-info-cont">
+              <span class="badge doc-avail-badge">
+                <i class="fa-solid fa-circle"></i>{{ doctor?.availabilities?.length ? 'Available' : 'Not Available' }}
+              </span>
+              <h4 class="doc-name">
+                {{ getDoctorName() }}
+                <img src="assets/img/icons/badge-check.svg" alt="Verified" />
+                <span class="badge doctor-role-badge">
+                  <i class="fa-solid fa-circle"></i>{{ doctor?.designation || doctor?.services?.[0]?.name || 'Doctor' }}
+                </span>
+              </h4>
+              <p *ngIf="doctor?.educations?.length">
+                {{ doctor.educations[0]?.degree }}<span *ngIf="doctor.educations[0]?.institution"> - {{ doctor.educations[0]?.institution }}</span>
+              </p>
+              <p *ngIf="getLanguages()">Speaks : {{ getLanguages() }}</p>
+              <p class="address-detail">
+                <span class="loc-icon"><i class="feather icon-map-pin"></i></span>{{ getPrimaryClinic()?.address || doctor?.city }}
+              </p>
+            </div>
+          </div>
+          <div class="doc-info-right">
+            <ul class="doctors-activities">
+              <li>
+                <div class="hospital-info">
+                  <span class="list-icon"><img src="assets/img/icons/watch-icon.svg" alt="Availability" /></span>
+                  <p>Online therapy available</p>
+                </div>
+              </li>
+              <li>
+                <div class="hospital-info">
+                  <span class="list-icon"><img src="assets/img/icons/thumb-icon.svg" alt="Recommended" /></span>
+                  <p><b>{{ doctor?.recommended_percent ?? 'N/A' }}% </b> Recommended</p>
+                </div>
+              </li>
+              <li>
+                <div class="hospital-info">
+                  <span class="list-icon"><img src="assets/img/icons/building-icon.svg" alt="Clinic" /></span>
+                  <p>{{ doctor?.clinics?.[0]?.name || 'Clinic' }}</p>
+                </div>
+                <h5 class="accept-text">
+                  <span><i class="feather icon-check"></i></span>{{ doctor?.accepting_new_patients ? 'Accepting New Patients' : 'Not Accepting New Patients' }}
+                </h5>
+              </li>
+              <li>
+                <div class="rating">
+                  <i class="fas fa-star filled" *ngFor="let s of [1,2,3,4,5]"></i>
+                  <span>{{ doctor?.rating_avg ?? 'N/A' }}</span>
+                  <a href="javascript:void(0);" class="d-inline-block average-rating">{{ doctor?.reviews?.length || 0 }} Reviews</a>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="doc-profile-card-bottom">
+          <div class="bottom-book-btn">
+            <p><span>Price : ${{ getFee() }}</span></p>
+            <div class="clinic-booking">
+              <a class="apt-btn" [routerLink]="routes.booking" [queryParams]="{ id: doctor?.id }">Book Appointment</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doctors-detailed-info" *ngIf="doctor">
+      <ul class="information-title-list">
+        <li [class.active]="activeTab === 'doc_bio'"><a [class.active]="activeTab === 'doc_bio'" (click)="setActiveTab('doc_bio');scrollToSection(doc_bio)" (keydown.enter)="setActiveTab('doc_bio');scrollToSection(doc_bio)" tabindex="0">Doctor Bio</a></li>
+        <li [class.active]="activeTab === 'experience'"><a (click)="setActiveTab('experience');scrollToSection(experienceSection)" (keydown.enter)="setActiveTab('experience');scrollToSection(experienceSection)" tabindex="0">Experience</a></li>
+        <li [class.active]="activeTab === 'insurence'"><a (click)="setActiveTab('insurence');scrollToSection(insurenceSection)" (keydown.enter)="setActiveTab('insurence');scrollToSection(insurenceSection)" tabindex="0">Insurances</a></li>
+        <li [class.active]="activeTab === 'services'"><a (click)="setActiveTab('services');scrollToSection(servicesSection)" (keydown.enter)="setActiveTab('services');scrollToSection(servicesSection)" tabindex="0">Treatments</a></li>
+        <li [class.active]="activeTab === 'speciality'"><a (click)="setActiveTab('speciality');scrollToSection(specialitySection)" (keydown.enter)="setActiveTab('speciality');scrollToSection(specialitySection)" tabindex="0">Speciality</a></li>
+        <li [class.active]="activeTab === 'availability'"><a (click)="setActiveTab('availability');scrollToSection(availabilitySection)" (keydown.enter)="setActiveTab('availability');scrollToSection(availabilitySection)" tabindex="0">Availability</a></li>
+        <li [class.active]="activeTab === 'clinic'"><a (click)="setActiveTab('clinic');scrollToSection(clinicSection)" (keydown.enter)="setActiveTab('clinic');scrollToSection(clinicSection)" tabindex="0">Clinics</a></li>
+        <li [class.active]="activeTab === 'membership'"><a (click)="setActiveTab('membership');scrollToSection(membershipSection)" (keydown.enter)="setActiveTab('membership');scrollToSection(membershipSection)" tabindex="0">Memberships</a></li>
+        <li [class.active]="activeTab === 'social'"><a (click)="setActiveTab('social');scrollToSection(socialSection)" (keydown.enter)="setActiveTab('social');scrollToSection(socialSection)" tabindex="0">Social</a></li>
+        <li [class.active]="activeTab === 'awards'"><a (click)="setActiveTab('awards');scrollToSection(awardsSection)" (keydown.enter)="setActiveTab('awards');scrollToSection(awardsSection)" tabindex="0">Awards</a></li>
+        <li [class.active]="activeTab === 'bussiness_hour'"><a (click)="setActiveTab('bussiness_hour');scrollToSection(bussinessHourSection)" (keydown.enter)="setActiveTab('bussiness_hour');scrollToSection(bussinessHourSection)" tabindex="0">Business Hours</a></li>
+        <li [class.active]="activeTab === 'review'"><a (click)="setActiveTab('review');scrollToSection(reviewSection)" (keydown.enter)="setActiveTab('review');scrollToSection(reviewSection)" tabindex="0">Review</a></li>
+      </ul>
+      <div class="doc-information-main">
+        <div class="doc-information-details bio-detail" id="doc_bio" #doc_bio>
+          <div class="detail-title"><h4>Doctor Bio</h4></div>
+          <p>{{ doctor?.bio || 'No bio available.' }}</p>
+          <a href="javascript:void(0);" class="show-more d-flex align-items-center">See More<i class="fa-solid fa-chevron-down ms-2"></i></a>
+        </div>
+
+        <div class="doc-information-details" id="experience" #experienceSection *ngIf="doctor?.experiences?.length">
+          <div class="detail-title"><h4>Practice Experience</h4></div>
+          <div class="experience-info" *ngFor="let exp of doctor.experiences">
+            <div class="experience-content">
+              <h5>{{ exp.organization || exp.hospital_name || exp.title }}</h5>
+              <ul class="ent-list">
+                <li *ngIf="exp.department">{{ exp.department }}</li>
+                <li *ngIf="exp.city">{{ exp.city }}</li>
+              </ul>
+              <ul class="date-list">
+                <li>{{ exp.start_date }} - {{ exp.end_date || 'Present' }}</li>
+              </ul>
+              <p>{{ exp.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-information-details" id="insurence" #insurenceSection *ngIf="doctor?.insurances?.length">
+          <div class="detail-title slider-nav d-flex justify-content-between align-items-center">
+            <h4>Insurance Accepted ({{ doctor.insurances.length }})</h4>
+            <div class="nav nav-container slide-1"></div>
+          </div>
+          <div class="insurence-logo-slider">
+            <owl-carousel-o [options]="ourDoctorOption">
+              <ng-template carouselSlide *ngFor="let ins of doctor.insurances">
+                <div class="insurence-logo">
+                  <span><img [src]="ins.logo_url || 'assets/img/icons/insurence-logo-01.svg'" alt="Img" /></span>
+                  <p class="mt-2 mb-0">{{ ins.name }}</p>
+                </div>
+              </ng-template>
+            </owl-carousel-o>
+          </div>
+        </div>
+
+        <div class="doc-information-details" id="speciality" #specialitySection *ngIf="doctor?.services?.length">
+          <div class="detail-title"><h4>Speciality</h4></div>
+          <ul class="special-links">
+            <li *ngFor="let svc of doctor.services"><a href="javascript:void(0);">{{ svc.specialty?.name || svc.name }}</a></li>
+          </ul>
+        </div>
+
+        <div class="doc-information-details" id="services" #servicesSection *ngIf="doctor?.services?.length">
+          <div class="detail-title"><h4>Services & Pricing</h4></div>
+          <ul class="special-links">
+            <li *ngFor="let svc of doctor.services">
+              <a href="javascript:void(0);">{{ svc.name }} <span>${{ svc.price ?? doctor.default_fee }}</span></a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="doc-information-details" id="availability" #availabilitySection>
+          <div class="detail-title slider-nav d-flex justify-content-between align-items-center">
+            <h4>Availability</h4>
+            <div class="nav nav-container slide-2"></div>
+          </div>
+          <div class="availability-slots-slider" *ngIf="doctor?.availabilities?.length; else noAvail">
+            <owl-carousel-o [options]="availabilyOption">
+              <ng-template carouselSlide *ngFor="let slot of doctor.availabilities">
+                <div class="availability-date">
+                  <div class="book-date">
+                    <h6>{{ ($any(slot)).day_of_week }}</h6>
+                    <span>{{ formatAvailability(slot) }}</span>
+                  </div>
+                </div>
+              </ng-template>
+            </owl-carousel-o>
+          </div>
+          <ng-template #noAvail><p>No availability published.</p></ng-template>
+        </div>
+
+        <div class="doc-information-details" id="clinic" #clinicSection>
+          <div class="detail-title"><h4>Clinics & Locations</h4></div>
+          <div *ngIf="doctor?.clinics?.length; else noClinics">
+            <div class="clinic-loc" *ngFor="let clinicItem of doctor.clinics">
+              <div class="row align-items-center">
+                <div class="col-lg-7">
+                  <div class="clinic-info">
+                    <div class="clinic-img">
+                      <img src="assets/img/clinic/clinic-11.jpg" alt="Img" />
+                    </div>
+                    <div class="detail-clinic">
+                      <h5>{{ clinicItem.name }}</h5>
+                      <span *ngIf="clinicItem.fee_amount">${{ clinicItem.fee_amount }} / Appointment</span>
+                      <p>{{ clinicItem.address }}<span *ngIf="clinicItem.city">, {{ clinicItem.city }}</span></p>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center avail-time-slot" *ngIf="doctor.availabilities?.length">
+                    <div class="availability-date" *ngFor="let slot of doctor.availabilities | slice:0:2">
+                      <div class="book-date">
+                        <h6>{{ ($any(slot)).day_of_week }}</h6>
+                        <span>{{ formatAvailability(slot) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-5">
+                  <div class="contact-map d-flex">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3300.000000000000!2d35.519446!3d33.881431!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151f193e45cf0a0f%3A0xabcd1234!2sHôtel-Dieu%20de%20France!5e0!3m2!1sen!2slb!4v0000000000000" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ng-template #noClinics><p>No clinics listed.</p></ng-template>
+        </div>
+
+        <div class="doc-information-details" id="membership" #membershipSection *ngIf="doctor?.memberships?.length">
+          <div class="detail-title"><h4>Membership</h4></div>
+          <div class="member-ship-info" *ngFor="let mem of doctor.memberships">
+            <span class="mem-check"><i class="fa-solid fa-check"></i></span>
+            <p>{{ mem.description || mem.title }}</p>
+          </div>
+        </div>
+
+        <div class="doc-information-details" id="social" #socialSection *ngIf="doctor?.social_links?.length">
+          <div class="detail-title"><h4>Social Media</h4></div>
+          <ul class="special-links">
+            <li *ngFor="let link of doctor.social_links">
+              <a [href]="link.url" target="_blank" rel="noopener noreferrer">
+                {{ link.platform | titlecase }}
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="doc-information-details" id="awards" #awardsSection *ngIf="doctor?.awards?.length">
+          <div class="detail-title slider-nav d-flex justify-content-between align-items-center">
+            <h4>Awards</h4>
+            <div class="nav nav-container slide-3"></div>
+          </div>
+          <div class="awards-slider">
+            <owl-carousel-o [options]="awardOption">
+              <ng-template carouselSlide *ngFor="let aw of doctor.awards">
+                <div class="award-card">
+                  <div class="award-card-info">
+                    <span><img src="assets/img/icons/bookmark-star.svg" alt="Img" /></span>
+                    <h5>{{ aw.name || aw.title }} <span *ngIf="aw.year">({{ aw.year }})</span></h5>
+                    <p>{{ aw.description }}</p>
+                  </div>
+                </div>
+              </ng-template>
+            </owl-carousel-o>
+          </div>
+        </div>
+
+        <div class="doc-information-details" id="bussiness_hour" #bussinessHourSection>
+          <div class="detail-title"><h4>Business Hours</h4></div>
+          <div class="hours-business" *ngIf="availabilityByDay.length; else noHours">
+            <ul>
+              <li *ngFor="let day of availabilityByDay">
+                <h6>{{ day.day }}</h6>
+                <p>{{ day.slots.join(', ') }}</p>
+              </li>
+            </ul>
+          </div>
+          <ng-template #noHours><p>No business hours published.</p></ng-template>
+        </div>
+
+        <div class="doc-information-details" id="review" #reviewSection>
+          <div class="detail-title"><h4>Reviews ({{ doctor?.reviews?.length || 0 }})</h4></div>
+          <div *ngIf="doctor?.reviews?.length; else noReviews">
+            <div class="doc-review-card" *ngFor="let rev of doctor.reviews">
+              <div class="user-info-review">
+                <div class="reviewer-img">
+                  <a href="javascript:void(0);" class="avatar-img"><img src="assets/img/clients/client-13.jpg" alt="Img" /></a>
+                  <div class="review-star">
+                    <a href="javascript:void(0);">{{ rev.patient_name || 'Patient' }}</a>
+                    <div class="rating">
+                      <i class="fas fa-star filled" *ngFor="let s of [1,2,3,4,5]; let i = index" [class.filled]="i < (rev.rating || 0)"></i>
+                      <span>{{ rev.rating || 'N/A' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p>{{ rev.comment }}</p>
+              <a href="javascript:void(0);" class="reply d-flex align-items-center"><i class="fa-solid fa-reply me-2"></i>Reply</a>
+            </div>
+          </div>
+          <ng-template #noReviews><p>No reviews yet.</p></ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

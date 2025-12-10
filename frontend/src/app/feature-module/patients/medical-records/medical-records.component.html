@@ -1,0 +1,186 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+<!-- Page Content -->
+<div class="content doctor-content">
+  <div class="container">
+
+    <div class="row">
+
+      <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+
+      <div class="col-lg-8 col-xl-9">
+
+        <div class="dashboard-header">
+          <h3>Records</h3>
+          <div class="appointment-tabs">
+            <ul class="nav">
+              <li>
+                <a href="javascript:void(0);" class="nav-link active" data-bs-toggle="tab" data-bs-target="#medical">Medical Records</a>
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="nav-link" data-bs-toggle="tab" data-bs-target="#prescription">Prescriptions</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="mb-3">Add Medical Record</h6>
+            <form [formGroup]="recordForm" (ngSubmit)="addRecord()">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Title <span class="text-danger">*</span></label>
+                  <input class="form-control" formControlName="title" type="text" placeholder="e.g. Electro cardiography">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Record Type</label>
+                  <input class="form-control" formControlName="record_type" type="text" placeholder="ECG / Lab / Imaging">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Recorded At</label>
+                  <input class="form-control" formControlName="recorded_at" type="date">
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Comments</label>
+                  <textarea class="form-control" rows="2" formControlName="comments"></textarea>
+                </div>
+              </div>
+              <div class="text-end mt-3">
+                <button class="btn btn-primary" type="submit" [disabled]="saving">Save Record</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="tab-content pt-0">
+
+          <!-- Prescription Tab -->
+          <div class="tab-pane fade" id="prescription">
+            <div class="dashboard-header border-0 m-0">
+              <ul class="header-list-btns">
+                <li>
+                  <div class="input-block dash-search-input">
+                    <input type="text" class="form-control" placeholder="Search">
+                    <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="custom-table">
+              <div class="table-responsive">
+                <table class="table table-center mb-0">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Created Date</th>
+                      <th>Prescribed By</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="!medicalRecords?.length">
+                      <td colspan="5" class="text-center">No records found</td>
+                    </tr>
+                    <tr *ngFor="let record of medicalRecords">
+                      <td><a class="link-primary" href="javascript:void(0);">#{{ record?.id }}</a></td>
+                      <td>
+                        <a href="javascript:void(0);" class="lab-icon prescription">{{ record?.record_type || 'Record' }}</a>
+                      </td>
+                      <td>{{ record?.recorded_at | date:'dd MMM y, h:mm a' }}</td>
+                      <td>
+                        <h2 class="table-avatar">
+                          <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: record?.doctor_id}" class="avatar avatar-sm me-2">
+                            <img class="avatar-img rounded-3" src="assets/img/doctors/doctor-thumb-02.jpg" alt="User Image">
+                          </a>
+                          <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: record?.doctor_id}">{{ record?.doctor?.display_name || 'Doctor' }}</a>
+                        </h2>
+                      </td>
+                      <td>
+                        <div class="action-item">
+                          <a href="javascript:void(0);" title="View">
+                            <i class="isax isax-link-2"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- /Prescription Tab -->
+
+
+          <!-- Medical Tab -->
+          <div class="tab-pane fade show active" id="medical">
+            <div class="dashboard-header border-0 m-0">
+              <ul class="header-list-btns">
+                <li>
+                  <div class="input-block dash-search-input">
+                    <input type="text" class="form-control" placeholder="Search">
+                    <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="custom-table">
+              <div class="table-responsive">
+                <table class="table table-center mb-0">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Title</th>
+                      <th>Date</th>
+                      <th>Doctor</th>
+                      <th>Comments</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="!medicalRecords?.length">
+                      <td colspan="6" class="text-center">No records found</td>
+                    </tr>
+                    <tr *ngFor="let record of medicalRecords">
+                      <td><a class="link-primary" href="javascript:void(0);">#{{ record?.id }}</a></td>
+                      <td>
+                        <a href="javascript:void(0);" class="lab-icon">{{ record?.title || record?.record_type }}</a>
+                      </td>
+                      <td>{{ record?.recorded_at | date:'dd MMM y' }}</td>
+                      <td>
+                        <h2 class="table-avatar">
+                          <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: record?.doctor_id}" class="avatar avatar-sm me-2">
+                            <img class="avatar-img rounded-3" src="assets/img/doctors/doctor-thumb-05.jpg" alt="User Image">
+                          </a>
+                          <a [routerLink]="routes.doctorProfile1" [queryParams]="{id: record?.doctor_id}">{{ record?.doctor?.display_name || 'Doctor' }}</a>
+                        </h2>
+                      </td>
+                      <td>{{ record?.comments || record?.record_type }}</td>
+                      <td>
+                        <div class="action-item">
+                          <a target="_blank" href="{{record?.file_url}}" title="View">
+                            <i class="isax isax-link-2"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+          <!-- /Medical Tab -->
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<!-- /Page Content -->

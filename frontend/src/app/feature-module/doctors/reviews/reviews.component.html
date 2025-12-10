@@ -1,0 +1,95 @@
+<app-doctor-breadcrumb></app-doctor-breadcrumb>
+
+<!-- Page Content -->
+<div class="content">
+  <div class="container">
+
+    <div class="row">
+      <app-doctor-sidebar class="col-md-5 col-lg-4 col-xl-3"></app-doctor-sidebar>
+      <div class="col-lg-8 col-xl-9">
+        <div class="doc-review">
+
+          <div class="dashboard-header">
+            <div class="header-back">
+              <h3>Reviews</h3>
+            </div>
+          </div>
+
+          <div *ngIf="loading" class="alert alert-info mt-2">Loading reviews...</div>
+          <div *ngIf="error" class="alert alert-danger mt-2">{{ error }}</div>
+
+          <!-- Review Listing -->
+          <ul class="comments-list" *ngIf="!loading">
+
+            <li class="over-all-review">
+              <div class="review-content">
+                <div class="review-rate">
+                  <h5>Overall Rating</h5>
+                  <div class="star-rated">
+                    <span>{{ overallRating }}</span>
+                    <ng-container *ngFor="let s of [1,2,3,4,5]; let i = index">
+                      <i class="fa-solid fa-star" [class.filled]="i < overallRounded"></i>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li *ngFor="let rev of reviews">
+              <div class="comments">
+                <div class="comment-head">
+                  <div class="patinet-information">
+                    <a href="javascript:void(0);">
+                      <img src="assets/img/doctors-dashboard/profile-01.jpg" alt="User Image">
+                    </a>
+                    <div class="patient-info">
+                      <h6><a href="javascript:void(0);">{{ rev.patient_name || 'Patient' }}</a></h6>
+                      <span>{{ rev.created_at | date:'mediumDate' }}</span>
+                    </div>
+                  </div>
+                  <div class="star-rated">
+                    <ng-container *ngFor="let s of [1,2,3,4,5]; let i = index">
+                      <i class="fa-solid fa-star" [class.filled]="i < (rev.rating || 0)"></i>
+                    </ng-container>
+                  </div>
+                </div>
+                <div class="review-info">
+                  <p>{{ rev.comment }}</p>
+                  <div class="comment-reply">
+                    <a href="javascript:void(0);" class="d-inline-flex align-items-center"><i class="fa-solid fa-reply me-2"></i> Reply</a>
+                  </div>
+                </div>
+              </div>
+
+              <ul *ngIf="rev.reply_text">
+                <li>
+                  <div class="replied-comment">
+                    <div class="patinet-information">
+                      <a href="javascript:void(0);">
+                        <img src="assets/img/doctors-dashboard/doctor-profile-img.jpg" alt="User Image">
+                      </a>
+                      <div class="patient-info">
+                        <h6><a href="javascript:void(0);">{{ rev.doctor_name || 'Doctor' }}</a></h6>
+                        <span>{{ rev.reply_at | date:'mediumDate' }}</span>
+                      </div>
+                    </div>
+                    <div class="review-info">
+                      <p>{{ rev.reply_text }}</p>
+                      <div class="comment-reply">
+                        <a href="javascript:void(0);" class="d-inline-flex align-items-center"><i class="fa-solid fa-reply me-2"></i> Reply</a>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <!-- /Comment List -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- /Page Content -->

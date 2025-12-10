@@ -1,0 +1,335 @@
+<app-breadcrumb-search></app-breadcrumb-search>
+<div class="content mt-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-xl-3">
+        <div class="card filter-lists stickybar">
+          <div class="card-header">
+            <div class="d-flex align-items-center filter-head justify-content-between">
+              <h4>Filter</h4>
+              <a href="javascript:void(0);" class="text-secondary text-decoration-underline" (click)="clearFilters()">Clear All</a>
+            </div>
+            <div class="filter-input">
+              <div class="position-relative input-icon mb-3">
+                <input type="text" class="form-control" placeholder="Search by name" [(ngModel)]="filters.name" (ngModelChange)="onNameChange()">
+                <span><i class="isax isax-search-normal-1"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="accordion-item border-bottom">
+              <div class="accordion-header" id="heading1">
+                <div class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-controls="collapse1" role="button">
+                  <div class="d-flex align-items-center w-100">
+                    <h5>Specialities</h5>
+                    <div class="ms-auto">
+                      <span><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="collapse1" class="accordion-collapse show" aria-labelledby="heading1">
+                <div class="accordion-body pt-3">
+                  <div class="mb-3">
+                    <mat-select class="custom-mat-select select" placeholder="Specialty" multiple [(ngModel)]="filters.specialties" (ngModelChange)="applyFilters()">
+                      <mat-option *ngFor="let spec of filteredSpecialties" [value]="spec.id || spec.name">{{ spec.name }}</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-bottom">
+              <div class="accordion-header" id="heading2">
+                <div class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-controls="collapse2" role="button">
+                  <div class="d-flex align-items-center w-100">
+                    <h5>Gender</h5>
+                    <div class="ms-auto">
+                      <span><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="collapse2" class="accordion-collapse show" aria-labelledby="heading2">
+                <div class="accordion-body pt-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="gender" value="" id="gender-all" [(ngModel)]="filters.gender" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="gender-all">
+                        All
+                      </label>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="gender" value="male" id="gender-male" [(ngModel)]="filters.gender" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="gender-male">
+                        Male
+                      </label>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="gender" value="female" id="gender-female" [(ngModel)]="filters.gender" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="gender-female">
+                        Female
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-bottom">
+              <div class="accordion-header" id="heading3">
+                <div class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-controls="collapse3" role="button">
+                  <div class="d-flex align-items-center w-100">
+                    <h5>Availability</h5>
+                    <div class="ms-auto">
+                      <span><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="collapse3" class="accordion-collapse show" aria-labelledby="heading3">
+                <div class="accordion-body pt-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="availability" value="today" id="avail-today" [(ngModel)]="filters.availability" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="avail-today">
+                        Available Today
+                      </label>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="availability" value="tomorrow" id="avail-tomorrow" [(ngModel)]="filters.availability" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="avail-tomorrow">
+                        Available Tomorrow
+                      </label>
+                    </div>
+                  </div>
+                  <div class="view-content" [ngStyle]="{'display':isMore[0]?'block':'none'}">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="availability" value="next_7" id="avail-7" [(ngModel)]="filters.availability" (ngModelChange)="applyFilters()">
+                        <label class="form-check-label" for="avail-7">
+                          Available in Next 7 Days
+                        </label>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="availability" value="next_30" id="avail-30" [(ngModel)]="filters.availability" (ngModelChange)="applyFilters()">
+                        <label class="form-check-label" for="avail-30">
+                          Available in Next 30 Days
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="view-all">
+                    <a href="javascript:void(0);" class="viewall-button-two text-secondary text-decoration-underline" [ngStyle]="{'display':isMore[0]?'none':'block'}" (click)="viewMore(0)">View More</a>
+                    <a href="javascript:void(0);" class="viewall-button-two text-secondary text-decoration-underline" [ngStyle]="{'display':isMore[0]?'block':'none'}" (click)="viewMore(0)">View Less</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-bottom">
+              <div class="accordion-header" id="heading4">
+                <div class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-controls="collapse4" role="button">
+                  <div class="d-flex align-items-center w-100">
+                    <h5>Pricing</h5>
+                    <div class="ms-auto">
+                      <span><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="collapse4" class="accordion-collapse show" aria-labelledby="heading4">
+                <div class="accordion-body pt-3">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-6">
+                      <label class="form-label">Min</label>
+                      <input type="number" class="form-control" [(ngModel)]="minvalue" (ngModelChange)="filters.min_fee=minvalue; applyFilters()" min="0">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Max</label>
+                      <input type="number" class="form-control" [(ngModel)]="maxvalue" (ngModelChange)="filters.max_fee=maxvalue; applyFilters()" min="0">
+                    </div>
+                  </div>
+                  <p class="mb-0 mt-2">Range : ${{minvalue}} - ${{maxvalue}}</p>
+                </div>
+              </div>
+            </div>
+            <!-- <div class="accordion-item border-bottom">
+              <div class="accordion-header" id="heading5">
+                <div class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-controls="collapse5" role="button">
+                  <div class="d-flex align-items-center w-100">
+                    <h5>Experience</h5>
+                    <div class="ms-auto">
+                      <span><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="collapse5" class="accordion-collapse show" aria-labelledby="heading5">
+                <div class="accordion-body pt-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="experience" value="2" id="exp-2" [(ngModel)]="filters.min_experience" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="exp-2">
+                        2+ Years
+                      </label>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="experience" value="5" id="exp-5" [(ngModel)]="filters.min_experience" (ngModelChange)="applyFilters()">
+                      <label class="form-check-label" for="exp-5">
+                        5+ Years
+                      </label>
+                    </div>
+                  </div>
+                  <div class="view-content" [ngStyle]="{'display':isMore[1]?'block':'none'}">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="experience" value="7" id="exp-7" [(ngModel)]="filters.min_experience" (ngModelChange)="applyFilters()">
+                        <label class="form-check-label" for="exp-7">
+                          7+ Years
+                        </label>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="experience" value="10" id="exp-10" [(ngModel)]="filters.min_experience" (ngModelChange)="applyFilters()">
+                        <label class="form-check-label" for="exp-10">
+                          10+ Years
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="view-all">
+                    <a href="javascript:void(0);" class="viewall-button-two text-secondary text-decoration-underline" [ngStyle]="{'display':isMore[1]?'none':'block'}" (click)="viewMore(1)">View More</a>
+                    <a href="javascript:void(0);" class="viewall-button-two text-secondary text-decoration-underline" [ngStyle]="{'display':isMore[1]?'block':'none'}" (click)="viewMore(1)">View Less</a>
+                  </div>
+                </div>
+              </div>
+            </div> -->
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-9">
+        <div class="row gy-4">
+          <div class="col-12" *ngIf="loading">
+            <div class="d-flex justify-content-center my-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-12" *ngFor="let doctor of doctors">
+                <div class="card doctor-list-card">
+              <div class="d-md-flex align-items-center">
+                <div class="card-img card-img-hover">
+                  <a href="javascript:void(0);" (click)="openProfile(doctor)">
+                    <img [src]="doctor?.profile_image_path || 'assets/img/doctors/doctor-01.jpg'" alt="">
+                  </a>
+                  <div class="grid-overlay-item d-flex align-items-center justify-content-between">
+                    <span class="badge bg-orange"><i class="fa-solid fa-star me-1"></i>{{ doctor.rating_avg || 'N/A' }}</span>
+                    <a href="javascript:void(0)" class="fav-icon" (click)="toggleFavourite(doctor)">
+                      <i class="fa fa-heart" [class.text-danger]="isFav(doctor.id)"></i>
+                    </a>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="d-flex align-items-center justify-content-between border-bottom p-3">
+                    <a href="javascript:void(0);" class="text-info fw-medium fs-14">{{ doctor.designation || 'Doctor' }}</a>
+                    <!-- <span class="badge bg-success-light d-inline-flex align-items-center">
+                      <i class="fa-solid fa-circle fs-5 me-1"></i>
+                      Available
+                    </span> -->
+                    <!-- if Available -->
+                     <span class="badge bg-success-light d-inline-flex align-items-center" *ngIf="isDoctorAvailableNow(doctor)">
+                      <i class="fa-solid fa-circle fs-5 me-1"></i>
+                      Available
+                    </span>
+                    <!-- if Not Available -->
+                    <span class="badge bg-danger-light d-inline-flex align-items-center" *ngIf="!isDoctorAvailableNow(doctor)">
+                      <i class="fa-solid fa-circle fs-5 me-1"></i>
+                      Not Available
+                    </span>
+
+                  </div>
+                  <div class="p-3">
+                    <div class="doctor-info-detail pb-3">
+                      <div class="row align-items-center gy-3">
+                        <div class="col-sm-6">
+                          <div>
+                            <h6 class="d-flex align-items-center mb-1">
+                              <a href="javascript:void(0);" (click)="openProfile(doctor)">{{ getDoctorName(doctor) }}</a>
+                              <i class="isax isax-tick-circle5 text-success ms-2"></i>
+                            </h6>
+                            <p class="mb-2">{{ doctor.designation || '' }}</p>
+                            <p class="d-flex align-items-center mb-0 fs-14">
+                              <i class="isax isax-location me-2"></i>{{ doctor.city || '' }}<span *ngIf="doctor.country">, {{ doctor.country }}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div class="col-sm-6">
+                          <div>
+                            <p class="d-flex align-items-center mb-0 fs-14 mb-2" *ngIf="getDoctorLanguages(doctor)">
+                              <i class="isax isax-language-circle text-dark me-2"></i>{{ getDoctorLanguages(doctor) }}
+                            </p>
+                            <p class="d-flex align-items-center mb-0 fs-14 mb-2">
+                              <i class="isax isax-like-1 text-dark me-2"></i>{{ doctor.rating_avg ? (doctor.rating_avg | number:'1.1-1') + ' / 5' : 'No ratings yet' }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mt-3">
+                      <div class="d-flex align-items-center flex-wrap row-gap-3">
+                        <div class="me-3">
+                          <p class="mb-1">Consultation Fees</p>
+                          <h3 class="text-orange">${{ (doctor.default_fee ?? doctor.services?.[0]?.price ?? 0) }}</h3>
+                        </div>
+                        <p class="mb-0" *ngIf="doctor.clinics?.length">
+                          {{ doctor.clinics?.[0]?.name }}<br>
+                          {{ doctor.clinics?.[0]?.address }}
+                        </p>
+                      </div>
+                      <button type="button" class="btn btn-md btn-primary-gradient d-inline-flex align-items-center rounded-pill" (click)="handleBook(doctor)">
+                        <i class="isax isax-calendar-1 me-2"></i>
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12" *ngIf="!doctors.length && !loading">
+            <div class="alert alert-info mb-4">
+              No doctors found for the selected filters.
+            </div>
+          </div>
+        </div>
+        <div class="row" *ngIf="!loading && total > perPage">
+          <div class="col-12">
+            <nav class="d-flex justify-content-center mt-3">
+              <ul class="pagination">
+                <li class="page-item" [class.disabled]="page === 1">
+                  <a class="page-link" href="javascript:void(0);" (click)="onPageChange(page - 1)">Prev</a>
+                </li>
+                <li class="page-item" [class.active]="page === p" *ngFor="let p of pages">
+                  <a class="page-link" href="javascript:void(0);" (click)="onPageChange(p)">{{ p }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="page >= pages.length">
+                  <a class="page-link" href="javascript:void(0);" (click)="onPageChange(page + 1)">Next</a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

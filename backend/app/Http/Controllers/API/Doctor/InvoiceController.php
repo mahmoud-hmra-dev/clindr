@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Http\Controllers\API\Doctor;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\InvoiceResource;
+use App\Models\Invoice;
+use Illuminate\Http\Request;
+
+class InvoiceController extends Controller
+{
+    public function index(Request $request)
+    {
+        $invoices = Invoice::query()
+            ->where('doctor_id', $request->user()->doctor?->id)
+            ->latest()
+            ->paginate(15);
+
+        return InvoiceResource::collection($invoices);
+    }
+
+    public function show(Invoice $invoice)
+    {
+        return new InvoiceResource($invoice);
+    }
+}

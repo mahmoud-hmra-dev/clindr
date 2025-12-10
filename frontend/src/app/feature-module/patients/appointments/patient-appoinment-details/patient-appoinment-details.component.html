@@ -1,0 +1,163 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+
+<!-- Page Content -->
+<div class="content">
+  <div class="container">
+    <div class="row">
+      <!-- Profile Sidebar -->
+      <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+      <!-- / Profile Sidebar -->
+
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header">
+          <div class="header-back">
+            <a [routerLink]="routes.patientAppointment" class="back-arrow">
+              <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h3>Appointment Details</h3>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="my-4 text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="!loading && error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
+        <!-- No data -->
+        <div *ngIf="!loading && !error && !appointment" class="alert alert-info">
+          No appointment data found.
+        </div>
+
+        <!-- Appointment Details -->
+        <div class="appointment-details-wrap" *ngIf="!loading && !error && appointment">
+          <!-- Appointment Detail Card (الرئيسي) -->
+          <div class="appointment-wrap appointment-detail-card">
+            <ul>
+              <li>
+                <div class="patinet-information">
+                  <a [routerLink]="routes.doctorProfile1" [queryParams]="{ id: appointment?.doctor_id }">
+                    <img
+                      [src]="doctor?.profile_image_path || 'assets/img/doctors-dashboard/doctor-profile-img.jpg'"
+                      alt="Doctor Image"
+                    />
+                  </a>
+                  <div class="patient-info">
+                    <p>#APT{{ appointment?.id }}</p>
+                    <h6>
+                      <a [routerLink]="routes.doctorProfile1" [queryParams]="{ id: appointment?.doctor_id }">
+                        {{ doctor?.display_name || (doctor?.first_name + ' ' + doctor?.last_name) || 'Doctor' }}
+                      </a>
+                    </h6>
+                    <div class="mail-info-patient">
+                      <ul>
+                        <li>
+                          <i class="fa-solid fa-envelope"></i>
+                          {{ doctor?.email || appointment?.patient_email || '—' }}
+                        </li>
+                        <li>
+                          <i class="fa-solid fa-phone"></i>
+                          {{ doctor?.phone || appointment?.patient_phone || '—' }}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="appointment-info">
+                <div class="person-info">
+                  <p>Type of Appointment</p>
+                  <ul class="d-flex apponitment-types">
+                    <li>
+                      <i
+                        class="fa-solid"
+                        [ngClass]="{
+                          'fa-hospital text-green': appointment?.appointment_type === 'in_clinic',
+                          'fa-video text-indigo': appointment?.appointment_type === 'online'
+                        }"
+                      ></i>
+                      {{ appointmentTypeLabel }}
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="appointment-action">
+                <div class="detail-badge-info">
+                  <span [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
+                </div>
+<div class="consult-fees">
+  <h6>
+    Consultation Fees :
+    <!-- أولاً: السعر من الفاتورة -->
+    <ng-container *ngIf="appointment?.invoice?.amount;">
+      {{ appointment?.invoice?.currency || 'USD' }}
+      {{ appointment?.invoice?.amount }}
+    </ng-container>
+
+    <!-- أخيراً: ولا شي متوفر -->
+    <ng-template #noFee>
+      <span>-</span>
+    </ng-template>
+  </h6>
+</div>
+
+                <ul>
+                  <li>
+                    <a href="javascript:void(0);"><i class="fa-solid fa-comments"></i></a>
+                  </li>
+                  <li *ngIf="appointment?.status === 'pending' || appointment?.status === 'confirmed'">
+                    <a href="javascript:void(0);"><i class="fa-solid fa-xmark"></i></a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <ul class="detail-card-bottom-info">
+              <li>
+                <h6>Appointment Date &amp; Time</h6>
+                <span>{{ appointment?.scheduled_at | date: 'EEE, dd MMM y - h:mm a' }}</span>
+              </li>
+              <li>
+                <h6>Clinic Location</h6>
+                <span>
+                  {{
+                    appointment?.clinic_location
+                      || (appointment?.appointment_type === 'online' ? 'Online session' : 'Clinic')
+                  }}
+                </span>
+              </li>
+              <li>
+                <h6>Location</h6>
+                <span>
+                  {{
+                    (doctor?.city || '') +
+                    (doctor?.city && doctor?.country ? ', ' : '') +
+                    (doctor?.country || '')
+                      || '—'
+                  }}
+                </span>
+              </li>
+              <li>
+                <h6>Visit Type</h6>
+                <span>{{ visitTypeLabel }}</span>
+              </li>
+              <li>
+                <div class="start-btn" *ngIf="appointment?.appointment_type === 'online' && appointment?.status === 'confirmed'">
+                  <a href="{{appointment.online_meeting_url}}" class="btn btn-secondary">Start Session</a>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- ممكن لاحقاً نربط Recent Appointments من الـ API لو حاب -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Page Content -->

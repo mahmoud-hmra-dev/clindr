@@ -1,0 +1,195 @@
+<app-doctor-breadcrumb></app-doctor-breadcrumb>
+<!-- Page Content -->
+<div class="content doctor-content">
+  <div class="container">
+
+    <div class="row">
+      <app-doctor-sidebar
+      class="col-md-5 col-lg-4 col-xl-3"
+    ></app-doctor-sidebar>
+      <div class="col-lg-8 col-xl-9">
+
+        <!-- Profile Settings -->
+        <div class="dashboard-header">
+          <h3>Profile Settings</h3>
+        </div>
+
+        <!-- Settings List -->
+        <div class="setting-tab">
+          <div class="appointment-tabs">
+            <ul class="nav">
+              <li class="nav-item">
+                <a class="nav-link active" [routerLink]="routes.doctorProfileSettings">Basic Details</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="routes.doctorExperienceSettings">Experience</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="routes.doctorEducationSettings">Education</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink] = "routes.doctorAwardsSettings">Awards</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="routes.doctorInsuranceSettings">Insurances</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="routes.doctorClinicSettings">Clinics</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" [routerLink]="routes.doctorBusinessSettings">Business Hours</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- /Settings List -->
+
+        <div class="setting-title">
+          <h5>Profile</h5>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="submit()">
+          <div *ngIf="loading" class="alert alert-info">Saving...</div>
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+          <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+        <div class="setting-card">
+          <div class="change-avatar img-upload">
+            <div class="profile-img">
+              <img *ngIf="profileForm.get('profile_image_path')?.value; else placeholder" [src]="profileForm.get('profile_image_path')?.value" alt="Profile" class="img-fluid">
+              <ng-template #placeholder>
+                <i class="fa-solid fa-file-image"></i>
+              </ng-template>
+            </div>
+            <div class="upload-img">
+              <h5>Profile Image</h5>
+              <div class="imgs-load d-flex align-items-center">
+                <div class="change-photo">
+                  Upload New
+                  <input type="file" class="upload" (change)="onImageSelected($event)">
+                </div>
+                <a href="javascript:void(0)" class="upload-remove" (click)="removeImage()">Remove</a>
+              </div>
+              <p class="form-text">Your Image should Below 4 MB, Accepted format Jpg,Png,Svg</p>
+            </div>
+          </div>
+        </div>
+          <div class="setting-title">
+            <h5>Information</h5>
+          </div>
+          <div class="setting-card">
+            <div class="row">
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="firstname">First Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="first_name">
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="lastname">Last Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="last_name">
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="display">Display Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="display_name">
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="designation">Designation <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="designation">
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="phone">Phone Numbers <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="phone">
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="form-wrap">
+                  <label class="col-form-label" for="email">Email Address <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="email">
+                </div>
+              </div>
+              <div class="col-lg-6 col-md-6 d-flex align-items-center">
+                <div class="form-check mt-4">
+                  <input type="checkbox" class="form-check-input" id="accepting" formControlName="accepting_new_patients">
+                  <label class="form-check-label" for="accepting">Accepting New Patients</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="setting-title" #languagesSection>
+            <h5>Known Languages</h5>
+          </div>
+          <div class="setting-card" formArrayName="languages">
+            <div class="add-info membership-infos">
+              <div class="row membership-content">
+                <ng-container *ngFor="let lang of languages.controls; let i = index">
+                  <div class="col-lg-12 d-flex align-items-center mb-2">
+                    <div class="form-wrap flex-grow-1">
+                      <label class="col-form-label">Language {{ i + 1 }} <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" [formControlName]="i">
+                    </div>
+                    <div class="ms-2 mt-4">
+                      <a href="javascript:void(0);" class="trash-icon text-danger" (click)="removeLanguage(i)">Delete</a>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+            <div class="text-end">
+              <a href="javascript:void(0);" (click)="addLanguage()" class="add-membership-info more-item">Add New</a>
+            </div>
+          </div>
+          <div class="setting-title">
+            <h5>Memberships</h5>
+          </div>
+          <div class="setting-card" formArrayName="memberships">
+            <div class="add-info membership-infos">
+              <div class="row membership-content">
+                <ng-container *ngFor="let member of memberships.controls; let i = index">
+                  <div [formGroupName]="i" class="d-flex flex-wrap">
+                    <div class="col-lg-3 col-md-6">
+                      <div class="form-wrap">
+                        <label class="col-form-label" for="title">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Add Title" formControlName="title">
+                      </div>
+                    </div>
+                    <div class="col-lg-9 col-md-6">
+                      <div class="d-flex align-items-center">
+                        <div class="form-wrap w-100">
+                          <label class="col-form-label" for="about">About Membership</label>
+                          <input type="text" class="form-control" formControlName="description">
+                        </div>
+                        <div class="form-wrap ms-2">
+                          <label class="col-form-label d-block" for="education">&nbsp;</label>
+                          <a (click)="removeMembership(i)" href="javascript:void(0);" class="trash-icon trash">Delete</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+            <div class="text-end">
+              <a href="javascript:void(0);" (click)="addMembership()" class="add-membership-info more-item">Add New</a>
+            </div>
+          </div>
+
+          <div class="modal-btn text-end">
+            <a href="javascript:void(0);" class="btn btn-gray">Cancel</a>
+            <button type="submit" class="btn btn-primary prime-btn" [disabled]="loading">Save Changes</button>
+          </div>
+
+        </form>
+        <!-- /Profile Settings -->
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Page Content -->

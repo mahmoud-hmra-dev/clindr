@@ -1,0 +1,10 @@
+.back-to-list-btn {
+  display: none;
+
+  @media (max-width: 991.98px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0E82FD;
+  }
+}

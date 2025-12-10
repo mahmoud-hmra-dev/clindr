@@ -1,0 +1,29 @@
+:host ::ng-deep .mat-pseudo-checkbox-checked,
+:host ::ng-deep .mat-pseudo-checkbox-indeterminate {
+  background: #0e82fd !important;
+  border-color: #0e82fd !important;
+}
+
+:host ::ng-deep .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background,
+:host ::ng-deep .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background {
+  border-color: #0e82fd !important;
+  background-color: #0e82fd !important;
+}
+
+:host ::ng-deep .mdc-checkbox__ripple {
+  display: none;
+}
+
+/* Force mat-select pseudo checkboxes to use the brand blue instead of the default pink */
+:host ::ng-deep .mat-pseudo-checkbox-checked,
+:host ::ng-deep .mat-pseudo-checkbox-checked.mat-primary,
+:host ::ng-deep .mat-pseudo-checkbox-checked.mat-accent,
+:host ::ng-deep .mat-pseudo-checkbox-indeterminate {
+  background: #0e82fd !important;
+  border-color: #0e82fd !important;
+}
+
+:host ::ng-deep .mat-pseudo-checkbox-checked::after,
+:host ::ng-deep .mat-pseudo-checkbox-indeterminate::after {
+  color: #fff !important;
+}

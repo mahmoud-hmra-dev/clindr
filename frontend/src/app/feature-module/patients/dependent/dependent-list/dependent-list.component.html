@@ -1,0 +1,113 @@
+<app-patient-breadcrumb></app-patient-breadcrumb>
+
+<!-- Page Content -->
+<div class="content doctor-content">
+  <div class="container">
+    <div class="row">
+
+      <!-- Profile Sidebar -->
+      <div class="col-lg-4 col-xl-3 theiaStickySidebar">
+        <app-patient-sidebar class="col-lg-4 col-xl-3"></app-patient-sidebar>
+      </div>
+      <!-- / Profile Sidebar -->
+
+      <div class="col-lg-8 col-xl-9">
+        <div class="dashboard-header">
+          <h3>Dependants</h3>
+        </div>
+
+        <div class="dashboard-header border-0 m-0">
+          <ul class="header-list-btns">
+            <li>
+              <div class="input-block dash-search-input">
+                <input type="text" class="form-control" placeholder="Search">
+                <span class="search-icon"><i class="isax isax-search-normal"></i></span>
+              </div>
+            </li>
+          </ul>
+          <a href="javascript:void(0);" class="btn btn-md btn-primary-gradient rounded-pill" (click)="startAdd()">Add  Dependants</a>
+        </div>
+
+        <div class="card mb-3" *ngIf="showForm">
+          <div class="card-body">
+            <h6 class="mb-3">{{ editingId ? 'Edit Dependant' : 'Add Dependant' }}</h6>
+            <form [formGroup]="form" (ngSubmit)="save()">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="name">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Relationship <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="relationship">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Gender</label>
+                  <mat-select class="custom-mat-select select" formControlName="gender" placeholder="Select">
+                    <mat-option value="">Select</mat-option>
+                    <mat-option value="male">Male</mat-option>
+                    <mat-option value="female">Female</mat-option>
+                  </mat-select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Blood Group</label>
+                  <mat-select class="custom-mat-select select" formControlName="blood_group" placeholder="Select">
+                    <mat-option value="">Select</mat-option>
+                    <mat-option value="A+">A+</mat-option>
+                    <mat-option value="A-">A-</mat-option>
+                    <mat-option value="B+">B+</mat-option>
+                    <mat-option value="B-">B-</mat-option>
+                    <mat-option value="AB+">AB+</mat-option>
+                    <mat-option value="AB-">AB-</mat-option>
+                    <mat-option value="O+">O+</mat-option>
+                    <mat-option value="O-">O-</mat-option>
+                  </mat-select>
+                </div>
+                <div class="col-md-4 d-flex align-items-center mt-4 pt-2">
+                  <label class="form-check-label me-2">Active</label>
+                  <input type="checkbox" class="form-check-input" formControlName="is_active">
+                </div>
+              </div>
+              <div class="text-end mt-3">
+                <button type="button" class="btn btn-light me-2" (click)="showForm = false">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="saving">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="dependent-wrap" *ngFor="let dep of dependents">
+          <div class="dependent-info">
+              <div class="patinet-information">
+                <a [routerLink] = "routes.patientProfile">
+                  <img src="assets/img/dependent/dependent-01.jpg" alt="User Image">
+                </a>
+                <div class="patient-info">
+                  <h5>{{ dep?.name }}</h5>
+                  <ul>
+                    <li>{{ dep?.relationship }}</li>
+                    <li>{{ dep?.gender | titlecase }}</li>
+                    <li *ngIf="dep?.age_text">{{ dep.age_text }}</li>
+                  </ul>
+                </div>
+              </div>
+            <div class="blood-info">
+              <p>Blood Group</p>
+              <h6>{{ dep?.blood_group || '--' }}</h6>
+            </div>
+          </div>
+          <div class="dependent-status">
+                <div class="status-toggle">
+                  <input type="checkbox" [id]="'status_'+dep.id" class="check" [checked]="dep?.is_active" (change)="toggleActive(dep)">									
+                  <label [for]="'status_'+dep.id" class="checktoggle">checkbox</label>
+                </div>
+                <a href="javascript:void(0);" class="edit-icon me-2" (click)="startEdit(dep)"><i class="isax isax-edit-2"></i></a>
+                <a href="javascript:void(0);" class="edit-icon" (click)="delete(dep)"><i class="isax isax-trash"></i></a>
+              </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Page Content -->

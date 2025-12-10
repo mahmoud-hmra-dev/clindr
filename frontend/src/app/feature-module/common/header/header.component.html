@@ -1,0 +1,221 @@
+@if (page !== 'consultation' && page !== 'patient-details' && page !== 'payment' && page !== 'signup' && page !==
+'pharmacy-index' && base!=='index') {
+
+<header [hidden]="last==='booking' || last==='booking-popup' || last === 'booking-success-one'
+  || page==='login-email' || page === 'doctor-signup' || page==='signup-success'
+  || page==='patient-signup' || page==='login-email-otp' || page==='login-phone'
+  || page==='email-otp' || page==='login-phone-otp' || page==='mobile-otp' || page==='forgot-password2'"
+  class="header header-custom header-fixed inner-header relative">
+  <div class="container">
+    <nav class="navbar navbar-expand-lg header-nav">
+      <div class="navbar-header">
+        <a (click)="toggleSidebar()" id="mobile_btn" href="javascript:void(0);">
+          <span class="bar-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </a>
+        <a [routerLink]="routes.home1" class="navbar-brand logo">
+          <img src="assets/clindoctor-logo.png" class="img-fluid" alt="Logo" />
+        </a>
+      </div>
+      <div class="header-menu">
+        <div class="main-menu-wrapper">
+          <div class="menu-header">
+            <a [routerLink]="routes.adminLogin" class="menu-logo">
+              <img src="assets/clindoctor-logo.png" class="img-fluid" alt="Logo" />
+            </a>
+            <a id="menu_close" (click)="hideSidebar()" class="menu-close" href="javascript:void(0);">
+              <i class="fas fa-times"></i></a>
+          </div>
+          <ul class="main-nav">
+             <ng-container *ngIf="!isLoggedIn">
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.search1">Find Your Doctor</a>
+                </li>
+                <!-- Contact us -->
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.contactUs">Contact Us</a>
+                </li>
+                <!-- /Contact us -->
+                 <!-- About -->
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.aboutUs">About Us</a>
+                </li>
+                <!-- Privacy Policy -->
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.privacyPolicy">Privacy Policy</a>
+                </li>
+               </ng-container>
+
+               <!-- isLoggedIn doctor -->
+                <ng-container *ngIf="isLoggedIn && userRole === 'doctor'">
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.doctorDashboard">Dashboard</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.appointmentList">Appointments</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.myPatients">Patients</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.availableTimings">Schedule Timings</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.doctorProfileSettings">Earnings</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.reviews">Reviews</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.doctorProfileSettings">Profile Settings</a>
+                </li>
+                </ng-container>
+
+
+                <!-- isLoggedIn patient -->
+                <ng-container *ngIf="isLoggedIn && userRole === 'patient'">
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.patientDashboard">Dashboard</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.search1">Book Appointment</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.favourites">Favourites</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.patientAppointment">Appointments</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.medicalRecords">Medical Records</a>
+                </li>
+                <li routerLinkActive="active">
+                <a [routerLink]="routes.profileSettings">Profile Settings</a>
+                </li>
+                </ng-container>
+                <li class="login-link" *ngIf="!isLoggedIn"><a [routerLink] = "routes.userLogin">Login / Signup</a></li>
+                <li class="login-link" *ngIf="isLoggedIn"><a [routerLink]="routes.profileSettings">{{ userName || 'Account' }}</a></li>
+
+          </ul>
+        </div>
+
+        @if (base === 'patients' ||base === 'doctors' || base === 'pharmacy' || last === 'voice-call' || last ===
+        'video-call' || page==='invoices' || base === 'blog') {
+        <ul [hidden]="last==='booking1' || last === 'booking2' || base==='blog' || base === 'pharmacy'"
+          class="nav header-navbar-rht">
+          <!-- Cart -->
+          @if (last !== 'add-dependent' && last !== 'edit-dependent' && last !== 'pharmacy-register') {
+
+          <li class="header-theme noti-nav">
+            <a href="javascript:void(0);" id="dark-mode-toggle" class="theme-toggle" [ngClass]="{'activate' : isdark}"
+              (click)="darkMode()" (click)="sidebar.changeThemeColor('dark-mode')">
+              <i class="isax isax-sun-1"></i>
+            </a>
+            <a href="javascript:void(0);" id="light-mode-toggle" class="theme-toggle" [ngClass]="{'activate' : islight}"
+              (click)="darkMode()" (click)="sidebar.changeThemeColor('light-mode')">
+              <i class="isax isax-moon"></i>
+            </a>
+          </li>
+
+
+          <!-- Messages -->
+          <li class="nav-item noti-nav me-3 pe-0">
+            <a [routerLink]="routes.chat" *ngIf="userRole == 'patient'" class="dropdown-toggle nav-link active-dot active-dot-success p-0">
+              <i class="isax isax-message-2"></i>
+            </a>
+                        <a [routerLink]="routes.chatDoctor" *ngIf="userRole == 'doctor'" class="dropdown-toggle nav-link active-dot active-dot-success p-0">
+              <i class="isax isax-message-2"></i>
+            </a>
+          </li>
+          <!-- /Messages -->
+
+
+          <!-- User Menu -->
+          <li class="nav-item dropdown has-arrow logged-item" *ngIf="isLoggedIn">
+            <a href="javascript:void(0);" class="nav-link ps-0" data-bs-toggle="dropdown">
+              <span class="user-img">
+                <img [hidden]="base === 'doctors'" class="rounded-circle"
+                  src="assets/img/doctors-dashboard/profile-06.jpg" width="31" alt="Darren Elder">
+                <img *ngIf="base==='doctors'" class="rounded-circle" width="31" alt="client-image"
+                  src="assets/img/doctors-dashboard/doctor-profile-img.jpg">
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <div class="user-header">
+                <div class="avatar avatar-sm">
+                  <img src="assets/img/doctors-dashboard/profile-06.jpg" alt="User Image"
+                    class="avatar-img rounded-circle">
+                </div>
+                <div class="user-text">
+                  <h6>{{ userName || 'User' }}</h6>
+                  <p class="text-muted mb-0">{{ userRole || 'User' }}</p>
+                </div>
+              </div>
+              <a class="dropdown-item" *ngIf="userRole == 'patient'"
+                [routerLink]="routes.patientDashboard">Dashboard</a>
+              <a class="dropdown-item" *ngIf="userRole == 'patient'" [routerLink]="routes.profileSettings">Profile
+                Settings</a>
+              <a class="dropdown-item" *ngIf="userRole == 'doctor'"
+                [routerLink]="routes.doctorDashboard">Dashboard</a>
+              <a class="dropdown-item" *ngIf="userRole == 'doctor'" [routerLink]="routes.doctorProfileSettings">Profile
+                Settings</a>
+              <a class="dropdown-item" href="javascript:void(0);" (click)="logout()">Logout</a>
+            </div>
+          </li>
+          <!-- /User Menu -->
+          }
+        </ul>
+        }
+        @if (last === 'booking1' || last === 'booking2' || base === 'authentication' || base === 'blog' || base ===
+        'pharmacy' || base==='pages'){
+        <ul [hidden]="page==='call' || page==='invoices'" class="nav header-navbar-rht">
+          <li [hidden]="page==='forgot-password'" class="header-theme noti-nav">
+            <a href="javascript:void(0);" id="dark-mode-toggle" class="theme-toggle" [ngClass]="{'activate' : isdark}"
+              (click)="darkMode()" (click)="sidebar.changeThemeColor('dark-mode')">
+              <i class="isax isax-sun-1"></i>
+            </a>
+            <a href="javascript:void(0);" id="light-mode-toggle" class="theme-toggle" [ngClass]="{'activate' : islight}"
+              (click)="darkMode()" (click)="sidebar.changeThemeColor('light-mode')">
+              <i class="isax isax-moon"></i>
+            </a>
+          </li>
+          <li *ngIf="!isLoggedIn">
+            <a [routerLink]="routes.userLogin"
+              class="btn btn-md btn-primary-gradient d-inline-flex align-items-center rounded-pill"><i
+                class="isax isax-lock-1 me-1"></i>Login</a>
+          </li>
+          <li *ngIf="!isLoggedIn">
+            <a [routerLink]="routes.register" class="btn btn-md btn-dark d-inline-flex align-items-center rounded-pill">
+              <i class="isax isax-user-tick me-1"></i>Register
+            </a>
+          </li>
+          <li class="nav-item dropdown has-arrow logged-item" *ngIf="isLoggedIn">
+            <a href="javascript:void(0);" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
+              <span class="user-img">
+                <img src="assets/img/doctors-dashboard/profile-02.jpg" class="img-fluid rounded-circle" alt="User">
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <div class="user-header">
+                <div class="avatar avatar-sm">
+                  <img src="assets/img/doctors-dashboard/profile-02.jpg" alt="User" class="avatar-img rounded-circle">
+                </div>
+                <div class="user-text">
+                  <h6>{{ userName || 'User' }}</h6>
+                  <p class="text-muted mb-0">{{ userRole || '' }}</p>
+                </div>
+              </div>
+              <a class="dropdown-item" [routerLink]="routes.profileSettings">Profile Settings</a>
+              <a class="dropdown-item" href="javascript:void(0);" (click)="logout()">Logout</a>
+            </div>
+          </li>
+        </ul>
+        }
+      </div>
+    </nav>
+  </div>
+</header>
+}
