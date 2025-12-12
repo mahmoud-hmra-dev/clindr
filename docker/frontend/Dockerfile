@@ -1,8 +1,18 @@
-FROM node:22-alpine
+FROM node:22-alpine AS build
 
 WORKDIR /usr/src/app
 
-# لو تحتاج build فقط للإنتاج لاحقاً نقدر نعدّل
-EXPOSE 4200
+COPY package*.json ./
+RUN npm ci --force
 
-CMD ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "4200"]
+COPY . .
+RUN npm run build -- --configuration production
+
+FROM nginx:1.27-alpine
+
+COPY --from=build /usr/src/app/dist/template/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

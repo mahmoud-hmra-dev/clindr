@@ -15,6 +15,11 @@ services:
       - "3307:3306"
     volumes:
       - db_backend:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   # MySQL الخاص بالـ PAYMENT
   mysql_payment:
@@ -30,6 +35,11 @@ services:
       - "3308:3306"
     volumes:
       - db_payment:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -50,17 +60,17 @@ services:
       context: ./backend
       dockerfile: ../docker/backend/Dockerfile
     container_name: clindoctor-backend
-    working_dir: /var/www/html
-    volumes:
-      - ./backend:/var/www/html
+    restart: unless-stopped
     ports:
       - "8000:8000"
     depends_on:
-      - mysql_backend
-    command: sh -c "composer install && php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=8000"
+      mysql_backend:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
+      APP_ENV: production
+      APP_DEBUG: "false"
       APP_URL: http://localhost:8000
       DB_CONNECTION: mysql
       DB_HOST: mysql_backend
@@ -68,23 +78,25 @@ services:
       DB_DATABASE: clindoctor
       DB_USERNAME: clindoctor
       DB_PASSWORD: clindoctorpass
+    volumes:
+      - backend_storage:/var/www/html/storage
 
   payment:
     build:
       context: ./payment
       dockerfile: ../docker/payment/Dockerfile
     container_name: clindoctor-payment
-    working_dir: /var/www/html
-    volumes:
-      - ./payment:/var/www/html
+    restart: unless-stopped
     ports:
       - "8001:8000"
     depends_on:
-      - mysql_payment
-    command: sh -c "composer install && php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=8000"
+      mysql_payment:
+        condition: service_healthy
+    env_file:
+      - ./payment/.env
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
+      APP_ENV: production
+      APP_DEBUG: "false"
       APP_URL: http://localhost:8001
       DB_CONNECTION: mysql
       DB_HOST: mysql_payment
@@ -92,19 +104,31 @@ services:
       DB_DATABASE: clindoctor_payment
       DB_USERNAME: clindoctor
       DB_PASSWORD: clindoctorpass
+    volumes:
+      - payment_storage:/var/www/html/storage
 
   frontend:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend/Dockerfile
     container_name: clindoctor-frontend
-    working_dir: /usr/src/app
-    volumes:
-      - ./frontend:/usr/src/app
     ports:
-      - "4200:4200"
-    command: sh -c "npm install --force && npm run start -- --host 0.0.0.0 --port 4200"
+      - "4200:80"
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - payment
+
+  mirotalk:
+    image: mirotalk/p2p:latest
+    container_name: mirotalk
+    hostname: mirotalk
+    restart: unless-stopped
+    ports:
+      - "8082:3000"
 
 volumes:
   db_backend:
   db_payment:
+  backend_storage:
+  payment_storage:
