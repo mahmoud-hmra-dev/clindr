@@ -69,11 +69,20 @@ public function index(Request $request)
             'reason' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'clinic_id' => ['nullable', 'exists:clinics,id'],
+            'online_meeting_url' => ['nullable', 'url'],
+
+
         ]);
 
         $doctor = Doctor::findOrFail($validated['doctor_id']);
         $clinic = null;
-        if (! empty($validated['clinic_id'])) {
+          if ($validated['appointment_type'] === 'in_clinic') {
+            if (empty($validated['clinic_id'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Clinic is required for in-clinic appointments.',
+                ], 422);
+            }
             $clinic = Clinic::where('doctor_id', $doctor->id)->findOrFail($validated['clinic_id']);
         }
 
@@ -89,10 +98,23 @@ public function index(Request $request)
 
         $slotExists = DoctorAvailability::query()
             ->where('doctor_id', $doctor->id)
-            ->when($clinic, fn ($q) => $q->where('clinic_id', $clinic->id))
+
             ->whereRaw('LOWER(day_of_week) = ?', [$day])
             ->whereTime('start_time', '<=', $time)
-            ->whereTime('end_time', '>=', $time)
+            ->whereTime('end_time', '>', $time)
+            ->when(
+                $validated['appointment_type'] === 'online',
+                fn ($q) => $q->whereNull('clinic_id'),
+                function ($q) use ($clinic) {
+                    $q->where(function ($inner) use ($clinic) {
+                        if ($clinic) {
+                            $inner->where('clinic_id', $clinic->id);
+                        }
+
+                        $inner->orWhereNull('clinic_id');
+                    });
+                }
+            )
             ->exists();
 
         if (! $slotExists) {
@@ -117,6 +139,7 @@ public function index(Request $request)
                 'created_by' => $request->user()->id,
                 'patient_email' => $patient->email,
                 'patient_phone' => $patient->phone,
+                'online_meeting_url' => $validated['online_meeting_url'] ?? null,
             ]);
 
             return $appointment;

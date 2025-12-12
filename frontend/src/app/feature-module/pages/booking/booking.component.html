@@ -303,8 +303,7 @@
                       <div class="col-lg-5">
                         <div class="card">
                           <div class="card-body p-2 pt-3">
-                            <bs-datepicker-inline [bsValue]="bsInlineValue"></bs-datepicker-inline>
-                          </div>
+                    <bs-datepicker-inline [bsValue]="bsInlineValue" (bsValueChange)="onDateChange($event)"></bs-datepicker-inline>                          </div>
                         </div>
                       </div>
                       <div class="col-lg-7">
@@ -314,15 +313,16 @@
                               <h6 class="fs-14 mb-2">Slots</h6>
                             </div>
                             <div class="token-slot mt-2 mb-2">
-                              {{filteredAvailabilities |json}}
-                              <div class="form-check-inline visits me-0" *ngFor="let av of filteredAvailabilities">
+
+                              <div class="form-check-inline visits me-0" *ngFor="let slot of timeSlots">
                                 <label class="visit-btns">
                                   <input type="radio" class="form-check-input" name="appointmentSlot"
-                                    (change)="selectSlot(av.start_time)"
-                                    [checked]="selectedDateTime === av.start_time">
-                                  <span class="visit-rsn">{{ av.start_time | date:'shortTime' }}</span>
+                                    (change)="selectSlot(slot.value)"
+                                      [checked]="selectedDateTime === slot.value">
+                                  <span class="visit-rsn">{{ slot.label }}</span>
                                 </label>
                               </div>
+                              <p class="text-muted" *ngIf="!timeSlots.length">No slots available for this day.</p>
                             </div>
                           </div>
                         </div>

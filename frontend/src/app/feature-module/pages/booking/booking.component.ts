@@ -27,6 +27,7 @@ export class BookingComponent {
   selectedDateTime: string | null = null;
   selectedClinicId: number | null = null;
   slotDurationMinutes = 30;
+  selectedDate = new Date();
 
   patientName = '';
   patientEmail = '';
@@ -43,45 +44,22 @@ export class BookingComponent {
 
   currentUser: AuthUser | null = null;
 
+timeSlots: { value: string; label: string }[] = [];
+private getTimePartFromIso(iso: string): string | null {
+  if (!iso) return null;
 
-  get timeSlots(): { value: string; label: string }[] {
-  const slots: { value: string; label: string }[] = [];
+  // مثال: 2025-12-11T16:59:00.000000Z
+  const parts = iso.split('T');
+  if (parts.length < 2) return null;
 
-  const avs = this.filteredAvailabilities || [];
-  if (!avs.length) {
-    return slots;
-  }
+  let timePart = parts[1];              // "16:59:00.000000Z"
+  timePart = timePart.replace('Z', ''); // "16:59:00.000000"
+  timePart = timePart.substring(0, 8);  // "16:59:00"
 
-  for (const av of avs) {
-    if (!av.start_time || !av.end_time) continue;
-
-    const start = new Date(av.start_time);
-    const end   = new Date(av.end_time);
-
-    // safety: لو end قبل start، طنّشه
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
-      continue;
-    }
-
-    const current = new Date(start);
-
-    while (current < end) {
-      const value = current.toISOString(); // هذا اللي نرسله لـ scheduled_at
-
-      const label = current.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-
-      slots.push({ value, label });
-
-      // زِد 30 دقيقة (أو القيمة اللي حاطها في slotDurationMinutes)
-      current.setMinutes(current.getMinutes() + this.slotDurationMinutes);
-    }
-  }
-
-  return slots;
+  return timePart;
 }
+
+
 
 
   get selectedService(): any {
@@ -96,11 +74,19 @@ export class BookingComponent {
 
   get filteredAvailabilities(): any[] {
     const avs = this.doctor?.availabilities || [];
+    const selectedDay = this.selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    return avs.filter((a: any) => {
+      const matchesDay = (a.day_of_week || '').toLowerCase() === selectedDay;
+      if (!matchesDay) return false;
 
-    if (!this.isClinic || !this.selectedClinicId) {
-      return avs;
-    }
-    return avs.filter((a: any) => a.clinic_id === this.selectedClinicId);
+      if (this.selectedAppointmentType === 'online') {
+        return !a.clinic_id;
+      }
+
+      // in clinic: يسمح بالفتحات المخصصة للعيادة أو العامة (clinic_id null)
+      if (!this.selectedClinicId) return true;
+      return !a.clinic_id || a.clinic_id === this.selectedClinicId;
+    });
   }
 
   constructor(
@@ -126,6 +112,12 @@ export class BookingComponent {
     if (doctorId) {
       this.loadDoctor(doctorId);
     }
+  }
+    onDateChange(date: Date): void {
+    this.bsInlineValue = date;
+    this.selectedDate = date;
+    this.selectedDateTime = null;
+      this.recalculateTimeSlots();
   }
 
   private updateAmount(): void {
@@ -155,6 +147,7 @@ export class BookingComponent {
         // حساب المبلغ بعد تحميل الداتا
         this.updateAmount();
         this.loading = false;
+        this.recalculateTimeSlots();
       },
       error: () => {
         this.loading = false;
@@ -168,6 +161,8 @@ export class BookingComponent {
       this.isClinic = true;
       this.selectedAppointmentType = 'in_clinic';
       this.selectedClinicId = this.selectedClinicId ?? this.doctor.clinics[0].id;
+      this.selectedDateTime = null;
+      this.recalculateTimeSlots();
     }
   }
 
@@ -175,6 +170,8 @@ export class BookingComponent {
     this.isClinic = false;
     this.selectedAppointmentType = 'online';
     this.selectedClinicId = null;
+    this.selectedDateTime = null;
+    this.recalculateTimeSlots();
   }
 
   selectService(id: number, price: number): void {
@@ -186,99 +183,208 @@ export class BookingComponent {
   selectSlot(slot: string): void {
     this.selectedDateTime = slot;
   }
+private combineDateAndTime(date: Date, time: string): Date {
+  const [hours, minutes, seconds] = time.split(':').map((v) => parseInt(v, 10) || 0);
+
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hours,
+    minutes,
+    seconds || 0,
+    0
+  );
+}
+
+private recalculateTimeSlots(): void {
+  const slots: { value: string; label: string }[] = [];
+
+  for (const av of this.filteredAvailabilities) {
+    if (!av.start_time || !av.end_time) continue;
+
+    const startTimeStr = this.getTimePartFromIso(av.start_time);
+    const endTimeStr   = this.getTimePartFromIso(av.end_time);
+
+    if (!startTimeStr || !endTimeStr) continue;
+
+    const start = this.combineDateAndTime(this.selectedDate, startTimeStr);
+    const end   = this.combineDateAndTime(this.selectedDate, endTimeStr);
+
+    // Debug مرة واحدة بس لو حابب
+    // console.log('Availability:', av, 'startTimeStr:', startTimeStr, 'Start:', start, 'End:', end);
+
+    if (end <= start) continue;
+
+    const current = new Date(start);
+
+    // حماية زيادة لو صار slotDurationMinutes = 0 بالغلط
+    if (!this.slotDurationMinutes || this.slotDurationMinutes <= 0) break;
+
+    while (current < end) {
+      if (current > new Date()) {
+        slots.push({
+          value: this.formatLocalDateTime(current),
+          label: current.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        });
+
+
+      }
+      current.setMinutes(current.getMinutes() + this.slotDurationMinutes);
+    }
+  }
+
+  this.timeSlots = slots;
+}
+
+
+
+private formatLocalDateTime(date: Date): string {
+  const y  = date.getFullYear();
+  const m  = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d  = date.getDate().toString().padStart(2, '0');
+  const hh = date.getHours().toString().padStart(2, '0');
+  const mm = date.getMinutes().toString().padStart(2, '0');
+  const ss = date.getSeconds().toString().padStart(2, '0');
+
+  // Laravel و Carbon يحبّوا هذا الشكل
+  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+}
+
+
 
   selectClinic(id: number): void {
     this.selectedClinicId = id;
+    this.selectedDateTime = null;
+    this.recalculateTimeSlots();
   }
 
-  confirmAndPay(): void {
- const SKIP_AUTH = new HttpContextToken(() => false);
+confirmAndPay(): void {
+  if (!this.selectedDateTime) {
+    this.bookingError = 'Please select a time slot before booking.';
+    return;
+  }
 
-        let onlineMeetingUrl = '';
+  if (this.selectedAppointmentType === 'in_clinic' && !this.selectedClinicId) {
+    this.bookingError = 'Please choose a clinic for in-clinic appointments.';
+    return;
+  }
 
-        this.HttpClient.post<any>(
-          'https://clindr-call.hdf.usj.edu.lb/api/v1/meeting',
-          {},
-          {
-            headers: new HttpHeaders({
-              Authorization: 'mirotalkp2p_default_secret',
-              'Content-Type': 'application/json'
-            }),
-            context: new HttpContext().set(SKIP_AUTH, true) // لمنع التغيير على الـ header
-          }
-        )
-        .subscribe({
-          next: (meetingResponse) => {
-            onlineMeetingUrl = meetingResponse.meeting;
-            alert('Online meeting created: ' + onlineMeetingUrl);
-          },
-          error: () => {
-            this.bookingError = 'Failed to create online meeting.';
-          }
-        });
+  this.bookingError = '';
 
+  // لو الموعد أونلاين: نعمل ميتينغ وبعدين نحجز
+  alert(this.selectedAppointmentType);
+  if (this.selectedAppointmentType === 'online') {
+    this.createOnlineMeetingAndBook();
+  } else {
+    // لو عيادة: ما في داعي لمكالمة فيديو
+    this.createOnlineMeetingAndBook();
+  }
+}
+private createOnlineMeetingAndBook(): void {
+  const SKIP_AUTH = new HttpContextToken(() => false);
 
-    this.bookingError = '';
+  console.log('Creating online meeting...');
 
-    const selectedService = this.selectedService;
-
-    const payload: any = {
-      doctor_id: this.doctor.id,
-      appointment_type: this.selectedAppointmentType,
-      visit_type: selectedService?.name || 'general',
-      scheduled_at: this.selectedDateTime,
-      duration_minutes: 30,
-      reason: '',
-      online_meeting_url: onlineMeetingUrl
-    };
-
-    if (this.selectedAppointmentType === 'in_clinic' && this.selectedClinicId) {
-      payload.clinic_id = this.selectedClinicId;
+  this.HttpClient.post<any>(
+    'https://clindr-call.hdf.usj.edu.lb/api/v1/meeting',
+    {},
+    {
+      headers: new HttpHeaders({
+        Authorization: 'mirotalkp2p_default_secret',
+        'Content-Type': 'application/json'
+      }),
+      context: new HttpContext().set(SKIP_AUTH, true)
     }
+  ).subscribe({
+    next: (meetingResponse) => {
+      console.log('Meeting response:', meetingResponse);
 
-    this.appointmentService.createAppointment(payload).subscribe({
-      next: (res) => {
-        const appointment = res?.data ?? res;
+      const onlineMeetingUrl = meetingResponse?.meeting;
 
-        const fullName = this.currentUser?.name || this.patientName || 'User Booking';
-        const nameParts = fullName.split(' ');
-        const firstName = nameParts.shift() || 'User';
-        const lastName = nameParts.join(' ') || 'Booking';
-
-        const paymentPayload: any = {
-          project_id: environment.hopePaymentProjectId,
-          project_name: environment.hopePaymentProjectName,
-          prodact_id: selectedService?.id || environment.hopePaymentProjectName,
-          user_id: this.currentUser?.id || 'guest',
-          firstName,
-          lastName,
-          email: this.currentUser?.email || this.patientEmail || 'user@example.com',
-          price: this.amount.toString(), // المبلغ الحقيقي
-          currency: environment.hopePaymentCurrency,
-          errorCallback: `${window.location.origin}/patients/booking/booking-error`,
-          successCallback: `${window.location.origin}/patients/booking/booking-Success`,
-          cancelCallback: `${window.location.origin}/patients/booking/booking-cancel`,
-          appointment_id: appointment?.id,
-        };
-
-        this.paymentService.createHopePayment(paymentPayload).subscribe({
-          next: (url) => {
-            const redirectUrl = (url || '').trim();
-            if (redirectUrl) {
-              window.location.href = redirectUrl;
-            } else {
-              this.bookingMessage = 'Appointment created. Proceed to payment.';
-              this.selectedFieldSet[0] = 5;
-            }
-          },
-          error: () => {
-            this.bookingError = 'Payment initiation failed';
-          }
-        });
-      },
-      error: () => {
-        this.bookingError = 'Failed to create appointment';
+      if (!onlineMeetingUrl) {
+        this.bookingError = 'Meeting created but URL is missing.';
+        return;
       }
-    });
+
+      // لو تحب تتأكد
+      alert('Online meeting created: ' + onlineMeetingUrl);
+
+      // بعد ما يجهز الـ URL نحجز الموعد
+      this.bookAppointment(onlineMeetingUrl);
+    },
+    error: (err) => {
+      console.error('Meeting create error:', err);
+      this.bookingError = 'Failed to create online meeting.';
+    }
+  });
+}
+
+
+private bookAppointment(onlineMeetingUrl: string): void {
+  const selectedService = this.selectedService;
+
+  const payload: any = {
+    doctor_id: this.doctor.id,
+    appointment_type: this.selectedAppointmentType,
+    visit_type: selectedService?.name || 'general',
+    scheduled_at: this.selectedDateTime,
+    duration_minutes: 30,
+    reason: '',
+    online_meeting_url: onlineMeetingUrl
+  };
+
+  if (this.selectedAppointmentType === 'in_clinic' && this.selectedClinicId) {
+    payload.clinic_id = this.selectedClinicId;
   }
+
+  this.appointmentService.createAppointment(payload).subscribe({
+    next: (res) => {
+      const appointment = res?.data ?? res;
+
+      const fullName = this.currentUser?.name || this.patientName || 'User Booking';
+      const nameParts = fullName.split(' ');
+      const firstName = nameParts.shift() || 'User';
+      const lastName = nameParts.join(' ') || 'Booking';
+
+      const paymentPayload: any = {
+        project_id: environment.hopePaymentProjectId,
+        project_name: environment.hopePaymentProjectName,
+        prodact_id: selectedService?.id || environment.hopePaymentProjectName,
+        user_id: this.currentUser?.id || 'guest',
+        firstName,
+        lastName,
+        email: this.currentUser?.email || this.patientEmail || 'user@example.com',
+        price: this.amount.toString(),
+        currency: environment.hopePaymentCurrency,
+        errorCallback: `${window.location.origin}/patients/booking/booking-error`,
+        successCallback: `${window.location.origin}/patients/booking/booking-Success`,
+        cancelCallback: `${window.location.origin}/patients/booking/booking-cancel`,
+        appointment_id: appointment?.id,
+      };
+
+      this.paymentService.createHopePayment(paymentPayload).subscribe({
+        next: (url) => {
+          const redirectUrl = (url || '').trim();
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+          } else {
+            this.bookingMessage = 'Appointment created. Proceed to payment.';
+            this.selectedFieldSet[0] = 5;
+          }
+        },
+        error: () => {
+          this.bookingError = 'Payment initiation failed';
+        }
+      });
+    },
+    error: () => {
+      this.bookingError = 'Failed to create appointment';
+    }
+  });
+}
+
 }
