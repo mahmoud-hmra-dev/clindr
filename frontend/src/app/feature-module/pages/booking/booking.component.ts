@@ -310,8 +310,6 @@ private createOnlineMeetingAndBook(): void {
         return;
       }
 
-
-
               onlineMeetingUrl = onlineMeetingUrl.replace(
               'https://127.0.0.1:8082',
               'https://clindr-call.hdf.usj.edu.lb'
