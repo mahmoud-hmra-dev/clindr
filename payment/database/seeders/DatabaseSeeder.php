@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
     {
         // create project
         Project::create([
-            'uuid' => str::uuid(),
-            'name' => 'Konzola',
+            'uuid' => '4d2ff084-1afd-4c6a-b2e7-6e8de34bd6c8',
+            'name' => 'clindoctor_test',
             'status'=>1
 
         ]);
