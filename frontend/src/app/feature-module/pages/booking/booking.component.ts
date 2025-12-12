@@ -368,7 +368,11 @@ private bookAppointment(onlineMeetingUrl: string): void {
 
       this.paymentService.createHopePayment(paymentPayload).subscribe({
         next: (url) => {
-          const redirectUrl = (url || '').trim();
+          let redirectUrl = (url || '').trim();
+              redirectUrl = redirectUrl.replace(
+              'http://localhost:8001',
+              'https://clindr-payment.hdf.usj.edu.lb'
+            );
           if (redirectUrl) {
             window.location.href = redirectUrl;
           } else {
