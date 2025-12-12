@@ -1,4 +1,4 @@
-import { HttpClient, HttpContext, HttpContextToken, HttpHeaders } from '@angular/common/http';
+﻿import { HttpClient, HttpContext, HttpContextToken, HttpHeaders } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { routes } from 'src/app/shared/routes/routes';
@@ -362,9 +362,9 @@ private bookAppointment(onlineMeetingUrl: string): void {
         email: this.currentUser?.email || this.patientEmail || 'user@example.com',
         price: this.amount.toString(),
         currency: environment.hopePaymentCurrency,
-        errorCallback: `${window.location.origin}/patients/booking/booking-error`,
-        successCallback: `${window.location.origin}/patients/booking/booking-Success`,
-        cancelCallback: `${window.location.origin}/patients/booking/booking-cancel`,
+        errorCallback: `https://clindrv2.hdf.usj.edu.lb/patients/booking/booking-error`,
+        successCallback: `https://clindrv2.hdf.usj.edu.lb/patients/booking/booking-Success`,
+        cancelCallback: `https://clindrv2.hdf.usj.edu.lb/patients/booking/booking-cancel`,
         appointment_id: appointment?.id,
       };
 
