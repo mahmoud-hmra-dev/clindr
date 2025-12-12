@@ -303,15 +303,19 @@ private createOnlineMeetingAndBook(): void {
     next: (meetingResponse) => {
       console.log('Meeting response:', meetingResponse);
 
-      const onlineMeetingUrl = meetingResponse?.meeting;
+      let onlineMeetingUrl = meetingResponse?.meeting;
 
       if (!onlineMeetingUrl) {
         this.bookingError = 'Meeting created but URL is missing.';
         return;
       }
 
-      // لو تحب تتأكد
-      alert('Online meeting created: ' + onlineMeetingUrl);
+
+
+              onlineMeetingUrl = onlineMeetingUrl.replace(
+              'https://127.0.0.1:8082',
+              'https://clindr-call.hdf.usj.edu.lb'
+            );
 
       // بعد ما يجهز الـ URL نحجز الموعد
       this.bookAppointment(onlineMeetingUrl);
