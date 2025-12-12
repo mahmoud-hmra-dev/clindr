@@ -20,6 +20,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 COPY . .
 
+RUN cp .env.example .env || true
+
+ENV APP_URL=https://clindr-payment.hdf.usj.edu.lb
+
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \

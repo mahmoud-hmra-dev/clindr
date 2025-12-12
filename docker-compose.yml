@@ -67,7 +67,6 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: https://clindr-payment.hdf.usj.edu.lb
       DB_CONNECTION: mysql
       DB_HOST: mysql_backend
       DB_PORT: 3306
@@ -93,7 +92,6 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: https://clindr-payment.hdf.usj.edu.lb
       DB_CONNECTION: mysql
       DB_HOST: mysql_payment
       DB_PORT: 3306
@@ -119,6 +117,8 @@ services:
     image: mirotalk/p2p:latest
     container_name: mirotalk
     hostname: mirotalk
+    volumes:
+      - ./.env:/src/.env:ro
     restart: unless-stopped
     ports:
       - "8082:3000"
