@@ -5,12 +5,12 @@ import { AvailableTimingsRoutingModule } from './available-timings-routing.modul
 import { AvailableTimingsComponent } from './available-timings.component';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { FullCalendarModule } from '@fullcalendar/angular';
+import { FullCalendarModule, registerPlugins } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
-FullCalendarModule.registerPlugins([
+registerPlugins([
   dayGridPlugin,
   interactionPlugin,
   timeGridPlugin,
