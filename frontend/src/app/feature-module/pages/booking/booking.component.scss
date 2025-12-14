@@ -1,11 +1,11 @@
-// Adds a small indicator on days that already have bookings (applied via dateCustomClasses)
-.bs-datepicker .bs-datepicker-body table td.booking-dot span {
+// Adds a small indicator on days that have available slots (class injected via dateCustomClasses)
+.bs-datepicker .bs-datepicker-body table td.booking-available span {
   position: relative;
   font-weight: 600;
   color: #0d6efd;
 }
 
-.bs-datepicker .bs-datepicker-body table td.booking-dot span::after {
+.bs-datepicker .bs-datepicker-body table td.booking-available span::after {
   content: '';
   position: absolute;
   bottom: 4px;
