@@ -37,7 +37,7 @@ export class BookingComponent {
 
   bookingError = '';
   bookingMessage = '';
-  bookedDateKeys = new Set<string>();
+  availableDateKeys = new Set<string>();
 
   // مبالغ الدفع
   amount = 0;              // المجموع النهائي
@@ -151,7 +151,7 @@ private getTimePartFromIso(iso: string): string | null {
         this.updateAmount();
         this.loading = false;
         this.recalculateTimeSlots();
-        this.loadBookedDates();
+        this.rebuildAvailableDateClasses();
       },
       error: () => {
         this.loading = false;
@@ -167,6 +167,7 @@ private getTimePartFromIso(iso: string): string | null {
       this.selectedClinicId = this.selectedClinicId ?? this.doctor.clinics[0].id;
       this.selectedDateTime = null;
       this.recalculateTimeSlots();
+      this.rebuildAvailableDateClasses();
     }
   }
 
@@ -176,6 +177,7 @@ private getTimePartFromIso(iso: string): string | null {
     this.selectedClinicId = null;
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
+    this.rebuildAvailableDateClasses();
   }
 
   selectService(id: number, price: number): void {
@@ -264,6 +266,7 @@ private formatLocalDateTime(date: Date): string {
     this.selectedClinicId = id;
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
+    this.rebuildAvailableDateClasses();
   }
 
 confirmAndPay(): void {
@@ -391,15 +394,6 @@ private bookAppointment(onlineMeetingUrl: string): void {
           this.bookingError = 'Payment initiation failed';
         }
       });
-      const bookedKey =
-        this.formatDateKeyFromString(appointment?.scheduled_at || this.selectedDateTime) ||
-        this.formatDateKey(this.selectedDate);
-      if (bookedKey) {
-        const updated = new Set(this.bookedDateKeys);
-        updated.add(bookedKey);
-        this.bookedDateKeys = updated;
-        this.refreshBookedDateClasses();
-      }
     },
     error: () => {
       this.bookingError = 'Failed to create appointment';
@@ -407,40 +401,52 @@ private bookAppointment(onlineMeetingUrl: string): void {
   });
 }
 
-private loadBookedDates(): void {
-    this.appointmentService.listPatientAppointments().subscribe({
-    next: (res) => {
-      const appointmentsRaw = res?.data ?? res ?? [];
-      const appointments = Array.isArray(appointmentsRaw) ? appointmentsRaw : [];
-      const doctorId = this.doctor?.id;
-      const keys = new Set<string>();
+private rebuildAvailableDateClasses(): void {
+  const keys = new Set<string>();
+  const today = new Date();
+  const horizonDays = 60;
 
-      for (const appt of appointments) {
-        if (doctorId && appt?.doctor_id && appt.doctor_id !== doctorId) continue;
-        const status = (appt?.status || '').toLowerCase();
-        if (status === 'cancelled') continue;
-        const key = this.formatDateKeyFromString(appt?.scheduled_at || appt?.scheduledAt);
-        if (key) keys.add(key);
-      }
+  for (let i = 0; i <= horizonDays; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
 
-      this.bookedDateKeys = keys;
-      this.refreshBookedDateClasses();
-    },
-    error: () => {
-      // ignore highlighting when appointments fail to load
+    if (this.hasAvailabilityOnDate(date)) {
+      keys.add(this.formatDateKey(date));
     }
+  }
+
+  this.availableDateKeys = keys;
+  this.refreshDatepickerClasses();
+}
+
+private hasAvailabilityOnDate(date: Date): boolean {
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  const availabilities = this.doctor?.availabilities || [];
+
+  return availabilities.some((av: any) => {
+    if ((av?.day_of_week || '').toLowerCase() !== dayName) return false;
+
+    if (this.selectedAppointmentType === 'online') {
+      return !av?.clinic_id;
+    }
+
+    if (this.selectedClinicId) {
+      return !av?.clinic_id || av?.clinic_id === this.selectedClinicId;
+    }
+
+    return true;
   });
 }
 
-private refreshBookedDateClasses(): void {
+private refreshDatepickerClasses(): void {
   const dateCustomClasses: DatepickerDateCustomClasses[] = [];
 
-  for (const key of this.bookedDateKeys) {
+  for (const key of this.availableDateKeys) {
     const parsed = this.parseDateKey(key);
     if (parsed) {
       dateCustomClasses.push({
         date: parsed,
-        classes: ['booking-dot']
+        classes: ['booking-available']
       });
     }
   }
@@ -453,18 +459,6 @@ private formatDateKey(date: Date): string {
   const m  = (date.getMonth() + 1).toString().padStart(2, '0');
   const d  = date.getDate().toString().padStart(2, '0');
   return `${y}-${m}-${d}`;
-}
-
-private formatDateKeyFromString(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (match?.[1]) {
-    return match[1];
-  }
-
-  const normalized = value.replace(' ', 'T');
-  const parsed = new Date(normalized);
-  return isNaN(parsed.getTime()) ? null : this.formatDateKey(parsed);
 }
 
 private parseDateKey(key: string): Date | null {
