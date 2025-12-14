@@ -59,8 +59,8 @@ export class AvailableTimingsComponent implements OnInit {
     });
 
     this.slotForm = this.fb.group({
-      start_time: ['', Validators.required],
-      end_time: ['', Validators.required],
+      start_time: ['', [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
+      end_time: ['', [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
       slot_capacity: [1, [Validators.required, Validators.min(1)]],
       fee_amount: [null, [Validators.min(0)]],
       clinic_id: [null],
@@ -79,8 +79,8 @@ export class AvailableTimingsComponent implements OnInit {
   private buildSlot(slot?: any): FormGroup {
     return this.fb.group({
       day_of_week: [slot?.day_of_week || 'monday', Validators.required],
-      start_time: [this.toTimeInput(slot?.start_time), Validators.required],
-      end_time: [this.toTimeInput(slot?.end_time), Validators.required],
+      start_time: [this.toTimeInput(slot?.start_time), [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
+      end_time: [this.toTimeInput(slot?.end_time), [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
       slot_capacity: [slot?.slot_capacity || 1, [Validators.required, Validators.min(1)]],
       fee_amount: [slot?.fee_amount ?? null, [Validators.min(0)]],
       clinic_id: [slot?.clinic_id || null],
@@ -129,6 +129,14 @@ export class AvailableTimingsComponent implements OnInit {
   addSlotFromModal(): void {
     if (this.slotForm.invalid || !this.selectedDateForAdd) {
       this.slotForm.markAllAsTouched();
+      return;
+    }
+    if (!this.isValidTime(this.slotForm.value.start_time) || !this.isValidTime(this.slotForm.value.end_time)) {
+      this.error = 'Use HH:mm format for times.';
+      return;
+    }
+    if (this.slotForm.value.start_time >= this.slotForm.value.end_time) {
+      this.error = 'End time must be after start time.';
       return;
     }
     this.selectedDate = this.selectedDateForAdd;
@@ -207,6 +215,14 @@ export class AvailableTimingsComponent implements OnInit {
       this.slotForm.markAllAsTouched();
       return;
     }
+    const invalid = this.availabilities.value.find((slot: any) => {
+      if (!this.isValidTime(slot.start_time) || !this.isValidTime(slot.end_time)) return true;
+      return slot.start_time >= slot.end_time;
+    });
+    if (invalid) {
+      this.error = 'Please ensure all times are in HH:mm format and end time is after start time.';
+      return;
+    }
     this.saving = true;
     this.message = '';
     this.error = '';
@@ -259,6 +275,7 @@ export class AvailableTimingsComponent implements OnInit {
     const slots: any[] = [];
     const uniqueKeys = new Set<string>();
     dates.forEach((d) => {
+      if (!this.isValidTime(start_time) || !this.isValidTime(end_time) || start_time >= end_time) return;
       const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
       const key = `${day}-${start_time}-${end_time}-${clinic_id ?? 'any'}`;
       if (uniqueKeys.has(key)) return;
@@ -340,5 +357,10 @@ export class AvailableTimingsComponent implements OnInit {
     const [h, m] = (time || '').split(':').map((v) => parseInt(v, 10) || 0);
     d.setHours(h || 0, m || 0, 0, 0);
     return d.toISOString();
+  }
+
+  private isValidTime(value: string | null | undefined): boolean {
+    if (!value) return false;
+    return /^\\d{2}:\\d{2}$/.test(value);
   }
 }
