@@ -7,6 +7,7 @@ import { AppointmentService } from 'src/app/core/services/appointment.service';
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { AuthService, AuthUser } from 'src/app/core/services/auth.service';
 import { environment } from 'src/environments/environment';
+import { BsDatepickerConfig, DatepickerDateCustomClasses } from 'ngx-bootstrap/datepicker';
 
 @Component({
   selector: 'app-booking',
@@ -19,6 +20,7 @@ export class BookingComponent {
   public selectedFieldSet = [0];
   loading = false;
   bsInlineValue = new Date();
+  bsInlineConfig: Partial<BsDatepickerConfig> = {};
   isClinic = true;
 
   doctor: any = null;
@@ -35,6 +37,7 @@ export class BookingComponent {
 
   bookingError = '';
   bookingMessage = '';
+  bookedDateKeys = new Set<string>();
 
   // مبالغ الدفع
   amount = 0;              // المجموع النهائي
@@ -148,6 +151,7 @@ private getTimePartFromIso(iso: string): string | null {
         this.updateAmount();
         this.loading = false;
         this.recalculateTimeSlots();
+        this.loadBookedDates();
       },
       error: () => {
         this.loading = false;
@@ -387,11 +391,88 @@ private bookAppointment(onlineMeetingUrl: string): void {
           this.bookingError = 'Payment initiation failed';
         }
       });
+      const bookedKey =
+        this.formatDateKeyFromString(appointment?.scheduled_at || this.selectedDateTime) ||
+        this.formatDateKey(this.selectedDate);
+      if (bookedKey) {
+        const updated = new Set(this.bookedDateKeys);
+        updated.add(bookedKey);
+        this.bookedDateKeys = updated;
+        this.refreshBookedDateClasses();
+      }
     },
     error: () => {
       this.bookingError = 'Failed to create appointment';
     }
   });
+}
+
+private loadBookedDates(): void {
+    this.appointmentService.listPatientAppointments().subscribe({
+    next: (res) => {
+      const appointmentsRaw = res?.data ?? res ?? [];
+      const appointments = Array.isArray(appointmentsRaw) ? appointmentsRaw : [];
+      const doctorId = this.doctor?.id;
+      const keys = new Set<string>();
+
+      for (const appt of appointments) {
+        if (doctorId && appt?.doctor_id && appt.doctor_id !== doctorId) continue;
+        const status = (appt?.status || '').toLowerCase();
+        if (status === 'cancelled') continue;
+        const key = this.formatDateKeyFromString(appt?.scheduled_at || appt?.scheduledAt);
+        if (key) keys.add(key);
+      }
+
+      this.bookedDateKeys = keys;
+      this.refreshBookedDateClasses();
+    },
+    error: () => {
+      // ignore highlighting when appointments fail to load
+    }
+  });
+}
+
+private refreshBookedDateClasses(): void {
+  const dateCustomClasses: DatepickerDateCustomClasses[] = [];
+
+  for (const key of this.bookedDateKeys) {
+    const parsed = this.parseDateKey(key);
+    if (parsed) {
+      dateCustomClasses.push({
+        date: parsed,
+        classes: ['booking-dot']
+      });
+    }
+  }
+
+  this.bsInlineConfig = { ...this.bsInlineConfig, dateCustomClasses };
+}
+
+private formatDateKey(date: Date): string {
+  const y  = date.getFullYear();
+  const m  = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d  = date.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+private formatDateKeyFromString(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match?.[1]) {
+    return match[1];
+  }
+
+  const normalized = value.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : this.formatDateKey(parsed);
+}
+
+private parseDateKey(key: string): Date | null {
+  const parts = key.split('-').map((v) => parseInt(v, 10));
+  if (parts.length !== 3) return null;
+  const [y, m, d] = parts;
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
 }
 
 }
