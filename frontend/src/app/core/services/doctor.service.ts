@@ -83,6 +83,14 @@ export class DoctorService {
     return this.http.put(`${environment.apiBaseUrl}/doctor/profile`, payload);
   }
 
+  listMyAvailabilities(): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/doctor/availabilities`);
+  }
+
+  syncMyAvailabilities(availabilities: any[]): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/doctor/availabilities/sync`, { availabilities });
+  }
+
   getSpecialties(): Observable<any> {
     return this.http.get(`${environment.apiBaseUrl}/specialties`);
   }
