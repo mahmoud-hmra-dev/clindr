@@ -25,6 +25,8 @@ export class AvailableTimingsComponent implements OnInit {
   saving = false;
   message = '';
   error = '';
+  modalOpen = false;
+  selectedDateForAdd: Date | null = null;
 
   selectionMode: 'single-day' | 'full-week' | 'full-month' = 'single-day';
   horizonDays = 90;
@@ -108,9 +110,36 @@ export class AvailableTimingsComponent implements OnInit {
     this.refreshCalendarEvents();
   }
 
+  openModal(date: Date): void {
+    this.selectedDateForAdd = date;
+    this.slotForm.reset({
+      start_time: '',
+      end_time: '',
+      slot_capacity: 1,
+      fee_amount: null,
+      clinic_id: null
+    });
+    this.modalOpen = true;
+  }
+
+  closeModal(): void {
+    this.modalOpen = false;
+  }
+
+  addSlotFromModal(): void {
+    if (this.slotForm.invalid || !this.selectedDateForAdd) {
+      this.slotForm.markAllAsTouched();
+      return;
+    }
+    this.selectedDate = this.selectedDateForAdd;
+    this.addSlot();
+    this.closeModal();
+  }
+
   onCalendarSelect(selectInfo: DateSelectArg): void {
     if (selectInfo.start) {
       this.selectedDate = selectInfo.start;
+      this.openModal(selectInfo.start);
     }
   }
 
@@ -183,8 +212,8 @@ export class AvailableTimingsComponent implements OnInit {
     this.error = '';
     const payload = this.availabilities.value.map((slot: any) => ({
       ...slot,
-      start_time: slot.start_time ? `${slot.start_time}:00` : null,
-      end_time: slot.end_time ? `${slot.end_time}:00` : null,
+      start_time: slot.start_time || null,
+      end_time: slot.end_time || null,
     }));
     this.doctorService.syncMyAvailabilities(payload).subscribe({
       next: () => {
