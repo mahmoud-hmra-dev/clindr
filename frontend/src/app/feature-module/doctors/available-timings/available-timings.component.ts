@@ -131,12 +131,10 @@ export class AvailableTimingsComponent implements OnInit {
       this.slotForm.markAllAsTouched();
       return;
     }
-    if (!this.isValidTime(this.slotForm.value.start_time) || !this.isValidTime(this.slotForm.value.end_time)) {
-      this.error = 'Use HH:mm format for times.';
-      return;
-    }
-    if (this.slotForm.value.start_time >= this.slotForm.value.end_time) {
-      this.error = 'End time must be after start time.';
+    const dayOfWeek = this.selectedDateForAdd.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const slotCandidate = { ...this.slotForm.value, day_of_week: dayOfWeek };
+    if (!this.isValidSlot(slotCandidate)) {
+      this.error = 'Use HH:mm format and ensure end time is after start time.';
       return;
     }
     this.selectedDate = this.selectedDateForAdd;
@@ -172,10 +170,6 @@ export class AvailableTimingsComponent implements OnInit {
     });
   }
 
-  private addDefaultSlot(): void {
-    this.availabilities.push(this.buildSlot());
-  }
-
   private loadAvailabilities(): void {
     this.loading = true;
     this.doctorService.listMyAvailabilities().subscribe({
@@ -184,7 +178,6 @@ export class AvailableTimingsComponent implements OnInit {
         const items = Array.isArray(list) ? list : [];
         this.availabilities.clear();
         items.forEach((slot: any) => this.availabilities.push(this.buildSlot(slot)));
-        if (this.availabilities.length === 0) this.addDefaultSlot();
         this.loading = false;
         this.refreshCalendarEvents();
       },
@@ -210,23 +203,15 @@ export class AvailableTimingsComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.slotForm.markAllAsTouched();
-      return;
-    }
-    const invalid = this.availabilities.value.find((slot: any) => {
-      if (!this.isValidTime(slot.start_time) || !this.isValidTime(slot.end_time)) return true;
-      return slot.start_time >= slot.end_time;
-    });
-    if (invalid) {
-      this.error = 'Please ensure all times are in HH:mm format and end time is after start time.';
+    const validSlots = (this.availabilities.value as any[]).filter((slot) => this.isValidSlot(slot));
+    if (!validSlots.length) {
+      this.error = 'Add at least one valid availability (HH:mm times, end after start).';
       return;
     }
     this.saving = true;
     this.message = '';
     this.error = '';
-    const payload = this.availabilities.value.map((slot: any) => ({
+    const payload = validSlots.map((slot: any) => ({
       ...slot,
       start_time: slot.start_time || null,
       end_time: slot.end_time || null,
@@ -362,5 +347,11 @@ export class AvailableTimingsComponent implements OnInit {
   private isValidTime(value: string | null | undefined): boolean {
     if (!value) return false;
     return /^\\d{2}:\\d{2}$/.test(value);
+  }
+
+  private isValidSlot(slot: any): boolean {
+    if (!slot?.day_of_week) return false;
+    if (!this.isValidTime(slot.start_time) || !this.isValidTime(slot.end_time)) return false;
+    return slot.start_time < slot.end_time;
   }
 }
