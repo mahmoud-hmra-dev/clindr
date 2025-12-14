@@ -137,6 +137,7 @@ export class AvailableTimingsComponent implements OnInit {
       this.error = 'Use HH:mm format and ensure end time is after start time.';
       return;
     }
+    this.selectionMode = 'single-day';
     this.selectedDate = this.selectedDateForAdd;
     this.addSlot();
     this.closeModal();
@@ -211,11 +212,17 @@ export class AvailableTimingsComponent implements OnInit {
     this.saving = true;
     this.message = '';
     this.error = '';
-    const payload = validSlots.map((slot: any) => ({
-      ...slot,
-      start_time: slot.start_time || null,
-      end_time: slot.end_time || null,
-    }));
+    const payload = validSlots.map((slot: any) => {
+      const start = this.normalizeTime(slot.start_time);
+      const end = this.normalizeTime(slot.end_time);
+      const day = (slot.day_of_week || '').toLowerCase();
+      return {
+        ...slot,
+        day_of_week: day || 'monday',
+        start_time: start,
+        end_time: end,
+      };
+    });
     this.doctorService.syncMyAvailabilities(payload).subscribe({
       next: () => {
         this.message = 'Availabilities updated';
@@ -353,5 +360,12 @@ export class AvailableTimingsComponent implements OnInit {
     if (!slot?.day_of_week) return false;
     if (!this.isValidTime(slot.start_time) || !this.isValidTime(slot.end_time)) return false;
     return slot.start_time < slot.end_time;
+  }
+
+  private normalizeTime(value: string | null | undefined): string | null {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!/^\\d{2}:\\d{2}/.test(trimmed)) return null;
+    return trimmed.substring(0, 5);
   }
 }
