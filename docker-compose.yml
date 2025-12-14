@@ -76,6 +76,17 @@ services:
     volumes:
       - backend_storage:/var/www/html/storage
 
+  websocket:
+    build:
+      context: ./backend
+      dockerfile: ../docker/websocket/Dockerfile
+    container_name: clindoctor-websocket
+    restart: unless-stopped
+    ports:
+      - "6001:6001"
+    environment:
+      WS_PORT: 6001
+
   payment:
     build:
       context: ./payment
