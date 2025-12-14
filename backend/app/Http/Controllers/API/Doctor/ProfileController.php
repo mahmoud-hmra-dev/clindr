@@ -108,7 +108,6 @@ class ProfileController extends Controller
             'availabilities' => ['nullable', 'array'],
             'availabilities.*.day_of_week' => ['required_with:availabilities', 'string', 'max:50'],
             'availabilities.*.start_time' => ['nullable', 'date_format:H:i:s'],
-            'availabilities.*.end_time' => ['nullable', 'date_format:H:i:s'],
             'availabilities.*.fee_amount' => ['nullable', 'numeric', 'min:0'],
             'availabilities.*.slot_capacity' => ['nullable', 'integer', 'min:1'],
             'availabilities.*.clinic_id' => ['nullable', 'exists:clinics,id'],

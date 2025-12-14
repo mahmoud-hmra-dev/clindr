@@ -207,10 +207,13 @@ private recalculateTimeSlots(): void {
   const slots: { value: string; label: string }[] = [];
 
   for (const av of this.filteredAvailabilities) {
-    if (!av.start_time || !av.end_time) continue;
+    if (!av.start_time) continue;
 
     const startTimeStr = this.getTimePartFromIso(av.start_time);
-    const endTimeStr   = this.getTimePartFromIso(av.end_time);
+    let endTimeStr   = this.getTimePartFromIso(av.end_time);
+    if (!endTimeStr && startTimeStr) {
+      endTimeStr = this.addDefaultEndTime(startTimeStr);
+    }
 
     if (!startTimeStr || !endTimeStr) continue;
 
@@ -258,6 +261,17 @@ private formatLocalDateTime(date: Date): string {
 
   // Laravel و Carbon يحبّوا هذا الشكل
   return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+}
+
+private addDefaultEndTime(start: string): string {
+  const [hours, minutes] = start.split(':').map((v) => parseInt(v, 10) || 0);
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  d.setHours(d.getHours() + 1);
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  const ss = d.getSeconds().toString().padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
 }
 
 

@@ -60,7 +60,6 @@ export class AvailableTimingsComponent implements OnInit {
 
     this.slotForm = this.fb.group({
       start_time: ['', [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
-      end_time: ['', [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
       slot_capacity: [1, [Validators.required, Validators.min(1)]],
       fee_amount: [null, [Validators.min(0)]],
       clinic_id: [null],
@@ -80,7 +79,6 @@ export class AvailableTimingsComponent implements OnInit {
     return this.fb.group({
       day_of_week: [slot?.day_of_week || 'monday', Validators.required],
       start_time: [this.toTimeInput(slot?.start_time), [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
-      end_time: [this.toTimeInput(slot?.end_time), [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
       slot_capacity: [slot?.slot_capacity || 1, [Validators.required, Validators.min(1)]],
       fee_amount: [slot?.fee_amount ?? null, [Validators.min(0)]],
       clinic_id: [slot?.clinic_id || null],
@@ -114,7 +112,6 @@ export class AvailableTimingsComponent implements OnInit {
     this.selectedDateForAdd = date;
     this.slotForm.reset({
       start_time: '',
-      end_time: '',
       slot_capacity: 1,
       fee_amount: null,
       clinic_id: null
@@ -134,7 +131,7 @@ export class AvailableTimingsComponent implements OnInit {
     const dayOfWeek = this.selectedDateForAdd.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const slotCandidate = { ...this.slotForm.value, day_of_week: dayOfWeek };
     if (!this.isValidSlot(slotCandidate)) {
-      this.error = 'Use HH:mm format and ensure end time is after start time.';
+      this.error = 'Use HH:mm format. End time is optional and defaults to +1 hour.';
       return;
     }
     this.selectionMode = 'single-day';
@@ -206,7 +203,7 @@ export class AvailableTimingsComponent implements OnInit {
   save(): void {
     const validSlots = (this.availabilities.value as any[]).filter((slot) => this.isValidSlot(slot));
     if (!validSlots.length) {
-      this.error = 'Add at least one valid availability (HH:mm times, end after start).';
+      this.error = 'Add at least one valid availability (HH:mm, end time optional).';
       return;
     }
     this.saving = true;
@@ -214,13 +211,11 @@ export class AvailableTimingsComponent implements OnInit {
     this.error = '';
     const payload = validSlots.map((slot: any) => {
       const start = this.normalizeTime(slot.start_time);
-      const end = this.normalizeTime(slot.end_time);
       const day = (slot.day_of_week || '').toLowerCase();
       return {
         ...slot,
         day_of_week: day || 'monday',
         start_time: start,
-        end_time: end,
       };
     });
     this.doctorService.syncMyAvailabilities(payload).subscribe({
@@ -242,41 +237,25 @@ export class AvailableTimingsComponent implements OnInit {
       return [];
     }
 
-    const { start_time, end_time, slot_capacity, fee_amount, clinic_id } = this.slotForm.value;
+    const { start_time, slot_capacity, fee_amount, clinic_id } = this.slotForm.value;
     const baseDate = this.selectedDate;
-    const dates: Date[] = [];
-
-    if (this.selectionMode === 'single-day') {
-      dates.push(new Date(baseDate));
-    } else if (this.selectionMode === 'full-week') {
-      const first = this.startOfWeek(baseDate);
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(first);
-        d.setDate(first.getDate() + i);
-        dates.push(d);
-      }
-    } else if (this.selectionMode === 'full-month') {
-      const year = baseDate.getFullYear();
-      const month = baseDate.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let i = 1; i <= daysInMonth; i++) {
-        dates.push(new Date(year, month, i));
-      }
-    }
-
+    const dates = this.getDatesForSelection(baseDate, this.selectionMode);
     const slots: any[] = [];
     const uniqueKeys = new Set<string>();
+
     dates.forEach((d) => {
-      if (!this.isValidTime(start_time) || !this.isValidTime(end_time) || start_time >= end_time) return;
+      if (!this.isValidTime(start_time)) return;
+      const start = this.normalizeTime(start_time);
+      const end = this.addDefaultEndTime(start);
+      if (!start || !end) return;
       const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-      const key = `${day}-${start_time}-${end_time}-${clinic_id ?? 'any'}`;
+      const key = `${day}-${start}-${end}-${clinic_id ?? 'any'}`;
       if (uniqueKeys.has(key)) return;
       uniqueKeys.add(key);
 
       slots.push({
         day_of_week: day,
-        start_time,
-        end_time,
+        start_time: start,
         slot_capacity,
         fee_amount,
         clinic_id
@@ -293,6 +272,28 @@ export class AvailableTimingsComponent implements OnInit {
     return new Date(d.setDate(diff));
   }
 
+  private getDatesForSelection(baseDate: Date, mode: 'single-day' | 'full-week' | 'full-month'): Date[] {
+    const dates: Date[] = [];
+    if (mode === 'single-day') {
+      dates.push(new Date(baseDate));
+    } else if (mode === 'full-week') {
+      const first = this.startOfWeek(baseDate);
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(first);
+        d.setDate(first.getDate() + i);
+        dates.push(d);
+      }
+    } else if (mode === 'full-month') {
+      const year = baseDate.getFullYear();
+      const month = baseDate.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let i = 1; i <= daysInMonth; i++) {
+        dates.push(new Date(year, month, i));
+      }
+    }
+    return dates;
+  }
+
   private refreshCalendarEvents(): void {
     const events: any[] = [];
     const today = new Date();
@@ -304,19 +305,22 @@ export class AvailableTimingsComponent implements OnInit {
       const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
       slots.forEach((slot) => {
-        if (!slot?.start_time || !slot?.end_time) return;
+        if (!slot?.start_time) return;
         if ((slot?.day_of_week || '').toLowerCase() !== dayName) return;
-        const start = this.combineDateTime(date, slot.start_time);
-        const end = this.combineDateTime(date, slot.end_time);
+        const startTime = this.normalizeTime(slot.start_time);
+        const endTime = this.addDefaultEndTime(startTime);
+        if (!startTime || !endTime) return;
+        const start = this.combineDateTime(date, startTime);
+        const end = this.combineDateTime(date, endTime);
         events.push({
           title: 'Available',
           start,
           end,
-          display: 'background',
-          classNames: ['fc-available'],
-          extendedProps: { type: 'available', clinicId: slot.clinic_id }
-        });
+        display: 'background',
+        classNames: ['fc-available'],
+        extendedProps: { type: 'available', clinicId: slot.clinic_id }
       });
+    });
     }
 
     this.appointments.forEach((appt: any) => {
@@ -358,8 +362,8 @@ export class AvailableTimingsComponent implements OnInit {
 
   private isValidSlot(slot: any): boolean {
     if (!slot?.day_of_week) return false;
-    if (!this.isValidTime(slot.start_time) || !this.isValidTime(slot.end_time)) return false;
-    return slot.start_time < slot.end_time;
+    if (!this.isValidTime(slot.start_time)) return false;
+    return true;
   }
 
   private normalizeTime(value: string | null | undefined): string | null {
@@ -367,5 +371,16 @@ export class AvailableTimingsComponent implements OnInit {
     const trimmed = value.trim();
     if (!/^\\d{2}:\\d{2}/.test(trimmed)) return null;
     return trimmed.substring(0, 5);
+  }
+
+  private addDefaultEndTime(start: string | null): string | null {
+    if (!start) return null;
+    const [h, m] = start.split(':').map((v) => parseInt(v, 10) || 0);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    d.setHours(d.getHours() + 1);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    return `${hh}:${mm}`;
   }
 }

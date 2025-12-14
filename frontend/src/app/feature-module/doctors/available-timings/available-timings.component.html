@@ -52,7 +52,7 @@
                           <div>
                             <div class="pill-title">{{ slot.value.day_of_week | titlecase }}</div>
                             <div class="pill-meta">
-                              {{ slot.value.start_time }} - {{ slot.value.end_time }}
+                              {{ slot.value.start_time }}
                               <ng-container *ngIf="slot.value.clinic_id"> · Clinic #{{ slot.value.clinic_id }}</ng-container>
                             </div>
                           </div>
@@ -87,14 +87,10 @@
                     <input type="time" class="form-control" formControlName="start_time">
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="form-label">End Time</label>
-                    <input type="time" class="form-control" formControlName="end_time">
-                  </div>
-                  <div class="col-12 col-sm-6">
                     <label class="form-label">Slot Capacity</label>
                     <input type="number" class="form-control" min="1" formControlName="slot_capacity">
                   </div>
-                  <div class="col-12 col-sm-6">
+                  <div class="col-12">
                     <label class="form-label">Fee Amount</label>
                     <input type="number" class="form-control" min="0" step="0.01" formControlName="fee_amount">
                   </div>

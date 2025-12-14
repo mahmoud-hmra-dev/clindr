@@ -84,7 +84,6 @@ return new class extends Migration
             $table->foreignId('clinic_id')->nullable()->constrained('clinics')->nullOnDelete();
             $table->string('day_of_week', 20);
             $table->time('start_time');
-            $table->time('end_time');
             $table->unsignedInteger('slot_capacity')->default(1);
             $table->decimal('fee_amount', 10, 2)->nullable();
             $table->timestamps();

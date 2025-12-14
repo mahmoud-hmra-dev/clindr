@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\DoctorAvailabilityResource;
 use App\Models\DoctorAvailability;
 use App\Models\Clinic;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -31,19 +32,22 @@ class AvailabilityController extends Controller
             'availabilities.*.clinic_id' => ['nullable', 'exists:clinics,id'],
             'availabilities.*.day_of_week' => ['required', 'string', 'max:20'],
             'availabilities.*.start_time' => ['required', 'date_format:H:i'],
-            'availabilities.*.end_time' => ['required', 'date_format:H:i'],
             'availabilities.*.slot_capacity' => ['nullable', 'integer', 'min:1', 'max:50'],
             'availabilities.*.fee_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $normalized = [];
         foreach ($validated['availabilities'] as $slot) {
-            if (! empty($slot['start_time']) && ! empty($slot['end_time']) && $slot['start_time'] >= $slot['end_time']) {
-                return response()->json(['success' => false, 'message' => 'end_time must be after start_time'], 422);
-            }
+            $start = Carbon::createFromFormat('H:i', $slot['start_time']);
+            $normalized[] = array_merge($slot, [
+                'start_time' => $start->format('H:i'),
+                'day_of_week' => strtolower($slot['day_of_week']),
+                'slot_capacity' => $slot['slot_capacity'] ?? 1,
+            ]);
         }
 
         // Ensure clinics belong to doctor
-        $clinicIds = collect($validated['availabilities'])
+        $clinicIds = collect($normalized)
             ->pluck('clinic_id')
             ->filter()
             ->unique()
@@ -56,15 +60,14 @@ class AvailabilityController extends Controller
         }
 
         // Replace all current availabilities for doctor
-        \DB::transaction(function () use ($doctor, $validated) {
+        \DB::transaction(function () use ($doctor, $normalized) {
             DoctorAvailability::where('doctor_id', $doctor->id)->delete();
-            $payload = collect($validated['availabilities'])->map(function ($slot) use ($doctor) {
+            $payload = collect($normalized)->map(function ($slot) use ($doctor) {
                 return [
                     'doctor_id' => $doctor->id,
                     'clinic_id' => $slot['clinic_id'] ?? null,
-                    'day_of_week' => strtolower($slot['day_of_week']),
+                    'day_of_week' => $slot['day_of_week'],
                     'start_time' => $slot['start_time'],
-                    'end_time' => $slot['end_time'],
                     'slot_capacity' => $slot['slot_capacity'] ?? 1,
                     'fee_amount' => $slot['fee_amount'] ?? null,
                     'created_at' => now(),
@@ -89,7 +92,6 @@ class AvailabilityController extends Controller
             'clinic_id' => ['nullable', 'exists:clinics,id'],
             'day_of_week' => ['required', 'string', 'max:20'],
             'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'slot_capacity' => ['nullable', 'integer', 'min:1', 'max:50'],
             'fee_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -98,12 +100,12 @@ class AvailabilityController extends Controller
             Clinic::where('doctor_id', $doctor->id)->findOrFail($validated['clinic_id']);
         }
 
+        $start = Carbon::createFromFormat('H:i', $validated['start_time']);
         $availability = DoctorAvailability::create([
             'doctor_id' => $doctor->id,
             'clinic_id' => $validated['clinic_id'] ?? null,
             'day_of_week' => strtolower($validated['day_of_week']),
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
+            'start_time' => $start->format('H:i'),
             'slot_capacity' => $validated['slot_capacity'] ?? 1,
             'fee_amount' => $validated['fee_amount'] ?? null,
         ]);
@@ -120,7 +122,6 @@ class AvailabilityController extends Controller
             'clinic_id' => ['nullable', 'exists:clinics,id'],
             'day_of_week' => ['nullable', 'string', 'max:20'],
             'start_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i'],
             'slot_capacity' => ['nullable', 'integer', 'min:1', 'max:50'],
             'fee_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -129,15 +130,10 @@ class AvailabilityController extends Controller
             Clinic::where('doctor_id', $doctor->id)->findOrFail($validated['clinic_id']);
         }
 
-        if (! empty($validated['start_time']) && ! empty($validated['end_time']) && $validated['start_time'] >= $validated['end_time']) {
-            return response()->json(['success' => false, 'message' => 'end_time must be after start_time'], 422);
-        }
-
         $doctorAvailability->update(array_filter([
             'clinic_id' => $validated['clinic_id'] ?? null,
             'day_of_week' => isset($validated['day_of_week']) ? strtolower($validated['day_of_week']) : null,
             'start_time' => $validated['start_time'] ?? null,
-            'end_time' => $validated['end_time'] ?? null,
             'slot_capacity' => $validated['slot_capacity'] ?? null,
             'fee_amount' => $validated['fee_amount'] ?? null,
         ], fn ($v) => $v !== null));

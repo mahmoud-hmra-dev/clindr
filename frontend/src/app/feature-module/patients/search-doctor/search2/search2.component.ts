@@ -71,31 +71,24 @@ public isDoctorAvailableNow(doctor: any): boolean {
   if (!availabilities.length) return false;
 
   const now = new Date();
-
-  // الجمعة → friday
   const currentDay = now.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-
-  // الوقت الحالي بالدقائق
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   for (const a of availabilities) {
-    if (!a.day_of_week) continue;
+    if (!a?.day_of_week || !a?.start_time) continue;
+    if (a.day_of_week.toLowerCase() !== currentDay) continue;
 
-    // قارن اليوم
-    if (a.day_of_week.toLowerCase() === currentDay) {
+    const [sh, sm] = a.start_time.split(':').map(Number);
+    const startMinutes = sh * 60 + sm;
 
-      // parse وقت البداية
-      const [sh, sm] = a.start_time.split(':').map(Number);
-      const startMinutes = sh * 60 + sm;
-
-      // parse وقت النهاية
+    let endMinutes = startMinutes + 60;
+    if (a.end_time) {
       const [eh, em] = a.end_time.split(':').map(Number);
-      const endMinutes = eh * 60 + em;
+      endMinutes = eh * 60 + em;
+    }
 
-      // تحقق من أن الوقت الآن ضمن الفترة المتاحة
-      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-        return true;
-      }
+    if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+      return true;
     }
   }
 
@@ -290,3 +283,4 @@ public isDoctorAvailableNow(doctor: any): boolean {
     this.filteredSpecialties = this.specialties || [];
   }
 }
+

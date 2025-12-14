@@ -14,14 +14,12 @@ class DoctorAvailability extends Model
         'clinic_id',
         'day_of_week',
         'start_time',
-        'end_time',
         'slot_capacity',
         'fee_amount',
     ];
 
     protected $casts = [
         'start_time' => 'datetime:H:i:s',
-        'end_time' => 'datetime:H:i:s',
         'fee_amount' => 'float',
     ];
 

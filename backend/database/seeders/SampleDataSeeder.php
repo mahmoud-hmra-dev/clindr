@@ -120,7 +120,6 @@ class SampleDataSeeder extends Seeder
                 'clinic_id' => $clinic->id,
                 'day_of_week' => 'monday',
                 'start_time' => '09:00:00',
-                'end_time' => '12:00:00',
             ],
             ['slot_capacity' => 4, 'fee_amount' => 250]
         );
@@ -130,7 +129,6 @@ class SampleDataSeeder extends Seeder
                 'clinic_id' => $clinic2->id,
                 'day_of_week' => 'tuesday',
                 'start_time' => '07:00:00',
-                'end_time' => '09:00:00',
             ],
             ['slot_capacity' => 4, 'fee_amount' => 350]
         );
@@ -140,7 +138,6 @@ class SampleDataSeeder extends Seeder
                 'clinic_id' => $clinic2->id,
                 'day_of_week' => 'wednesday',
                 'start_time' => '14:00:00',
-                'end_time' => '17:00:00',
             ],
             ['slot_capacity' => 4, 'fee_amount' => 350]
         );
@@ -361,7 +358,6 @@ class SampleDataSeeder extends Seeder
                 'clinic_id' => $clinicJane->id,
                 'day_of_week' => 'friday',
                 'start_time' => '07:00:00',
-                'end_time' => '21:00:00',
             ],
             ['slot_capacity' => 6, 'fee_amount' => 550]
         );

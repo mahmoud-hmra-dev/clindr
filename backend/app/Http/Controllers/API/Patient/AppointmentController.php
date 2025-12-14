@@ -101,7 +101,7 @@ public function index(Request $request)
 
             ->whereRaw('LOWER(day_of_week) = ?', [$day])
             ->whereTime('start_time', '<=', $time)
-            ->whereTime('end_time', '>', $time)
+            ->whereRaw("TIME(DATE_ADD(start_time, INTERVAL 1 HOUR)) > ?", [$time])
             ->when(
                 $validated['appointment_type'] === 'online',
                 fn ($q) => $q->whereNull('clinic_id'),
