@@ -6,5 +6,7 @@ export const environment = {
   hopePaymentProjectName: 'clindoctor_test',
   hopePaymentCurrency: 'USD',
   websocketUrl: 'ws://localhost:6001',
-  websocketPort: 6001
+  websocketPort: 6001,
+  onlineMeetingApiUrl: 'https://call.clindoctor.net/api/v1/meeting'
+
 };

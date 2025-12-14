@@ -286,11 +286,12 @@ confirmAndPay(): void {
 }
 private createOnlineMeetingAndBook(): void {
   const SKIP_AUTH = new HttpContextToken(() => false);
+  const onlineMeetingApiUrl = environment.onlineMeetingApiUrl;
 
   console.log('Creating online meeting...');
 
   this.HttpClient.post<any>(
-    'https://call.clindoctor.net/api/v1/meeting',
+    `${onlineMeetingApiUrl}/api/v1/meeting`,
     {},
     {
       headers: new HttpHeaders({
@@ -312,7 +313,7 @@ private createOnlineMeetingAndBook(): void {
 
               onlineMeetingUrl = onlineMeetingUrl.replace(
               'https://127.0.0.1:8082',
-              'https://call.clindoctor.net'
+              `${environment.onlineMeetingApiUrl}`
             );
 
       // بعد ما يجهز الـ URL نحجز الموعد
@@ -362,9 +363,9 @@ private bookAppointment(onlineMeetingUrl: string): void {
         email: this.currentUser?.email || this.patientEmail || 'user@example.com',
         price: this.amount.toString(),
         currency: environment.hopePaymentCurrency,
-        errorCallback: `https://clindrv2.clindoctor.net/patients/booking/booking-error`,
-        successCallback: `https://clindrv2.clindoctor.net/patients/booking/booking-Success`,
-        cancelCallback: `https://clindrv2.clindoctor.net/patients/booking/booking-cancel`,
+        errorCallback: `${environment.baseurl}/patients/booking/booking-error`,
+        successCallback: `${environment.baseurl}/patients/booking/booking-Success`,
+        cancelCallback: `${environment.baseurl}/patients/booking/booking-cancel`,
         appointment_id: appointment?.id,
       };
 
@@ -373,7 +374,7 @@ private bookAppointment(onlineMeetingUrl: string): void {
           let redirectUrl = (url || '').trim();
               redirectUrl = redirectUrl.replace(
               'http://localhost:8001',
-              'https://payment.clindoctor.net'
+              `${environment.paymenturl}`
             );
           if (redirectUrl) {
             window.location.href = redirectUrl;

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { routes } from 'src/app/shared/routes/routes';
 import { DoctorService } from 'src/app/core/services/doctor.service';
+import { environment } from 'src/environments/environment';
 interface medical {}
 @Component({
     selector: 'app-doctor-appointment-start',
@@ -19,6 +20,7 @@ export class DoctorAppointmentStartComponent implements OnInit {
   appointment: any = null;
   loading = false;
   error = '';
+  onlineMeetingApiUrl = environment.onlineMeetingApiUrl;
 
   constructor(private route: ActivatedRoute, private doctorService: DoctorService) {}
 
