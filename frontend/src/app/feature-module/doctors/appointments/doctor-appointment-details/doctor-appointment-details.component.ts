@@ -129,10 +129,9 @@ export class DoctorAppointmentDetailsComponent implements OnInit {
     this.doctorService
       .updateDoctorAppointmentStatus(this.appointment.id, newStatus)
       .subscribe({
-        next: (res) => {
-          const updated = res?.data ?? res;
-          this.appointment = updated;
-          this.selectedStatus = (this.appointment?.status || newStatus).toLowerCase();
+        next: () => {
+          // Reload the appointment to refresh nested patient data after status change
+          this.load(this.appointment.id);
         },
         error: (err) => {
           this.error = err?.error?.message || 'Failed to update status';
