@@ -136,4 +136,12 @@ export class DoctorService {
       body
     );
   }
+
+  getDoctorBookedSlots(id: number, params: { from?: string; to?: string } = {}): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params.from) httpParams = httpParams.set('from', params.from);
+    if (params.to) httpParams = httpParams.set('to', params.to);
+
+    return this.http.get(`${environment.apiBaseUrl}/doctors/${id}/booked-slots`, { params: httpParams });
+  }
 }

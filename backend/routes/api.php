@@ -73,6 +73,7 @@ Route::match(['get', 'post'], 'payments/areeba/callback', [AreebaPaymentControll
 
 Route::get('doctors', [DoctorPublicController::class, 'index']);
 Route::get('doctors/{doctor}', [DoctorPublicController::class, 'show']);
+Route::get('doctors/{doctor}/booked-slots', [DoctorPublicController::class, 'bookedSlots']);
 Route::get('specialties', [DoctorPublicController::class, 'specialties']);
 Route::get('specialties', [AdminSpecialtyController::class, 'index']);
 

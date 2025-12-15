@@ -38,6 +38,9 @@ export class BookingComponent {
   bookingError = '';
   bookingMessage = '';
   availableDateKeys = new Set<string>();
+  bookedSlots: { start: string; end: string; status?: string; appointment_type?: string; clinic_id?: number }[] = [];
+  private bookedRange = { from: '', to: '' };
+  private bookingHorizonDays = 60;
 
   // مبالغ الدفع
   amount = 0;              // المجموع النهائي
@@ -47,21 +50,21 @@ export class BookingComponent {
 
   currentUser: AuthUser | null = null;
 
-timeSlots: { value: string; label: string }[] = [];
+  timeSlots: { value: string; label: string }[] = [];
 
-private getTimePartFromIso(iso: string): string | null {
-  if (!iso) return null;
+  private getTimePartFromIso(iso: string): string | null {
+    if (!iso) return null;
 
-  // مثال: 2025-12-11T16:59:00.000000Z
-  const parts = iso.split('T');
-  if (parts.length < 2) return null;
+    // مثال: 2025-12-11T16:59:00.000000Z
+    const parts = iso.split('T');
+    if (parts.length < 2) return null;
 
-  let timePart = parts[1];              // "16:59:00.000000Z"
-  timePart = timePart.replace('Z', ''); // "16:59:00.000000"
-  timePart = timePart.substring(0, 8);  // "16:59:00"
+    let timePart = parts[1];              // "16:59:00.000000Z"
+    timePart = timePart.replace('Z', ''); // "16:59:00.000000"
+    timePart = timePart.substring(0, 8);  // "16:59:00"
 
-  return timePart;
-}
+    return timePart;
+  }
 
 
 
@@ -118,11 +121,13 @@ private getTimePartFromIso(iso: string): string | null {
       this.loadDoctor(doctorId);
     }
   }
+
   onDateChange(date: Date): void {
     this.bsInlineValue = date;
     this.selectedDate = date;
     this.selectedDateTime = null;
-      this.recalculateTimeSlots();
+    this.ensureBookingsRangeIncludes(date);
+    this.recalculateTimeSlots();
   }
 
   private updateAmount(): void {
@@ -152,6 +157,7 @@ private getTimePartFromIso(iso: string): string | null {
         // حساب المبلغ بعد تحميل الداتا
         this.updateAmount();
         this.loading = false;
+        this.loadBookedSlots();
         this.recalculateTimeSlots();
         this.rebuildAvailableDateClasses();
       },
@@ -191,91 +197,157 @@ private getTimePartFromIso(iso: string): string | null {
   selectSlot(slot: string): void {
     this.selectedDateTime = slot;
   }
-private combineDateAndTime(date: Date, time: string): Date {
-  const [hours, minutes, seconds] = time.split(':').map((v) => parseInt(v, 10) || 0);
+  private combineDateAndTime(date: Date, time: string): Date {
+    const [hours, minutes, seconds] = time.split(':').map((v) => parseInt(v, 10) || 0);
 
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    hours,
-    minutes,
-    seconds || 0,
-    0
-  );
-}
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      hours,
+      minutes,
+      seconds || 0,
+      0
+    );
+  }
 
-private recalculateTimeSlots(): void {
-  const slots: { value: string; label: string }[] = [];
+  private recalculateTimeSlots(): void {
+    const slots: { value: string; label: string }[] = [];
 
-  for (const av of this.filteredAvailabilities) {
-    if (!av.start_time) continue;
+    for (const av of this.filteredAvailabilities) {
+      if (!av.start_time) continue;
 
-    const startTimeStr = this.getTimePartFromIso(av.start_time) || av.start_time;
-    let endTimeStr   = this.getTimePartFromIso(av.end_time) || av.end_time;
-    if (!endTimeStr && startTimeStr) {
-      endTimeStr = this.addDefaultEndTime(startTimeStr);
+      const startTimeStr = this.getTimePartFromIso(av.start_time) || av.start_time;
+      let endTimeStr   = this.getTimePartFromIso(av.end_time) || av.end_time;
+      if (!endTimeStr && startTimeStr) {
+        endTimeStr = this.addDefaultEndTime(startTimeStr);
+      }
+
+      if (!startTimeStr || !endTimeStr) continue;
+
+      const start = this.combineDateAndTime(this.selectedDate, startTimeStr);
+      const end   = this.combineDateAndTime(this.selectedDate, endTimeStr);
+
+      if (end <= start) continue;
+
+      const current = new Date(start);
+
+      if (!this.slotDurationMinutes || this.slotDurationMinutes <= 0) break;
+
+      while (current < end) {
+        if (current > new Date()) {
+          const slotValue = this.formatLocalDateTime(current);
+          if (!this.isSlotBooked(slotValue)) {
+            slots.push({
+              value: slotValue,
+              label: current.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+            });
+          }
+        }
+        current.setMinutes(current.getMinutes() + this.slotDurationMinutes);
+      }
     }
 
-    if (!startTimeStr || !endTimeStr) continue;
+    this.timeSlots = slots;
 
-    const start = this.combineDateAndTime(this.selectedDate, startTimeStr);
-    const end   = this.combineDateAndTime(this.selectedDate, endTimeStr);
-
-    // Debug مرة واحدة بس لو حابب
-    // console.log('Availability:', av, 'startTimeStr:', startTimeStr, 'Start:', start, 'End:', end);
-
-    if (end <= start) continue;
-
-    const current = new Date(start);
-
-    // حماية زيادة لو صار slotDurationMinutes = 0 بالغلط
-    if (!this.slotDurationMinutes || this.slotDurationMinutes <= 0) break;
-
-    while (current < end) {
-      if (current > new Date()) {
-        slots.push({
-          value: this.formatLocalDateTime(current),
-          label: current.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        });
-
-
-      }
-      current.setMinutes(current.getMinutes() + this.slotDurationMinutes);
+    if (this.selectedDateTime && !this.timeSlots.some((s) => s.value === this.selectedDateTime)) {
+      this.selectedDateTime = null;
     }
   }
 
-  this.timeSlots = slots;
-}
+  private isSlotBooked(slotValue: string): boolean {
+    const slotStart = this.toDate(slotValue);
+    if (!slotStart) return false;
 
+    const slotEnd = new Date(slotStart.getTime() + this.slotDurationMinutes * 60000);
 
-private formatLocalDateTime(date: Date): string {
-  const y  = date.getFullYear();
-  const m  = (date.getMonth() + 1).toString().padStart(2, '0');
-  const d  = date.getDate().toString().padStart(2, '0');
-  const hh = date.getHours().toString().padStart(2, '0');
-  const mm = date.getMinutes().toString().padStart(2, '0');
-  const ss = date.getSeconds().toString().padStart(2, '0');
+    return this.bookedSlots.some((booking) => {
+      const bookingStart = this.toDate(booking.start);
+      const bookingEnd = this.toDate(booking.end);
+      if (!bookingStart || !bookingEnd) return false;
+      return bookingStart < slotEnd && slotStart < bookingEnd;
+    });
+  }
 
-  // Laravel و Carbon يحبّوا هذا الشكل
-  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
-}
+  private toDate(value: string | Date | null | undefined): Date | null {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(String(value).replace(' ', 'T'));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
 
-private addDefaultEndTime(start: string): string {
-  const [hours, minutes] = start.split(':').map((v) => parseInt(v, 10) || 0);
-  const d = new Date();
-  d.setHours(hours, minutes, 0, 0);
-  d.setHours(d.getHours() + 1);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  const ss = d.getSeconds().toString().padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
-}
+  private formatLocalDateTime(date: Date): string {
+    const y  = date.getFullYear();
+    const m  = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d  = date.getDate().toString().padStart(2, '0');
+    const hh = date.getHours().toString().padStart(2, '0');
+    const mm = date.getMinutes().toString().padStart(2, '0');
+    const ss = date.getSeconds().toString().padStart(2, '0');
 
+    // Laravel و Carbon يحبّوا هذا الشكل
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+  }
 
+  private addDefaultEndTime(start: string): string {
+    const [hours, minutes] = start.split(':').map((v) => parseInt(v, 10) || 0);
+    const d = new Date();
+    d.setHours(hours, minutes, 0, 0);
+    d.setHours(d.getHours() + 1);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    const ss = d.getSeconds().toString().padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  private ensureBookingsRangeIncludes(date: Date): void {
+    const key = this.formatDateKey(date);
+    if (!this.bookedRange.from || !this.bookedRange.to || key < this.bookedRange.from || key > this.bookedRange.to) {
+      this.loadBookedSlots(date);
+    }
+  }
+
+  private loadBookedSlots(anchorDate?: Date): void {
+    if (!this.doctor?.id) return;
+
+    const startDate = anchorDate ? new Date(anchorDate) : new Date();
+    const from = this.formatDateKey(startDate);
+    const toDate = new Date(startDate);
+    toDate.setDate(toDate.getDate() + this.bookingHorizonDays);
+    const to = this.formatDateKey(toDate);
+
+    this.doctorService.getDoctorBookedSlots(this.doctor.id, { from, to }).subscribe({
+      next: (res) => {
+        this.bookedSlots = res?.data ?? res ?? [];
+        this.bookedRange = { from, to };
+        this.recalculateTimeSlots();
+      },
+      error: () => {
+        // لو فشل الطلب نكتفي بالتحقق من التعارض في الباك-إند
+      }
+    });
+  }
+
+  private addBookingFromAppointment(appointment: any): void {
+    if (!appointment?.scheduled_at) return;
+    const start = this.toDate(appointment.scheduled_at);
+    if (!start) return;
+
+    const duration = appointment.duration_minutes ?? this.slotDurationMinutes;
+    const durationMs = (duration || this.slotDurationMinutes) * 60000;
+    const end = new Date(start.getTime() + durationMs);
+
+    this.bookedSlots.push({
+      start: start.toISOString(),
+      end: end.toISOString(),
+      status: appointment.status,
+      appointment_type: appointment.appointment_type,
+      clinic_id: appointment.clinic_id,
+    });
+
+    this.recalculateTimeSlots();
+  }
 
   selectClinic(id: number): void {
     this.selectedClinicId = id;
@@ -355,7 +427,7 @@ private bookAppointment(onlineMeetingUrl: string): void {
     appointment_type: this.selectedAppointmentType,
     visit_type: selectedService?.name || 'general',
     scheduled_at: this.selectedDateTime,
-    duration_minutes: 30,
+    duration_minutes: this.slotDurationMinutes,
     reason: '',
     online_meeting_url: onlineMeetingUrl
   };
@@ -367,6 +439,7 @@ private bookAppointment(onlineMeetingUrl: string): void {
   this.appointmentService.createAppointment(payload).subscribe({
     next: (res) => {
       const appointment = res?.data ?? res;
+      this.addBookingFromAppointment(appointment);
 
       const fullName = this.currentUser?.name || this.patientName || 'User Booking';
       const nameParts = fullName.split(' ');
@@ -408,8 +481,8 @@ private bookAppointment(onlineMeetingUrl: string): void {
         }
       });
     },
-    error: () => {
-      this.bookingError = 'Failed to create appointment';
+    error: (err) => {
+      this.bookingError = err?.error?.message || 'Failed to create appointment';
     }
   });
 }
@@ -417,7 +490,7 @@ private bookAppointment(onlineMeetingUrl: string): void {
 private rebuildAvailableDateClasses(): void {
   const keys = new Set<string>();
   const today = new Date();
-  const horizonDays = 60;
+  const horizonDays = this.bookingHorizonDays;
 
   for (let i = 0; i <= horizonDays; i++) {
     const date = new Date(today);
