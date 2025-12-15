@@ -122,7 +122,7 @@
               <li>
                 <div class="start-btn" *ngIf="appointment.appointment_type === 'online'
                             && (appointment.status === 'confirmed' || appointment.status === 'pending')">
-                  <a href="{{appointment.online_meeting_url}}"
+                  <a target="_blank" href="{{appointment.online_meeting_url}}"
                     class="btn btn-secondary">
                     Start Session
                   </a>
