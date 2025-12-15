@@ -134,9 +134,17 @@ export class AvailableTimingsComponent implements OnInit {
       this.error = 'Use HH:mm format. End time is optional and defaults to +1 hour.';
       return;
     }
-    this.selectionMode = 'single-day';
-    this.selectedDate = this.selectedDateForAdd;
-    this.addSlot();
+    const normalized = {
+      day_of_week: dayOfWeek,
+      start_time: this.normalizeTime(slotCandidate.start_time),
+      slot_capacity: slotCandidate.slot_capacity,
+      fee_amount: slotCandidate.fee_amount,
+      clinic_id: slotCandidate.clinic_id,
+    };
+    this.availabilities.push(this.buildSlot(normalized));
+    this.message = 'Availability added';
+    this.error = '';
+    this.refreshCalendarEvents();
     this.closeModal();
   }
 
