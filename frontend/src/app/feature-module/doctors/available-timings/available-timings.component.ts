@@ -135,16 +135,17 @@ export class AvailableTimingsComponent implements OnInit {
     const events: any[] = [];
 
     this.availabilitySlots.forEach((slot) => {
-      if (!slot?.date || !slot?.start_time || !slot?.end_time) {
+      if (!slot?.date || !slot?.start_time) {
         return;
       }
+      const endTime = slot.end_time || this.addDefaultEnd(slot.start_time);
       events.push({
         id: `avail-${slot.id}`,
         title: slot.availability_type === 'clinic'
           ? `Available (${slot.clinic?.name || 'Clinic'})`
           : 'Available (Online)',
         start: this.combineDateTime(slot.date, slot.start_time),
-        end: this.combineDateTime(slot.date, slot.end_time),
+        end: this.combineDateTime(slot.date, endTime),
         classNames: ['fc-available-event'],
         display: 'block',
       });
@@ -421,5 +422,15 @@ export class AvailableTimingsComponent implements OnInit {
       });
     }
     return dateStr;
+  }
+
+  private addDefaultEnd(time: string): string {
+    const [h, m] = time.split(':').map((v) => parseInt(v, 10) || 0);
+    const d = new Date();
+    d.setHours(h, m || 0, 0, 0);
+    d.setMinutes(d.getMinutes() + 60);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    return `${hh}:${mm}:00`;
   }
 }
