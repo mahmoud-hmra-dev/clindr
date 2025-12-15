@@ -297,8 +297,6 @@ confirmAndPay(): void {
 
   this.bookingError = '';
 
-  // لو الموعد أونلاين: نعمل ميتينغ وبعدين نحجز
-  alert(this.selectedAppointmentType);
   if (this.selectedAppointmentType === 'online') {
     this.createOnlineMeetingAndBook();
   } else {
