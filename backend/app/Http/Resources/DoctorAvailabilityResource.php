@@ -17,27 +17,42 @@ class DoctorAvailabilityResource extends JsonResource
             'id' => $this->id,
             'doctor_id' => $this->doctor_id,
             'clinic_id' => $this->clinic_id,
+            'date' => optional($this->date)->format('Y-m-d'),
+            'start_time' => $this->formatTime($this->start_time),
+            'end_time' => $this->formatTime($this->end_time),
+            'availability_type' => $this->availability_type,
+            'clinic' => $this->when(
+                $this->availability_type === 'clinic' || $this->clinic,
+                function () {
+                    if (! $this->clinic) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $this->clinic->id,
+                        'name' => $this->clinic->name,
+                    ];
+                }
+            ),
+            'status' => $this->status,
             'day_of_week' => $this->day_of_week,
-            'start_time' => $this->start_time,
             'slot_capacity' => $this->slot_capacity,
             'fee_amount' => $this->fee_amount,
-            // compatibility: compute an end_time (+1h) for consumers that still expect it
-            'end_time' => $this->computeEndTime(),
         ];
     }
 
-    private function computeEndTime(): ?string
+    private function formatTime($value): ?string
     {
-        $start = $this->start_time;
+        $time = $value;
         try {
-            if ($start instanceof \Carbon\CarbonInterface) {
-                return $start->copy()->addHour()->format('H:i');
+            if ($time instanceof \Carbon\CarbonInterface) {
+                return $time->format('H:i:s');
             }
-            if (is_string($start) && $start !== '') {
-                $parsed = \Carbon\Carbon::createFromFormat('H:i:s', $start) ?: \Carbon\Carbon::createFromFormat('H:i', $start);
-                if ($parsed) {
-                    return $parsed->addHour()->format('H:i');
-                }
+            if (is_string($time) && $time !== '') {
+                $parsed = \Carbon\Carbon::createFromFormat('H:i:s', $time)
+                    ?: \Carbon\Carbon::createFromFormat('H:i', $time);
+
+                return $parsed?->format('H:i:s');
             }
         } catch (\Throwable $e) {
             return null;

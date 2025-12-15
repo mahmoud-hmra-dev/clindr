@@ -82,12 +82,39 @@ return new class extends Migration
             $table->id();
             $table->foreignId('doctor_id')->constrained('doctors')->cascadeOnDelete();
             $table->foreignId('clinic_id')->nullable()->constrained('clinics')->nullOnDelete();
-            $table->string('day_of_week', 20);
+            $table->date('date');
+            $table->string('day_of_week', 20)->nullable(); // kept for backward compatibility
             $table->time('start_time');
+            $table->time('end_time');
+            $table->string('availability_type', 20)->default('online'); // clinic | online
+            $table->string('status', 30)->default('active');
             $table->unsignedInteger('slot_capacity')->default(1);
             $table->decimal('fee_amount', 10, 2)->nullable();
             $table->timestamps();
+
+            $table->index(['doctor_id', 'date']);
         });
+
+        // Backward/forwards compatibility if the table already exists and misses new columns.
+        if (Schema::hasTable('doctor_availabilities')) {
+            Schema::table('doctor_availabilities', function (Blueprint $table) {
+                if (! Schema::hasColumn('doctor_availabilities', 'date')) {
+                    $table->date('date')->nullable()->after('clinic_id');
+                }
+                if (! Schema::hasColumn('doctor_availabilities', 'day_of_week')) {
+                    $table->string('day_of_week', 20)->nullable()->after('date');
+                }
+                if (! Schema::hasColumn('doctor_availabilities', 'end_time')) {
+                    $table->time('end_time')->nullable()->after('start_time');
+                }
+                if (! Schema::hasColumn('doctor_availabilities', 'availability_type')) {
+                    $table->string('availability_type', 20)->default('online')->after('end_time');
+                }
+                if (! Schema::hasColumn('doctor_availabilities', 'status')) {
+                    $table->string('status', 30)->default('active')->after('availability_type');
+                }
+            });
+        }
 
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();

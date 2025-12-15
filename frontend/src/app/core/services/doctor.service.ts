@@ -84,11 +84,27 @@ export class DoctorService {
   }
 
   listMyAvailabilities(): Observable<any> {
-    return this.http.get(`${environment.apiBaseUrl}/doctor/availabilities`);
+    return this.http.get(`${environment.apiBaseUrl}/doctor/availability`);
   }
 
-  syncMyAvailabilities(availabilities: any[]): Observable<any> {
-    return this.http.post(`${environment.apiBaseUrl}/doctor/availabilities/sync`, { availabilities });
+  syncMyAvailabilities(payload: any): Observable<any> {
+    // Deprecated: kept for compatibility, forwards to the new availability endpoint.
+    return this.http.post(`${environment.apiBaseUrl}/doctor/availability`, payload);
+  }
+
+  getAvailabilityCalendar(from: string, to: string): Observable<any> {
+    let params = new HttpParams();
+    params = params.set('from', from);
+    params = params.set('to', to);
+    return this.http.get(`${environment.apiBaseUrl}/doctor/availability`, { params });
+  }
+
+  createAvailability(payload: any): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/doctor/availability`, payload);
+  }
+
+  deleteAvailability(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiBaseUrl}/doctor/availability/${id}`);
   }
 
   getSpecialties(): Observable<any> {

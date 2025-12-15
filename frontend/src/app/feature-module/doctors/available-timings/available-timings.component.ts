@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CalendarOptions, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import { CalendarOptions, DatesSetArg, EventClickArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -17,378 +17,409 @@ import { DoctorService } from 'src/app/core/services/doctor.service';
 export class AvailableTimingsComponent implements OnInit {
   public routes = routes;
 
-  form: FormGroup;
-  slotForm: FormGroup;
   clinics: any[] = [];
-  appointments: any[] = [];
+  availabilitySlots: any[] = [];
+  bookingSlots: any[] = [];
+
   loading = false;
   saving = false;
   message = '';
   error = '';
-  modalOpen = false;
-  selectedDateForAdd: Date | null = null;
 
-  selectionMode: 'single-day' | 'full-week' | 'full-month' = 'single-day';
-  horizonDays = 90;
-  selectedDate = new Date();
+  modalOpen = false;
+  modalDate: string | null = null;
+  modalError = '';
+
+  selectedDate = this.formatDate(new Date());
+  calendarRange = { from: '', to: '' };
+
+  modalForm: FormGroup;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
     initialView: 'dayGridMonth',
     selectable: true,
-    selectMirror: true,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek'
     },
-    select: (arg) => this.onCalendarSelect(arg),
-    eventClick: (arg) => this.onEventClick(arg),
+    dateClick: (info) => this.handleDateClick(info.dateStr),
+    datesSet: (info) => this.onDatesSet(info),
+    eventClick: (info) => this.onEventClick(info),
     events: [],
-    height: 'auto'
+    height: 'auto',
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false }
   };
-
-  dayOptions = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   constructor(
     private fb: FormBuilder,
     private doctorService: DoctorService
   ) {
-    this.form = this.fb.group({
-      availabilities: this.fb.array([])
-    });
-
-    this.slotForm = this.fb.group({
-      start_time: ['', [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
-      slot_capacity: [1, [Validators.required, Validators.min(1)]],
-      fee_amount: [null, [Validators.min(0)]],
+    this.modalForm = this.fb.group({
+      availability_type: ['online', Validators.required],
       clinic_id: [null],
+      slots: this.fb.array([this.buildSlotRow()]),
     });
   }
 
   ngOnInit(): void {
     this.loadProfile();
-    this.loadAppointments();
   }
 
-  get availabilities(): FormArray {
-    return this.form.get('availabilities') as FormArray;
+  get slots(): FormArray {
+    return this.modalForm.get('slots') as FormArray;
   }
 
-  private buildSlot(slot?: any): FormGroup {
+  get selectedDayAvailabilities(): any[] {
+    return this.getDayAvailabilities(this.selectedDate);
+  }
+
+  get selectedDayBookings(): any[] {
+    return this.getDayBookings(this.selectedDate);
+  }
+
+  private buildSlotRow(slot?: any): FormGroup {
     return this.fb.group({
-      day_of_week: [slot?.day_of_week || 'monday', Validators.required],
-      start_time: [this.toTimeInput(slot?.start_time), [Validators.required, Validators.pattern(/^\\d{2}:\\d{2}$/)]],
-      slot_capacity: [slot?.slot_capacity || 1, [Validators.required, Validators.min(1)]],
-      fee_amount: [slot?.fee_amount ?? null, [Validators.min(0)]],
-      clinic_id: [slot?.clinic_id || null],
+      start_time: [slot?.start_time || '', Validators.required],
+      end_time: [slot?.end_time || '', Validators.required],
     });
   }
 
-  private toTimeInput(val?: string): string {
-    if (!val) return '';
-    if (val.length >= 5) return val.substring(0, 5);
-    return val;
-  }
-
-  addSlot(): void {
-    const generated = this.generateSlotsFromSelection();
-    if (!generated.length) {
-      this.error = 'Select a date and time range to add availability.';
-      return;
-    }
-
-    generated.forEach((slot) => this.availabilities.push(this.buildSlot(slot)));
-    this.message = `Added ${generated.length} slot(s)`;
-    this.refreshCalendarEvents();
-  }
-
-  removeSlot(index: number): void {
-    this.availabilities.removeAt(index);
-    this.refreshCalendarEvents();
-  }
-
-  openModal(date: Date): void {
-    this.selectedDateForAdd = date;
-    this.slotForm.reset({
-      start_time: '',
-      slot_capacity: 1,
-      fee_amount: null,
-      clinic_id: null
-    });
-    this.modalOpen = true;
-  }
-
-  closeModal(): void {
-    this.modalOpen = false;
-  }
-
-  addSlotFromModal(): void {
-    if (this.slotForm.invalid || !this.selectedDateForAdd) {
-      this.slotForm.markAllAsTouched();
-      return;
-    }
-    const dayOfWeek = this.selectedDateForAdd.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const slotCandidate = { ...this.slotForm.value, day_of_week: dayOfWeek };
-    if (!this.isValidSlot(slotCandidate)) {
-      this.error = 'Use HH:mm format. End time is optional and defaults to +1 hour.';
-      return;
-    }
-    const normalized = {
-      day_of_week: dayOfWeek,
-      start_time: this.normalizeTime(slotCandidate.start_time),
-      slot_capacity: slotCandidate.slot_capacity,
-      fee_amount: slotCandidate.fee_amount,
-      clinic_id: slotCandidate.clinic_id,
-    };
-    this.availabilities.push(this.buildSlot(normalized));
-    this.message = 'Availability added';
-    this.error = '';
-    this.refreshCalendarEvents();
-    this.closeModal();
-  }
-
-  onCalendarSelect(selectInfo: DateSelectArg): void {
-    if (selectInfo.start) {
-      this.selectedDate = selectInfo.start;
-      this.openModal(selectInfo.start);
-    }
-  }
-
-  onEventClick(info: EventClickArg): void {
-    // reserved for future actions (e.g., inspect booked slot)
-    info.jsEvent.preventDefault();
-  }
-
-  loadProfile(): void {
+  private loadProfile(): void {
     this.loading = true;
     this.doctorService.getMyProfile().subscribe({
       next: (res) => {
         const data = res?.data || res;
         this.clinics = data?.clinics || [];
         this.loading = false;
-        this.loadAvailabilities();
       },
       error: () => {
-        this.error = 'Failed to load availabilities';
         this.loading = false;
+        this.error = 'Failed to load clinics.';
       }
     });
   }
 
-  private loadAvailabilities(): void {
-    this.loading = true;
-    this.doctorService.listMyAvailabilities().subscribe({
-      next: (res) => {
-        const list = res?.data ?? res ?? [];
-        const items = Array.isArray(list) ? list : [];
-        this.availabilities.clear();
-        items.forEach((slot: any) => this.availabilities.push(this.buildSlot(slot)));
-        this.loading = false;
-        this.refreshCalendarEvents();
-      },
-      error: () => {
-        this.error = 'Failed to load availabilities';
-        this.loading = false;
-      }
-    });
-  }
+  private onDatesSet(arg: DatesSetArg): void {
+    const from = this.formatDate(arg.start);
+    const end = new Date(arg.end);
+    end.setDate(end.getDate() - 1);
+    const to = this.formatDate(end);
 
-  private loadAppointments(): void {
-    this.doctorService.getDoctorAppointments().subscribe({
-      next: (res) => {
-        const data = res?.data ?? res ?? [];
-        const booked = Array.isArray(data) ? data : [];
-        this.appointments = booked;
-        this.refreshCalendarEvents();
-      },
-      error: () => {
-        // ignore booking highlights on failure
-      }
-    });
-  }
-
-  save(): void {
-    const validSlots = (this.availabilities.value as any[]).filter((slot) => this.isValidSlot(slot));
-    if (!validSlots.length) {
-      this.error = 'Add at least one valid availability (HH:mm, end time optional).';
+    if (this.calendarRange.from === from && this.calendarRange.to === to) {
       return;
     }
-    this.saving = true;
-    this.message = '';
-    this.error = '';
-    const payload = validSlots.map((slot: any) => {
-      const start = this.normalizeTime(slot.start_time);
-      const day = (slot.day_of_week || '').toLowerCase();
-      return {
-        ...slot,
-        day_of_week: day || 'monday',
-        start_time: start,
-      };
-    });
-    this.doctorService.syncMyAvailabilities(payload).subscribe({
-      next: () => {
-        this.message = 'Availabilities updated';
-        this.saving = false;
-        this.loadAvailabilities();
+
+    this.calendarRange = { from, to };
+    this.fetchRange(from, to);
+  }
+
+  private fetchRange(from: string, to: string): void {
+    this.loading = true;
+    this.doctorService.getAvailabilityCalendar(from, to).subscribe({
+      next: (res) => {
+        this.availabilitySlots = res?.availabilities || [];
+        this.bookingSlots = res?.bookings || [];
+        this.loading = false;
+        this.refreshCalendarEvents();
       },
       error: () => {
-        this.error = 'Failed to update availabilities';
-        this.saving = false;
+        this.loading = false;
+        this.error = 'Failed to load availability data for the calendar.';
       }
     });
-  }
-
-  private generateSlotsFromSelection(): any[] {
-    if (this.slotForm.invalid || !this.selectedDate) {
-      this.slotForm.markAllAsTouched();
-      return [];
-    }
-
-    const { start_time, slot_capacity, fee_amount, clinic_id } = this.slotForm.value;
-    const baseDate = this.selectedDate;
-    const dates = this.getDatesForSelection(baseDate, this.selectionMode);
-    const slots: any[] = [];
-    const uniqueKeys = new Set<string>();
-
-    dates.forEach((d) => {
-      if (!this.isValidTime(start_time)) return;
-      const start = this.normalizeTime(start_time);
-      const end = this.addDefaultEndTime(start);
-      if (!start || !end) return;
-      const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-      const key = `${day}-${start}-${end}-${clinic_id ?? 'any'}`;
-      if (uniqueKeys.has(key)) return;
-      uniqueKeys.add(key);
-
-      slots.push({
-        day_of_week: day,
-        start_time: start,
-        slot_capacity,
-        fee_amount,
-        clinic_id
-      });
-    });
-
-    return slots;
-  }
-
-  private startOfWeek(date: Date): Date {
-    const d = new Date(date);
-    const day = d.getDay(); // 0 Sun .. 6 Sat
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
-  }
-
-  private getDatesForSelection(baseDate: Date, mode: 'single-day' | 'full-week' | 'full-month'): Date[] {
-    const dates: Date[] = [];
-    if (mode === 'single-day') {
-      dates.push(new Date(baseDate));
-    } else if (mode === 'full-week') {
-      const first = this.startOfWeek(baseDate);
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(first);
-        d.setDate(first.getDate() + i);
-        dates.push(d);
-      }
-    } else if (mode === 'full-month') {
-      const year = baseDate.getFullYear();
-      const month = baseDate.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let i = 1; i <= daysInMonth; i++) {
-        dates.push(new Date(year, month, i));
-      }
-    }
-    return dates;
   }
 
   private refreshCalendarEvents(): void {
     const events: any[] = [];
-    const today = new Date();
-    const slots = this.availabilities.value as any[];
 
-    for (let i = 0; i <= this.horizonDays; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-      slots.forEach((slot) => {
-        if (!slot?.start_time) return;
-        if ((slot?.day_of_week || '').toLowerCase() !== dayName) return;
-        const startTime = this.normalizeTime(slot.start_time);
-        const endTime = this.addDefaultEndTime(startTime);
-        if (!startTime || !endTime) return;
-        const start = this.combineDateTime(date, startTime);
-        const end = this.combineDateTime(date, endTime);
-        events.push({
-          title: 'Available',
-          start,
-          end,
-        display: 'background',
-        classNames: ['fc-available'],
-        extendedProps: { type: 'available', clinicId: slot.clinic_id }
+    this.availabilitySlots.forEach((slot) => {
+      if (!slot?.date || !slot?.start_time || !slot?.end_time) {
+        return;
+      }
+      events.push({
+        id: `avail-${slot.id}`,
+        title: slot.availability_type === 'clinic'
+          ? `Available (${slot.clinic?.name || 'Clinic'})`
+          : 'Available (Online)',
+        start: this.combineDateTime(slot.date, slot.start_time),
+        end: this.combineDateTime(slot.date, slot.end_time),
+        classNames: ['fc-available-event'],
+        display: 'block',
       });
     });
-    }
 
-    this.appointments.forEach((appt: any) => {
-      const status = (appt?.status || '').toLowerCase();
-      if (status === 'cancelled') return;
-
-      const startStr = appt?.scheduled_at || appt?.scheduledAt;
-      if (!startStr) return;
-      const start = new Date(startStr);
-      if (isNaN(start.getTime())) return;
-
-      const duration = Number(appt?.duration_minutes) || 30;
-      const end = new Date(start);
-      end.setMinutes(end.getMinutes() + duration);
-
+    this.bookingSlots.forEach((booking: any) => {
+      if (!booking?.start || !booking?.end) return;
+      const start = this.normalizeDateTimeString(booking.start);
+      const end = this.normalizeDateTimeString(booking.end);
       events.push({
-        title: appt?.patient?.name || 'Booked',
+        id: `book-${booking.id}`,
+        title: booking?.patient?.name ? `Booked (${booking.patient.name})` : 'Booked',
         start,
         end,
-        classNames: ['fc-booked'],
-        display: 'block'
+        classNames: ['fc-booked-event'],
+        display: 'block',
       });
     });
 
     this.calendarOptions = { ...this.calendarOptions, events };
   }
 
-  private combineDateTime(date: Date, time: string): string {
-    const d = new Date(date);
-    const [h, m] = (time || '').split(':').map((v) => parseInt(v, 10) || 0);
-    d.setHours(h || 0, m || 0, 0, 0);
-    return d.toISOString();
+  handleDateClick(dateStr: string): void {
+    this.selectedDate = dateStr;
+    this.openModal(dateStr);
   }
 
-  private isValidTime(value: string | null | undefined): boolean {
-    if (!value) return false;
-    return /^\\d{2}:\\d{2}$/.test(value);
+  onEventClick(info: EventClickArg): void {
+    info.jsEvent.preventDefault();
+    const start = info.event.start;
+    const dateStr = start ? this.formatDate(start) : this.selectedDate;
+    this.selectedDate = dateStr;
+    this.openModal(dateStr);
   }
 
-  private isValidSlot(slot: any): boolean {
-    if (!slot?.day_of_week) return false;
-    if (!this.isValidTime(slot.start_time)) return false;
-    return true;
+  openModal(dateStr: string | null): void {
+    if (!dateStr) return;
+    this.modalDate = dateStr;
+    this.modalOpen = true;
+    this.modalError = '';
+    this.error = '';
+    this.message = '';
+    this.modalForm.reset({
+      availability_type: this.modalForm.get('availability_type')?.value || 'online',
+      clinic_id: null,
+    });
+    this.slots.clear();
+    this.slots.push(this.buildSlotRow());
   }
 
-  private normalizeTime(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    if (!/^\\d{2}:\\d{2}/.test(trimmed)) return null;
-    return trimmed.substring(0, 5);
+  closeModal(): void {
+    this.modalOpen = false;
   }
 
-  private addDefaultEndTime(start: string | null): string | null {
-    if (!start) return null;
-    const [h, m] = start.split(':').map((v) => parseInt(v, 10) || 0);
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    d.setHours(d.getHours() + 1);
-    const hh = d.getHours().toString().padStart(2, '0');
-    const mm = d.getMinutes().toString().padStart(2, '0');
+  addSlotRow(): void {
+    this.slots.push(this.buildSlotRow());
+  }
+
+  removeSlotRow(index: number): void {
+    if (this.slots.length === 1) return;
+    this.slots.removeAt(index);
+  }
+
+  saveSlots(): void {
+    if (!this.modalDate) return;
+    this.modalForm.markAllAsTouched();
+
+    const payload = this.buildPayload();
+    if (!payload) {
+      return;
+    }
+
+    this.saving = true;
+    this.modalError = '';
+    this.doctorService.createAvailability(payload).subscribe({
+      next: (res) => {
+        this.message = 'Availability saved.';
+        this.saving = false;
+        this.closeModal();
+        const from = this.calendarRange.from || this.modalDate!;
+        const to = this.calendarRange.to || this.modalDate!;
+        this.fetchRange(from, to);
+      },
+      error: (err) => {
+        this.saving = false;
+        this.modalError = err?.error?.message || 'Failed to save availability.';
+        if (err?.error?.errors && Array.isArray(err.error.errors)) {
+          this.modalError = err.error.errors.join(' ');
+        }
+      }
+    });
+  }
+
+  formatSlotLabel(slot: any): string {
+    if (slot?.availability_type === 'clinic') {
+      return slot?.clinic?.name ? `Clinic - ${slot.clinic.name}` : 'Clinic availability';
+    }
+    return 'Online availability';
+  }
+
+  toTime(value: string | Date | null | undefined): string {
+    if (!value) return '';
+    if (value instanceof Date) {
+      return value.toTimeString().substring(0, 5);
+    }
+    if (value.includes('T')) {
+      return value.split('T')[1].substring(0, 5);
+    }
+    if (value.includes(' ')) {
+      return value.split(' ')[1].substring(0, 5);
+    }
+    return value.substring(0, 5);
+  }
+
+  private buildPayload(): any | null {
+    if (!this.modalDate) return null;
+
+    const availabilityType = this.modalForm.value.availability_type;
+    const clinicId = availabilityType === 'clinic' ? this.modalForm.value.clinic_id : null;
+    if (availabilityType === 'clinic' && !clinicId) {
+      this.modalError = 'Select a clinic for clinic availability.';
+      return null;
+    }
+
+    const slots = this.slots.controls.map((ctrl) => ctrl.value);
+    const issues: string[] = [];
+
+    slots.forEach((slot, idx) => {
+      const start = this.timeToMinutes(slot.start_time);
+      const end = this.timeToMinutes(slot.end_time);
+      if (start === null || end === null) {
+        issues.push(`Slot ${idx + 1}: time must be HH:mm.`);
+        return;
+      }
+      if (end <= start) {
+        issues.push(`Slot ${idx + 1}: end time must be after start time.`);
+      }
+    });
+
+    for (let i = 0; i < slots.length; i++) {
+      for (let j = i + 1; j < slots.length; j++) {
+        const aStart = this.timeToMinutes(slots[i].start_time);
+        const aEnd = this.timeToMinutes(slots[i].end_time);
+        const bStart = this.timeToMinutes(slots[j].start_time);
+        const bEnd = this.timeToMinutes(slots[j].end_time);
+        if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
+        if (this.rangesOverlap(aStart, aEnd, bStart, bEnd)) {
+          issues.push(`Slots ${i + 1} and ${j + 1} overlap.`);
+        }
+      }
+    }
+
+    const existingAvailabilities = this.getDayAvailabilities(this.modalDate);
+    const existingBookings = this.getDayBookings(this.modalDate);
+
+    slots.forEach((slot, idx) => {
+      const start = this.timeToMinutes(slot.start_time);
+      const end = this.timeToMinutes(slot.end_time);
+      if (start === null || end === null) return;
+
+      existingAvailabilities.forEach((existing) => {
+        const existingStart = this.timeToMinutes(existing.start_time || existing.start || '');
+        const existingEnd = this.timeToMinutes(existing.end_time || existing.end || '');
+        if (existingStart === null || existingEnd === null) return;
+        if (this.rangesOverlap(start, end, existingStart, existingEnd)) {
+          issues.push(`Slot ${idx + 1} overlaps existing availability ${this.toTime(existing.start_time)} - ${this.toTime(existing.end_time)}.`);
+        }
+      });
+
+      existingBookings.forEach((booking) => {
+        const bookingStart = this.timeToMinutes(this.extractTime(booking.start));
+        const bookingEnd = this.timeToMinutes(this.extractTime(booking.end));
+        if (bookingStart === null || bookingEnd === null) return;
+        if (this.rangesOverlap(start, end, bookingStart, bookingEnd)) {
+          issues.push(`Slot ${idx + 1} conflicts with booked time ${this.toTime(booking.start)} - ${this.toTime(booking.end)}.`);
+        }
+      });
+    });
+
+    if (issues.length) {
+      this.modalError = issues.join(' ');
+      return null;
+    }
+
+    return {
+      date: this.modalDate,
+      availability_type: availabilityType,
+      clinic_id: clinicId,
+      slots: slots.map((slot) => ({
+        start_time: this.normalizeTimeInput(slot.start_time),
+        end_time: this.normalizeTimeInput(slot.end_time),
+      })),
+    };
+  }
+
+  getDayAvailabilities(dateStr: string): any[] {
+    return (this.availabilitySlots || []).filter((slot) => slot?.date === dateStr);
+  }
+
+  getDayBookings(dateStr: string): any[] {
+    return (this.bookingSlots || []).filter((slot) => {
+      if (slot?.date) return slot.date === dateStr;
+      const startDate = slot?.start ? slot.start.split('T')[0] || slot.start.split(' ')[0] : '';
+      return startDate === dateStr;
+    });
+  }
+
+  private timeToMinutes(time: string | null | undefined): number | null {
+    if (!time) return null;
+    const parts = time.split(':').map((p) => parseInt(p, 10));
+    if (parts.length < 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
+    return parts[0] * 60 + parts[1];
+  }
+
+  private rangesOverlap(startA: number, endA: number, startB: number, endB: number): boolean {
+    return startA < endB && startB < endA;
+  }
+
+  private normalizeTimeInput(time: string): string {
+    if (!time) return '';
+    const [h, m] = time.split(':');
+    const hh = h?.padStart(2, '0') ?? '00';
+    const mm = m?.padStart(2, '0') ?? '00';
     return `${hh}:${mm}`;
+  }
+
+  private combineDateTime(date: string, time: string): string {
+    const normalized = this.normalizeDateTimeString(`${date} ${time}`);
+    return normalized.replace(' ', 'T');
+  }
+
+  private normalizeDateTimeString(value: string): string {
+    if (!value) return '';
+    if (value.includes('T')) return value;
+    return value.replace(' ', 'T');
+  }
+
+  private extractTime(value: string): string {
+    if (!value) return '';
+    if (value.includes('T')) {
+      return value.split('T')[1] || '';
+    }
+    if (value.includes(' ')) {
+      return value.split(' ')[1] || '';
+    }
+    return value;
+  }
+
+  private formatDate(date: Date | string): string {
+    if (typeof date === 'string' && date.includes('-')) {
+      const parts = date.split('T')[0].split('-').map((p) => parseInt(p, 10));
+      if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
+        const [y, m, d] = parts;
+        return `${y.toString().padStart(4, '0')}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+      }
+    }
+    const d = date instanceof Date ? date : new Date(date);
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  displayDate(dateStr: string | null): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-').map((p) => parseInt(p, 10));
+    if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+    return dateStr;
   }
 }

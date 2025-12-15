@@ -91,8 +91,10 @@ Route::middleware(['auth:sanctum', 'role:doctor', 'permission:appointment.view_o
         Route::put('prescriptions/{prescription}', [DoctorPrescriptionController::class, 'update']); // مع _method=PUT
         Route::delete('prescriptions/{prescription}', [DoctorPrescriptionController::class, 'destroy']);
 
-    Route::post('availabilities/sync', \App\Http\Controllers\API\Doctor\AvailabilityController::class . '@sync');
-    Route::apiResource('availabilities', \App\Http\Controllers\API\Doctor\AvailabilityController::class)->except(['show']);
+    Route::get('availability', [DoctorAvailabilityController::class, 'index']);
+    Route::post('availability', [DoctorAvailabilityController::class, 'store']);
+    Route::delete('availability/{doctorAvailability}', [DoctorAvailabilityController::class, 'destroy']);
+    Route::apiResource('availabilities', DoctorAvailabilityController::class)->only(['index', 'store', 'destroy']);
     Route::apiResource('services', DoctorServiceController::class)->except(['show']);
     Route::apiResource('clinics', DoctorClinicController::class)->except(['show']);
     Route::get('my-patients', [DoctorPatientController::class, 'index']);

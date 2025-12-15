@@ -32,13 +32,6 @@
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <li routerLinkActive="active">
-                        <a [routerLink] = "routes.doctorRequest">
-                            <i class="isax isax-clipboard-tick"></i>
-                            <span>Requests</span>
-                            <small class="unread-msg">2</small>
-                        </a>
-                    </li>
                     <li [ngClass]="{'active': page === 'appointments'}">
                         <a [routerLink] = "routes.appointmentsListUser">
                             <i class="isax isax-calendar-1"></i>

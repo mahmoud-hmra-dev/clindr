@@ -76,7 +76,7 @@ public function index(Request $request)
 
         $doctor = Doctor::findOrFail($validated['doctor_id']);
         $clinic = null;
-          if ($validated['appointment_type'] === 'in_clinic') {
+        if ($validated['appointment_type'] === 'in_clinic') {
             if (empty($validated['clinic_id'])) {
                 return response()->json([
                     'success' => false,
@@ -93,34 +93,62 @@ public function index(Request $request)
                 'message' => 'Scheduled time must be in the future.',
             ], 422);
         }
-        $day = strtolower($scheduledAt->englishDayOfWeek);
-        $time = $scheduledAt->format('H:i:s');
 
-        $slotExists = DoctorAvailability::query()
+        $appointmentEnd = (clone $scheduledAt)->addMinutes($validated['duration_minutes'] ?? 30);
+        $availabilityType = $validated['appointment_type'] === 'in_clinic' ? 'clinic' : 'online';
+
+        $availabilities = DoctorAvailability::query()
             ->where('doctor_id', $doctor->id)
-
-            ->whereRaw('LOWER(day_of_week) = ?', [$day])
-            ->whereTime('start_time', '<=', $time)
-            ->whereRaw("TIME(DATE_ADD(start_time, INTERVAL 1 HOUR)) > ?", [$time])
+            ->whereDate('date', $scheduledAt->toDateString())
+            ->where('availability_type', $availabilityType)
             ->when(
-                $validated['appointment_type'] === 'online',
-                fn ($q) => $q->whereNull('clinic_id'),
-                function ($q) use ($clinic) {
-                    $q->where(function ($inner) use ($clinic) {
-                        if ($clinic) {
-                            $inner->where('clinic_id', $clinic->id);
-                        }
-
-                        $inner->orWhereNull('clinic_id');
-                    });
-                }
+                $availabilityType === 'clinic',
+                fn ($q) => $q->where(function ($inner) use ($clinic) {
+                    $inner->whereNull('clinic_id');
+                    if ($clinic) {
+                        $inner->orWhere('clinic_id', $clinic->id);
+                    }
+                })
             )
-            ->exists();
+            ->get();
+
+        $slotExists = $availabilities->contains(function ($slot) use ($scheduledAt, $appointmentEnd) {
+            if (! $slot->start_time) {
+                return false;
+            }
+
+            $startTime = strlen($slot->start_time) === 5 ? $slot->start_time . ':00' : $slot->start_time;
+            $slotStart = Carbon::createFromFormat('Y-m-d H:i:s', $scheduledAt->toDateString() . ' ' . $startTime);
+            $endTime = $slot->end_time
+                ? (strlen($slot->end_time) === 5 ? $slot->end_time . ':00' : $slot->end_time)
+                : Carbon::createFromFormat('H:i:s', $startTime)->addHour()->format('H:i:s');
+            $slotEnd = Carbon::createFromFormat('Y-m-d H:i:s', $scheduledAt->toDateString() . ' ' . $endTime);
+
+            return $scheduledAt >= $slotStart && $appointmentEnd <= $slotEnd;
+        });
 
         if (! $slotExists) {
             return response()->json([
                 'success' => false,
                 'message' => 'Selected slot is not available.',
+            ], 422);
+        }
+
+        $conflictingBooking = Appointment::where('doctor_id', $doctor->id)
+            ->whereDate('scheduled_at', $scheduledAt->toDateString())
+            ->whereNotIn('status', ['cancelled'])
+            ->get()
+            ->contains(function ($appt) use ($scheduledAt, $appointmentEnd) {
+                $start = Carbon::parse($appt->scheduled_at);
+                $end = (clone $start)->addMinutes($appt->duration_minutes ?? 30);
+
+                return $start < $appointmentEnd && $scheduledAt < $end;
+            });
+
+        if ($conflictingBooking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Time range overlaps another booking.',
             ], 422);
         }
 

@@ -114,32 +114,58 @@ class SampleDataSeeder extends Seeder
             ['address' => '2286 Sundown Lane, Old Trafford 24541, UK', 'city' => 'Old Trafford', 'fee_amount' => 350]
         );
 
+        $nextWeek = Carbon::now()->addWeek()->startOfWeek();
+        $nextMonday = $nextWeek->copy()->setDate($nextWeek->year, $nextWeek->month, $nextWeek->day);
+        $nextTuesday = $nextMonday->copy()->addDay();
+        $nextWednesday = $nextMonday->copy()->addDays(2);
+
         DoctorAvailability::updateOrCreate(
             [
                 'doctor_id' => $doctor->id,
                 'clinic_id' => $clinic->id,
-                'day_of_week' => 'monday',
+                'date' => $nextMonday->toDateString(),
                 'start_time' => '09:00:00',
             ],
-            ['slot_capacity' => 4, 'fee_amount' => 250]
+            [
+                'day_of_week' => 'monday',
+                'end_time' => '12:00:00',
+                'availability_type' => 'clinic',
+                'status' => 'active',
+                'slot_capacity' => 4,
+                'fee_amount' => 250,
+            ]
         );
         DoctorAvailability::updateOrCreate(
             [
                 'doctor_id' => $doctor->id,
                 'clinic_id' => $clinic2->id,
-                'day_of_week' => 'tuesday',
+                'date' => $nextTuesday->toDateString(),
                 'start_time' => '07:00:00',
             ],
-            ['slot_capacity' => 4, 'fee_amount' => 350]
+            [
+                'day_of_week' => 'tuesday',
+                'end_time' => '10:00:00',
+                'availability_type' => 'clinic',
+                'status' => 'active',
+                'slot_capacity' => 4,
+                'fee_amount' => 350,
+            ]
         );
         DoctorAvailability::updateOrCreate(
             [
                 'doctor_id' => $doctor->id,
                 'clinic_id' => $clinic2->id,
-                'day_of_week' => 'wednesday',
+                'date' => $nextWednesday->toDateString(),
                 'start_time' => '14:00:00',
             ],
-            ['slot_capacity' => 4, 'fee_amount' => 350]
+            [
+                'day_of_week' => 'wednesday',
+                'end_time' => '17:00:00',
+                'availability_type' => 'clinic',
+                'status' => 'active',
+                'slot_capacity' => 4,
+                'fee_amount' => 350,
+            ]
         );
 
         SocialLink::updateOrCreate(
@@ -356,10 +382,17 @@ class SampleDataSeeder extends Seeder
             [
                 'doctor_id' => $doctorTwo->id,
                 'clinic_id' => $clinicJane->id,
+                'date' => Carbon::now()->addWeek()->startOfWeek()->addDays(4)->toDateString(),
                 'day_of_week' => 'friday',
                 'start_time' => '07:00:00',
             ],
-            ['slot_capacity' => 6, 'fee_amount' => 550]
+            [
+                'end_time' => '10:00:00',
+                'availability_type' => 'clinic',
+                'status' => 'active',
+                'slot_capacity' => 6,
+                'fee_amount' => 550,
+            ]
         );
 
         DoctorEducation::firstOrCreate(
