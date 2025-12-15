@@ -65,8 +65,8 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
+      APP_ENV: development
+      APP_DEBUG: "true"
       DB_CONNECTION: mysql
       DB_HOST: mysql_backend
       DB_PORT: 3306
