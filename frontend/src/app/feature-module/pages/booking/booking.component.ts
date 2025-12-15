@@ -8,9 +8,6 @@ import { PaymentService } from 'src/app/core/services/payment.service';
 import { AuthService, AuthUser } from 'src/app/core/services/auth.service';
 import { environment } from 'src/environments/environment';
 import { BsDatepickerConfig, DatepickerDateCustomClasses } from 'ngx-bootstrap/datepicker';
-import { CalendarOptions } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
 
 @Component({
   selector: 'app-booking',
@@ -51,27 +48,6 @@ export class BookingComponent {
   currentUser: AuthUser | null = null;
 
 timeSlots: { value: string; label: string }[] = [];
-calendarEvents: any[] = [];
-  calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    selectable: true,
-    height: 'auto',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek'
-    },
-    dateClick: (info) => this.onDateChange(new Date(info.dateStr)),
-    eventClick: (info) => {
-      const start = info.event.start;
-      if (start) {
-        this.onDateChange(start);
-        this.selectedDateTime = this.formatLocalDateTime(start);
-      }
-    },
-    events: []
-  };
 
 private getTimePartFromIso(iso: string): string | null {
   if (!iso) return null;
@@ -147,7 +123,6 @@ private getTimePartFromIso(iso: string): string | null {
     this.selectedDate = date;
     this.selectedDateTime = null;
       this.recalculateTimeSlots();
-      this.buildCalendarEvents();
   }
 
   private updateAmount(): void {
@@ -179,7 +154,6 @@ private getTimePartFromIso(iso: string): string | null {
         this.loading = false;
         this.recalculateTimeSlots();
         this.rebuildAvailableDateClasses();
-        this.buildCalendarEvents();
       },
       error: () => {
         this.loading = false;
@@ -196,7 +170,6 @@ private getTimePartFromIso(iso: string): string | null {
       this.selectedDateTime = null;
       this.recalculateTimeSlots();
       this.rebuildAvailableDateClasses();
-      this.buildCalendarEvents();
     }
   }
 
@@ -207,7 +180,6 @@ private getTimePartFromIso(iso: string): string | null {
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
     this.rebuildAvailableDateClasses();
-    this.buildCalendarEvents();
   }
 
   selectService(id: number, price: number): void {
@@ -279,44 +251,6 @@ private recalculateTimeSlots(): void {
   this.timeSlots = slots;
 }
 
-  private buildCalendarEvents(): void {
-    const availabilities = this.doctor?.availabilities || [];
-    const events: any[] = [];
-    const horizonDays = 60;
-    const today = new Date();
-
-    for (let i = 0; i <= horizonDays; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      const dateKey = this.formatDateKey(date);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-      availabilities.forEach((av: any) => {
-        const matchesDate = av.date ? av.date === dateKey : (av.day_of_week || '').toLowerCase() === dayName;
-        if (!matchesDate) return;
-
-        if (this.selectedAppointmentType === 'online' && av.clinic_id) return;
-        if (this.selectedAppointmentType === 'in_clinic' && this.selectedClinicId && av.clinic_id && av.clinic_id !== this.selectedClinicId) return;
-
-        const startTimeStr = this.getTimePartFromIso(av.start_time) || av.start_time;
-        let endTimeStr = this.getTimePartFromIso(av.end_time) || av.end_time;
-        if (!endTimeStr && startTimeStr) endTimeStr = this.addDefaultEndTime(startTimeStr);
-        if (!startTimeStr) return;
-
-        events.push({
-          title: av.clinic_id ? 'Clinic' : 'Online',
-          start: this.combineDateAndTime(date, startTimeStr),
-          end: endTimeStr ? this.combineDateAndTime(date, endTimeStr) : undefined,
-          classNames: av.clinic_id ? ['fc-clinic'] : ['fc-online'],
-        });
-      });
-    }
-
-    this.calendarEvents = events;
-    this.calendarOptions = { ...this.calendarOptions, events };
-  }
-
-
 
 private formatLocalDateTime(date: Date): string {
   const y  = date.getFullYear();
@@ -348,7 +282,6 @@ private addDefaultEndTime(start: string): string {
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
     this.rebuildAvailableDateClasses();
-    this.buildCalendarEvents();
   }
 
 confirmAndPay(): void {
