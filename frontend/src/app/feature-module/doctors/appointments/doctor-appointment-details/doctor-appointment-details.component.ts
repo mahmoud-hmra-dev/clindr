@@ -97,7 +97,7 @@ export class DoctorAppointmentDetailsComponent implements OnInit {
     const status = (this.appointment?.status || '').toLowerCase();
     if (status === 'cancelled') return 'badge bg-red';
     if (status === 'completed') return 'badge bg-green';
-    if (status === 'confirmed') return 'badge bg-blue';
+    if (status === 'confirmed') return 'badge bg-green';
     return 'badge bg-yellow'; // pending / default
   }
 
