@@ -10,6 +10,7 @@ use App\Models\DoctorAvailability;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +21,7 @@ class AvailabilityController extends Controller
         $doctor = $request->user()->doctor;
         abort_unless($doctor, 403);
 
+        $hasDateColumn = $this->supportsColumn('date');
         $validated = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
@@ -32,13 +34,21 @@ class AvailabilityController extends Controller
             return response()->json(['message' => 'Invalid range: "from" must be before "to".'], 422);
         }
 
-        $availabilities = DoctorAvailability::with('clinic')
-            ->where('doctor_id', $doctor->id)
-            ->whereBetween('date', [$from, $to])
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-        $availabilityData = DoctorAvailabilityResource::collection($availabilities)->resolve();
+        $availabilityData = [];
+        if ($hasDateColumn) {
+            $availabilities = DoctorAvailability::with('clinic')
+                ->where('doctor_id', $doctor->id)
+                ->whereBetween('date', [$from, $to])
+                ->orderBy('date')
+                ->orderBy('start_time')
+                ->get();
+            $availabilityData = DoctorAvailabilityResource::collection($availabilities)->resolve();
+        } else {
+            $availabilities = DoctorAvailability::with('clinic')
+                ->where('doctor_id', $doctor->id)
+                ->get();
+            $availabilityData = $this->expandRecurringAvailabilities($availabilities, $from, $to);
+        }
 
         $bookings = Appointment::with('patient')
             ->where('doctor_id', $doctor->id)
@@ -65,6 +75,11 @@ class AvailabilityController extends Controller
         $doctor = $request->user()->doctor;
         abort_unless($doctor, 403);
 
+        $hasDateColumn = $this->supportsColumn('date');
+        $hasEndColumn = $this->supportsColumn('end_time');
+        $hasTypeColumn = $this->supportsColumn('availability_type');
+        $hasStatusColumn = $this->supportsColumn('status');
+
         $validated = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
             'availability_type' => ['required', Rule::in(['clinic', 'online'])],
@@ -85,27 +100,41 @@ class AvailabilityController extends Controller
             ], 422);
         }
 
-        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots) {
+        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn) {
             $dayOfWeek = strtolower(Carbon::createFromFormat('Y-m-d', $validated['date'])->englishDayOfWeek);
 
-            return collect($normalizedSlots)->map(function ($slot) use ($doctor, $validated, $dayOfWeek) {
-                return DoctorAvailability::create([
+            return collect($normalizedSlots)->map(function ($slot) use ($doctor, $validated, $dayOfWeek, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn) {
+                $data = [
                     'doctor_id' => $doctor->id,
                     'clinic_id' => $validated['clinic_id'] ?? null,
-                    'date' => $validated['date'],
                     'day_of_week' => $dayOfWeek,
                     'start_time' => $slot['start_time'],
-                    'end_time' => $slot['end_time'],
-                    'availability_type' => $validated['availability_type'],
-                    'status' => 'active',
                     'slot_capacity' => $slot['slot_capacity'] ?? 1,
                     'fee_amount' => $slot['fee_amount'] ?? null,
-                ]);
+                ];
+                if ($hasDateColumn) {
+                    $data['date'] = $validated['date'];
+                }
+                if ($hasEndColumn) {
+                    $data['end_time'] = $slot['end_time'];
+                }
+                if ($hasTypeColumn) {
+                    $data['availability_type'] = $validated['availability_type'];
+                }
+                if ($hasStatusColumn) {
+                    $data['status'] = 'active';
+                }
+
+                return DoctorAvailability::create($data);
             });
         });
 
+        $responseAvailabilities = $hasDateColumn
+            ? DoctorAvailabilityResource::collection($created)->resolve()
+            : $this->expandRecurringAvailabilities($created, $validated['date'], $validated['date']);
+
         return response()->json([
-            'availabilities' => DoctorAvailabilityResource::collection($created)->resolve(),
+            'availabilities' => $responseAvailabilities,
         ], 201);
     }
 
@@ -128,6 +157,56 @@ class AvailabilityController extends Controller
         $doctorAvailability->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    private function supportsColumn(string $column): bool
+    {
+        return Schema::hasColumn('doctor_availabilities', $column);
+    }
+
+    private function expandRecurringAvailabilities($availabilities, string $from, string $to): array
+    {
+        $byDay = collect($availabilities)->groupBy(fn ($a) => strtolower((string) $a->day_of_week));
+        $out = [];
+
+        $cursor = Carbon::createFromFormat('Y-m-d', $from)->startOfDay();
+        $end = Carbon::createFromFormat('Y-m-d', $to)->endOfDay();
+        while ($cursor->lte($end)) {
+            $dayKey = strtolower($cursor->englishDayOfWeek);
+            foreach ($byDay->get($dayKey, []) as $slot) {
+                if (! $slot->start_time) {
+                    continue;
+                }
+                $startTime = $this->normalizeTime($slot->start_time);
+                $endTime = $slot->end_time
+                    ? $this->normalizeTime($slot->end_time)
+                    : $this->defaultEndFromStart($slot->start_time);
+                if (! $startTime || ! $endTime) {
+                    continue;
+                }
+
+                $out[] = [
+                    'id' => $slot->id,
+                    'doctor_id' => $slot->doctor_id,
+                    'clinic_id' => $slot->clinic_id,
+                    'date' => $cursor->toDateString(),
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'availability_type' => $slot->availability_type ?? 'online',
+                    'clinic' => $slot->clinic ? [
+                        'id' => $slot->clinic->id,
+                        'name' => $slot->clinic->name,
+                    ] : null,
+                    'status' => $slot->status ?? 'active',
+                    'day_of_week' => $slot->day_of_week,
+                    'slot_capacity' => $slot->slot_capacity,
+                    'fee_amount' => $slot->fee_amount,
+                ];
+            }
+            $cursor->addDay();
+        }
+
+        return $out;
     }
 
     private function normalizeSlots(array $slots): array
@@ -191,7 +270,10 @@ class AvailabilityController extends Controller
         }
 
         $existing = DoctorAvailability::where('doctor_id', $doctorId)
-            ->whereDate('date', $date)
+            ->when(
+                $this->supportsColumn('date'),
+                fn ($q) => $q->whereDate('date', $date)
+            )
             ->get();
 
         foreach ($slots as $slot) {
@@ -199,6 +281,9 @@ class AvailabilityController extends Controller
             $slotEnd = $this->combineDateTime($date, $slot['end_time']);
 
             foreach ($existing as $existingSlot) {
+                if (! $this->supportsColumn('date') && strtolower((string) $existingSlot->day_of_week) !== strtolower(Carbon::parse($date)->englishDayOfWeek)) {
+                    continue;
+                }
                 if (! $existingSlot->start_time) {
                     continue;
                 }

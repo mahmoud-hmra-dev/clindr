@@ -11,6 +11,7 @@ use App\Models\DoctorAvailability;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class AppointmentController extends Controller
@@ -96,11 +97,19 @@ public function index(Request $request)
 
         $appointmentEnd = (clone $scheduledAt)->addMinutes($validated['duration_minutes'] ?? 30);
         $availabilityType = $validated['appointment_type'] === 'in_clinic' ? 'clinic' : 'online';
+        $hasDateColumn = Schema::hasColumn('doctor_availabilities', 'date');
+        $hasTypeColumn = Schema::hasColumn('doctor_availabilities', 'availability_type');
 
         $availabilities = DoctorAvailability::query()
             ->where('doctor_id', $doctor->id)
-            ->whereDate('date', $scheduledAt->toDateString())
-            ->where('availability_type', $availabilityType)
+            ->when(
+                $hasDateColumn,
+                fn ($q) => $q->whereDate('date', $scheduledAt->toDateString())
+            )
+            ->when(
+                $hasTypeColumn,
+                fn ($q) => $q->where('availability_type', $availabilityType)
+            )
             ->when(
                 $availabilityType === 'clinic',
                 fn ($q) => $q->where(function ($inner) use ($clinic) {
@@ -111,6 +120,11 @@ public function index(Request $request)
                 })
             )
             ->get();
+
+        if (! $hasDateColumn) {
+            $dayKey = strtolower($scheduledAt->englishDayOfWeek);
+            $availabilities = $availabilities->filter(fn ($slot) => strtolower((string) $slot->day_of_week) === $dayKey);
+        }
 
         $slotExists = $availabilities->contains(function ($slot) use ($scheduledAt, $appointmentEnd) {
             if (! $slot->start_time) {
