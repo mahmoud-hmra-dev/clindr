@@ -2,13 +2,12 @@ import { Component } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
-import { PaginationService, tablePageSize } from 'src/app/shared/custom-pagination/pagination.service';
-import { DataService } from 'src/app/shared/data/data.service';
+import { AdminService } from 'src/app/core/services/admin.service';
 import {
-  patientList,
-  pageSelection,
-  apiResultFormat,
-} from 'src/app/shared/models/models';
+  PaginationService,
+  tablePageSize,
+} from 'src/app/shared/custom-pagination/pagination.service';
+import { PaginatedResponse, pageSelection } from 'src/app/shared/models/models';
 import { routes } from 'src/app/shared/routes/routes';
 
 @Component({
@@ -19,7 +18,8 @@ import { routes } from 'src/app/shared/routes/routes';
 })
 export class PatientListComponent {
   public routes = routes;
-  public tableData: Array<patientList> = [];
+  public tableData: Array<any> = [];
+  loading = false;
 
   // pagination variables
   public pageSize = 10;
@@ -31,7 +31,7 @@ export class PatientListComponent {
   // pagination variables end
 
   constructor(
-    private data: DataService,
+    private adminService: AdminService,
     private pagination: PaginationService,
     private router: Router
   ) {
@@ -44,29 +44,40 @@ export class PatientListComponent {
   }
 
   private getTableData(pageOption: pageSelection): void {
-    this.data.getPatientList().subscribe((apiRes: apiResultFormat) => {
-      this.tableData = [];
-      this.serialNumberArray = [];
-      this.totalData = apiRes.totalData;
-      apiRes.data.map((res: patientList, index: number) => {
-        const serialNumber = index + 1;
-        if (index >= pageOption.skip && serialNumber <= pageOption.limit) {
-          res.id = serialNumber;
-          this.tableData.push(res);
-          this.serialNumberArray.push(serialNumber);
-        }
+    this.loading = true;
+    const currentPage = Math.floor(pageOption.skip / this.pageSize) + 1;
+    this.adminService
+      .getPatients({ page: currentPage, per_page: this.pageSize })
+      .subscribe((apiRes: PaginatedResponse<any>) => {
+        const data = apiRes?.data ?? [];
+        const meta = (apiRes as any)?.meta;
+
+        this.pageSize = meta?.per_page ?? this.pageSize;
+        this.totalData = meta?.total ?? data.length;
+
+        const serialStart = ((meta?.current_page ?? 1) - 1) * this.pageSize;
+        this.tableData = data.map((res: any, index: number) => ({
+          id: res.id,
+          fullName: res.full_name || `#${res.id}`,
+          phone: res.phone || '—',
+          email: res.email || '—',
+          city: res.city || '—',
+          country: res.country || '',
+          serial: serialStart + index + 1,
+        }));
+        this.serialNumberArray = this.tableData.map((row) => row.serial);
+        this.dataSource = new MatTableDataSource<any>(this.tableData);
+        this.pagination.calculatePageSize.next({
+          totalData: this.totalData,
+          pageSize: this.pageSize,
+          tableData: this.tableData,
+          serialNumberArray: this.serialNumberArray,
+          tableData2: [],
+          tableData3: [],
+          tableData4: []
+        });
+        this.loading = false;
       });
-      this.dataSource = new MatTableDataSource<patientList>(this.tableData);
-      this.pagination.calculatePageSize.next({
-        totalData: this.totalData,
-        pageSize: this.pageSize,
-        tableData: this.tableData,
-        serialNumberArray: this.serialNumberArray,
-        tableData2: [],
-        tableData3: [],
-        tableData4: []
-      });
-    });
   }
 
   public sortData(sort: Sort) {
@@ -81,5 +92,16 @@ export class PatientListComponent {
         return (aValue < bValue ? -1 : 1) * (sort.direction === 'asc' ? 1 : -1);
       });
     }
+  }
+
+  deletePatient(id: number): void {
+    if (!id) {
+      return;
+    }
+    this.adminService.deletePatient(id).subscribe(() => {
+      this.tableData = this.tableData.filter((p) => p.id !== id);
+      this.totalData = Math.max(0, this.totalData - 1);
+      this.dataSource = new MatTableDataSource<any>(this.tableData);
+    });
   }
 }

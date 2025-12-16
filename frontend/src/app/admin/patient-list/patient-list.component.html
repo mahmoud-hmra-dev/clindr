@@ -26,32 +26,32 @@
                 class="datatable table table-hover table-center mb-0">
                 <thead>
                   <tr>
-                    <th mat-sort-header="patientId">Patient ID</th>
-                    <th mat-sort-header="patientName">Patient Name</th>
-                    <th mat-sort-header="age">Age</th>
-                    <th mat-sort-header="address">Address</th>
+                    <th mat-sort-header="id">Patient ID</th>
+                    <th mat-sort-header="fullName">Patient Name</th>
                     <th mat-sort-header="phone">Phone</th>
-                    <th mat-sort-header="lastVisit">Last Visit</th>
-                    <th mat-sort-header="paid">Paid</th>
+                    <th mat-sort-header="email">Email</th>
+                    <th mat-sort-header="city">Location</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (data of tableData; track data) {
                     <tr>
-                      <td>{{data.patientId}}</td>
+                      <td>{{data.id}}</td>
                       <td>
                         <h2 class="table-avatar">
                           <a [routerLink]="routes.adminProfile" class="avatar avatar-sm me-2"><img
-                            class="avatar-img rounded-circle" [src]="data.img"
+                            class="avatar-img rounded-circle" src="assets/admin/img/patients/patient1.jpg"
                           alt="User Image"></a>
-                          <a [routerLink]="routes.adminProfile">{{data.patientName}} </a>
+                          <a [routerLink]="routes.adminProfile">{{data.fullName}} </a>
                         </h2>
                       </td>
-                      <td>{{data.age}}</td>
-                      <td>{{data.address}}</td>
                       <td>{{data.phone}}</td>
-                      <td>{{data.lastVisit}}</td>
-                      <td>{{data.paid}}</td>
+                      <td>{{data.email}}</td>
+                      <td>{{data.city}} <span *ngIf="data.country">({{data.country}})</span></td>
+                      <td>
+                        <button class="btn btn-sm btn-danger" type="button" (click)="deletePatient(data.id)">Delete</button>
+                      </td>
                     </tr>
                   }
                 </tbody>

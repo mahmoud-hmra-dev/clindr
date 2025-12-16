@@ -10,11 +10,13 @@ class InvoiceController extends Controller
 {
     public function index()
     {
-        return InvoiceResource::collection(Invoice::paginate(25));
+        return InvoiceResource::collection(
+            Invoice::with(['doctor', 'patient'])->paginate(25)
+        );
     }
 
     public function show(Invoice $invoice)
     {
-        return new InvoiceResource($invoice);
+        return new InvoiceResource($invoice->load(['doctor', 'patient']));
     }
 }

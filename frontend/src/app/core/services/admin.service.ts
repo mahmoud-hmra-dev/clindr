@@ -7,16 +7,56 @@ import { environment } from '../../../environments/environment';
 export class AdminService {
   constructor(private http: HttpClient) {}
 
-  getDoctors(): Observable<any> {
-    return this.http.get(`${environment.apiBaseUrl}/admin/doctors`);
+  getStats(): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/stats`);
   }
 
-  getPatients(): Observable<any> {
-    return this.http.get(`${environment.apiBaseUrl}/admin/patients`);
+  getDoctors(params: any = {}): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/doctors`, { params });
   }
 
-  getAppointments(): Observable<any> {
-    return this.http.get(`${environment.apiBaseUrl}/admin/appointments`);
+  createDoctor(payload: any): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/admin/doctors`, payload);
+  }
+
+  updateDoctor(id: number, payload: any): Observable<any> {
+    return this.http.put(`${environment.apiBaseUrl}/admin/doctors/${id}`, payload);
+  }
+
+  deleteDoctor(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiBaseUrl}/admin/doctors/${id}`);
+  }
+
+  getPatients(params: any = {}): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/patients`, { params });
+  }
+
+  createPatient(payload: any): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/admin/patients`, payload);
+  }
+
+  updatePatient(id: number, payload: any): Observable<any> {
+    return this.http.put(`${environment.apiBaseUrl}/admin/patients/${id}`, payload);
+  }
+
+  deletePatient(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiBaseUrl}/admin/patients/${id}`);
+  }
+
+  getAppointments(params: any = {}): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/appointments`, { params });
+  }
+
+  createAppointment(payload: any): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/admin/appointments`, payload);
+  }
+
+  updateAppointment(id: number, payload: any): Observable<any> {
+    return this.http.put(`${environment.apiBaseUrl}/admin/appointments/${id}`, payload);
+  }
+
+  deleteAppointment(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiBaseUrl}/admin/appointments/${id}`);
   }
 
    getReviews(): Observable<any> {
@@ -25,5 +65,21 @@ export class AdminService {
 
   getInvoices(params: any = {}): Observable<any> {
     return this.http.get(`${environment.apiBaseUrl}/admin/invoices`, { params });
+  }
+
+  getSpecialties(params: any = {}): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/admin/specialties`, { params });
+  }
+
+  createSpecialty(payload: any): Observable<any> {
+    return this.http.post(`${environment.apiBaseUrl}/admin/specialties`, payload);
+  }
+
+  updateSpecialty(id: number, payload: any): Observable<any> {
+    return this.http.put(`${environment.apiBaseUrl}/admin/specialties/${id}`, payload);
+  }
+
+  deleteSpecialty(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiBaseUrl}/admin/specialties/${id}`);
   }
 }

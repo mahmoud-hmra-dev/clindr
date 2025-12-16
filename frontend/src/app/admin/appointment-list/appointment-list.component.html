@@ -26,38 +26,27 @@
                 <thead>
                   <tr>
                     <th mat-sort-header="doctorName">Doctor Name</th>
-                    <th mat-sort-header="speciality">Speciality</th>
                     <th mat-sort-header="patientName">Patient Name</th>
                     <th mat-sort-header="appointmentTime">Appointment Time</th>
                     <th mat-sort-header="status">Status</th>
                     <th mat-sort-header="amount">Amount</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (data of tableData; track data; let i = $index) {
                     <tr>
-                      <td>
-                        <h2 class="table-avatar">
-                          <a [routerLink] = "routes.adminProfile" class="avatar avatar-sm me-2"><img class="avatar-img rounded-circle" [src]="data.img1" alt="User Image"></a>
-                          <a [routerLink] = "routes.adminProfile">{{data.doctorName}}</a>
-                        </h2>
-                      </td>
-                      <td>{{data.speciality}}</td>
-                      <td>
-                        <h2 class="table-avatar">
-                          <a [routerLink] = "routes.adminProfile" class="avatar avatar-sm me-2"><img class="avatar-img rounded-circle" [src]="data.img2" alt="User Image"></a>
-                          <a [routerLink] = "routes.adminProfile">{{data.patientName}} </a>
-                        </h2>
-                      </td>
+                      <td>{{data.doctorName}}</td>
+                      <td>{{data.patientName}}</td>
                       <td>{{data.appointmentDate}} <span class="text-primary d-block">{{data.appointmentTime}}</span></td>
-                      <td>
-                        <div class="status-toggle">
-                          <input type="checkbox" id="{{ 'data.toggle' + i }}" class="check" [(ngModel)]="data.isStatus" />
-                          <label for="{{ 'data.toggle' + i }}" class="checktoggle">checkbox</label>
-                        </div>
-                      </td>
+                      <td><span class="badge rounded-pill bg-success-soft text-success text-capitalize">{{data.status}}</span></td>
                       <td>
                         {{data.amount}}
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-danger" type="button" (click)="deleteAppointment(data.id)">
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   }

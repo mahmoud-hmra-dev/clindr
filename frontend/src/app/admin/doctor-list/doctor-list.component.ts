@@ -2,9 +2,12 @@ import { Component } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
-import { PaginationService, tablePageSize } from 'src/app/shared/custom-pagination/pagination.service';
-import { DataService } from 'src/app/shared/data/data.service';
-import { doctorList, pageSelection, apiResultFormat } from 'src/app/shared/models/models';
+import { AdminService } from 'src/app/core/services/admin.service';
+import {
+  PaginationService,
+  tablePageSize,
+} from 'src/app/shared/custom-pagination/pagination.service';
+import { PaginatedResponse, pageSelection } from 'src/app/shared/models/models';
 import { routes } from 'src/app/shared/routes/routes';
 
 @Component({
@@ -15,20 +18,21 @@ import { routes } from 'src/app/shared/routes/routes';
 })
 export class DoctorListComponent {
   public routes = routes;
-  public tableData: Array<doctorList> = [];
+  public tableData: Array<any> = [];
   initChecked = false;
-  
+  loading = false;
+
   // pagination variables
   public pageSize = 10;
   public serialNumberArray: Array<number> = [];
   public totalData = 0;
   showFilter = false;
-  dataSource!: MatTableDataSource<doctorList>;
+  dataSource!: MatTableDataSource<any>;
   public searchDataValue = '';
   // pagination variables end
 
   constructor(
-    private data: DataService,
+    private adminService: AdminService,
     private pagination: PaginationService,
     private router: Router
   ) {
@@ -41,29 +45,42 @@ export class DoctorListComponent {
   }
 
   private getTableData(pageOption: pageSelection): void {
-    this.data.getDoctorList().subscribe((apiRes: apiResultFormat) => {
-      this.tableData = [];
-      this.serialNumberArray = [];
-      this.totalData = apiRes.totalData;
-      apiRes.data.map((res: doctorList, index: number) => {
-        const serialNumber = index + 1;
-        if (index >= pageOption.skip && serialNumber <= pageOption.limit) {
-          res.id = serialNumber;
-          this.tableData.push(res);
-          this.serialNumberArray.push(serialNumber);
-        }
+    this.loading = true;
+    const currentPage = Math.floor(pageOption.skip / this.pageSize) + 1;
+    this.adminService
+      .getDoctors({ page: currentPage, per_page: this.pageSize })
+      .subscribe((apiRes: PaginatedResponse<any>) => {
+        const data = apiRes?.data ?? [];
+        const meta = (apiRes as any)?.meta;
+
+        this.pageSize = meta?.per_page ?? this.pageSize;
+        this.totalData = meta?.total ?? data.length;
+
+        const serialStart = ((meta?.current_page ?? 1) - 1) * this.pageSize;
+        this.tableData = data.map((res: any, index: number) => ({
+          id: res.id,
+          doctorName: res.display_name || res.full_name || `#${res.id}`,
+          designation: res.designation || '—',
+          city: res.city || '—',
+          country: res.country || '',
+          defaultFee: res.default_fee ?? '—',
+          accepting: res.accepting_new_patients ?? false,
+          profileImage: res.profile_image_path || 'assets/admin/img/doctors/default.jpg',
+          serial: serialStart + index + 1,
+        }));
+        this.serialNumberArray = this.tableData.map((row) => row.serial);
+        this.dataSource = new MatTableDataSource<any>(this.tableData);
+        this.pagination.calculatePageSize.next({
+          totalData: this.totalData,
+          pageSize: this.pageSize,
+          tableData: this.tableData,
+          serialNumberArray: this.serialNumberArray,
+          tableData2: [],
+          tableData3: [],
+          tableData4: [],
+        });
+        this.loading = false;
       });
-      this.dataSource = new MatTableDataSource<doctorList>(this.tableData);
-      this.pagination.calculatePageSize.next({
-        totalData: this.totalData,
-        pageSize: this.pageSize,
-        tableData: this.tableData,
-        serialNumberArray: this.serialNumberArray,
-        tableData2: [],
-        tableData3: [],
-        tableData4: []
-      });
-    });
   }
 
   public sortData(sort: Sort) {
@@ -89,5 +106,16 @@ export class DoctorListComponent {
         f.isSelected = false;
       });
     }
+  }
+
+  deleteDoctor(id: number): void {
+    if (!id) {
+      return;
+    }
+    this.adminService.deleteDoctor(id).subscribe(() => {
+      this.tableData = this.tableData.filter((d) => d.id !== id);
+      this.totalData = Math.max(0, this.totalData - 1);
+      this.dataSource = new MatTableDataSource<any>(this.tableData);
+    });
   }
 }

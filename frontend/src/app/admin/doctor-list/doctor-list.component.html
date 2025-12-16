@@ -26,10 +26,11 @@
                 <thead>
                   <tr>
                     <th mat-sort-header="doctorName">Doctor Name</th>
-                    <th mat-sort-header="speciality">Speciality</th>
-                    <th mat-sort-header="memberSince">Member Since</th>
-                    <th mat-sort-header="earned">Earned</th>
-                    <th mat-sort-header="accountStatus">Account Status</th>
+                    <th mat-sort-header="designation">Designation</th>
+                    <th mat-sort-header="city">Location</th>
+                    <th mat-sort-header="defaultFee">Default Fee</th>
+                    <th mat-sort-header="accepting">Account Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -37,18 +38,25 @@
                     <tr>
                       <td>
                         <h2 class="table-avatar">
-                          <a [routerLink] = "routes.adminProfile" class="avatar avatar-sm me-2"><img class="avatar-img rounded-circle" [src]="data.img" alt="User Image"></a>
+                          <a [routerLink] = "routes.adminProfile" class="avatar avatar-sm me-2">
+                            <img class="avatar-img rounded-circle" [src]="data.profileImage" alt="User Image">
+                          </a>
                           <a [routerLink] = "routes.adminProfile">{{data.doctorName}}</a>
                         </h2>
                       </td>
-                      <td>{{data.speciality}}</td>
-                      <td>{{data.memberSince}} <br><small>{{data.time}}</small></td>
-                      <td>{{data.earned}}</td>
+                      <td>{{data.designation}}</td>
+                      <td>{{data.city}} <span *ngIf="data.country">({{data.country}})</span></td>
+                      <td>{{data.defaultFee || '--'}}</td>
                       <td>
                         <div class="status-toggle">
-                          <input type="checkbox" id="{{ 'data.toggle' + i }}" class="check" [(ngModel)]="data.isStatus" />
+                          <input type="checkbox" id="{{ 'data.toggle' + i }}" class="check" [(ngModel)]="data.accepting" disabled />
                           <label for="{{ 'data.toggle' + i }}" class="checktoggle">checkbox</label>
                         </div>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-danger" type="button" (click)="deleteDoctor(data.id)">
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   }

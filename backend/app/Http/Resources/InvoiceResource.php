@@ -25,6 +25,25 @@ class InvoiceResource extends JsonResource
             'pdf_url' => $this->pdf_url,
             'payment_status' => $this->payment_status,
             'payment_id' => $this->payment_id,
+            'doctor' => $this->whenLoaded('doctor', function () {
+                return [
+                    'id' => $this->doctor->id,
+                    'first_name' => $this->doctor->first_name,
+                    'last_name' => $this->doctor->last_name,
+                    'display_name' => $this->doctor->display_name,
+                    'email' => $this->doctor->email,
+                    'phone' => $this->doctor->phone,
+                ];
+            }),
+            'patient' => $this->whenLoaded('patient', function () {
+                return [
+                    'id' => $this->patient->id,
+                    'first_name' => $this->patient->first_name,
+                    'last_name' => $this->patient->last_name,
+                    'email' => $this->patient->email,
+                    'phone' => $this->patient->phone,
+                ];
+            }),
         ];
     }
 }

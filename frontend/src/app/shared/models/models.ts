@@ -6,6 +6,17 @@ export interface apiResultFormat {
   data: [];
   totalData: number;
 }
+
+export interface PaginationMeta {
+  total: number;
+  per_page: number;
+  current_page: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta?: PaginationMeta;
+}
 export interface url {
   url: string;
 }

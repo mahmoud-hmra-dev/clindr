@@ -3,6 +3,8 @@
 use App\Http\Controllers\API\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\API\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\API\Admin\PatientController as AdminPatientController;
+use App\Http\Controllers\API\Admin\AppointmentController as AdminAppointmentController;
+use App\Http\Controllers\API\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\API\Admin\SpecialtyController as AdminSpecialtyController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
 use App\Http\Controllers\API\AuthController;
@@ -75,7 +77,6 @@ Route::get('doctors', [DoctorPublicController::class, 'index']);
 Route::get('doctors/{doctor}', [DoctorPublicController::class, 'show']);
 Route::get('doctors/{doctor}/booked-slots', [DoctorPublicController::class, 'bookedSlots']);
 Route::get('specialties', [DoctorPublicController::class, 'specialties']);
-Route::get('specialties', [AdminSpecialtyController::class, 'index']);
 
 Route::middleware(['auth:sanctum', 'role:doctor', 'permission:appointment.view_own'])->prefix('doctor')->group(function () {
     Route::get('appointments', [DoctorAppointmentController::class, 'index']);
@@ -109,9 +110,11 @@ Route::middleware(['auth:sanctum', 'role:doctor', 'permission:appointment.view_o
 });
 
 Route::middleware(['auth:sanctum', 'role:admin', 'permission:user.manage'])->prefix('admin')->group(function () {
+    Route::get('stats', [AdminDashboardController::class, 'summary']);
     Route::apiResource('users', AdminUserController::class);
-    Route::apiResource('doctors', AdminDoctorController::class)->only(['index', 'show', 'update']);
-    Route::apiResource('patients', AdminPatientController::class)->only(['index', 'show', 'update']);
+    Route::apiResource('doctors', AdminDoctorController::class);
+    Route::apiResource('patients', AdminPatientController::class);
+    Route::apiResource('appointments', AdminAppointmentController::class);
     Route::apiResource('specialties', AdminSpecialtyController::class);
     Route::apiResource('invoices', AdminInvoiceController::class)->only(['index', 'show']);
     Route::get('reviews', [AdminReviewController::class, 'index']);
