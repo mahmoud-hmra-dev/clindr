@@ -28,7 +28,7 @@ export class SpecialitiesComponent {
   public serialNumberArray: Array<number> = [];
   public totalData = 0;
   showFilter = false;
-  dataSource!: MatTableDataSource<specialities>;
+  dataSource!: MatTableDataSource<any>;
   public searchDataValue = '';
   // pagination variables end
 

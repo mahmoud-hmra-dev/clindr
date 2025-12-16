@@ -26,7 +26,7 @@ export class PatientListComponent {
   public serialNumberArray: Array<number> = [];
   public totalData = 0;
   showFilter = false;
-  dataSource!: MatTableDataSource<patientList>;
+  dataSource!: MatTableDataSource<any>;
   public searchDataValue = '';
   // pagination variables end
 
