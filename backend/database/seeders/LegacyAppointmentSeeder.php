@@ -32,9 +32,16 @@ class LegacyAppointmentSeeder extends Seeder
         foreach ($rows as $row) {
             $doctorEmail = trim((string) Arr::get($row, 'doctor_email', ''));
             $patientEmail = trim((string) Arr::get($row, 'patient_email', ''));
-            $scheduledAt = Arr::get($row, 'scheduled_at');
+            $scheduledAtRaw = Arr::get($row, 'scheduled_at');
 
-            if (! $doctorEmail || ! $patientEmail || ! $scheduledAt) {
+            if (! $doctorEmail || ! $patientEmail || ! $scheduledAtRaw || strtoupper((string) $scheduledAtRaw) === 'NULL') {
+                continue;
+            }
+
+            try {
+                $scheduledAt = Carbon::parse($scheduledAtRaw);
+            } catch (\Throwable $e) {
+                $this->command?->warn("Skipping booking {$row['old_booking_id']} due to invalid scheduled_at: {$scheduledAtRaw}");
                 continue;
             }
 
@@ -58,7 +65,7 @@ class LegacyAppointmentSeeder extends Seeder
                 [
                     'doctor_id' => $doctor->id,
                     'patient_id' => $patient->id,
-                    'scheduled_at' => Carbon::parse($scheduledAt),
+                    'scheduled_at' => $scheduledAt,
                 ],
                 [
                     'appointment_type' => $appointmentType,
