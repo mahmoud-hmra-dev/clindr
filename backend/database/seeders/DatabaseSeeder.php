@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SampleDataSeeder::class,
             DoctorExcelSeeder::class,
+            LegacyPatientSeeder::class,
+            LegacyAppointmentSeeder::class,
+            LegacyInvoiceSeeder::class,
         ]);
     }
 }
