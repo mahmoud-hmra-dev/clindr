@@ -12,6 +12,39 @@ use Illuminate\Support\Carbon;
 
 class LegacyAppointmentSeeder extends Seeder
 {
+    private function normalizeStatus(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+
+        return match ($normalized) {
+            'done' => 'completed',
+            'approved' => 'confirmed',
+            'ongoing' => 'confirmed',
+            'canceled by patient', 'cancelled by patient', 'canceled by doctor', 'cancelled by doctor' => 'cancelled',
+            default => $normalized ?: 'pending',
+        };
+    }
+
+    private function parseNullableDate($value): ?Carbon
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '' || strtoupper($trimmed) === 'NULL') {
+                return null;
+            }
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function run(): void
     {
         $dataFile = __DIR__ . '/data/legacy_appointments.php';
@@ -32,16 +65,10 @@ class LegacyAppointmentSeeder extends Seeder
         foreach ($rows as $row) {
             $doctorEmail = trim((string) Arr::get($row, 'doctor_email', ''));
             $patientEmail = trim((string) Arr::get($row, 'patient_email', ''));
-            $scheduledAtRaw = Arr::get($row, 'scheduled_at');
+            $scheduledAt = $this->parseNullableDate(Arr::get($row, 'scheduled_at'));
 
-            if (! $doctorEmail || ! $patientEmail || ! $scheduledAtRaw || strtoupper((string) $scheduledAtRaw) === 'NULL') {
-                continue;
-            }
-
-            try {
-                $scheduledAt = Carbon::parse($scheduledAtRaw);
-            } catch (\Throwable $e) {
-                $this->command?->warn("Skipping booking {$row['old_booking_id']} due to invalid scheduled_at: {$scheduledAtRaw}");
+            if (! $doctorEmail || ! $patientEmail || ! $scheduledAt) {
+                $this->command?->warn("Skipping booking {$row['old_booking_id']} due to missing doctor/patient/scheduled_at");
                 continue;
             }
 
@@ -58,7 +85,7 @@ class LegacyAppointmentSeeder extends Seeder
             }
 
             $creatorId = $patient->user_id ?? User::where('email', $patientEmail)->value('id');
-            $status = strtolower((string) Arr::get($row, 'status', 'pending'));
+            $status = $this->normalizeStatus((string) Arr::get($row, 'status', 'pending'));
             $appointmentType = Arr::get($row, 'appointment_type', 'in_clinic');
 
             $appointment = Appointment::updateOrCreate(
@@ -82,11 +109,11 @@ class LegacyAppointmentSeeder extends Seeder
                 ]
             );
 
-            if ($createdAt = Arr::get($row, 'created_at')) {
-                $appointment->created_at = Carbon::parse($createdAt);
+            if ($createdAt = $this->parseNullableDate(Arr::get($row, 'created_at'))) {
+                $appointment->created_at = $createdAt;
             }
-            if ($updatedAt = Arr::get($row, 'updated_at')) {
-                $appointment->updated_at = Carbon::parse($updatedAt);
+            if ($updatedAt = $this->parseNullableDate(Arr::get($row, 'updated_at'))) {
+                $appointment->updated_at = $updatedAt;
             }
             $appointment->save();
         }
