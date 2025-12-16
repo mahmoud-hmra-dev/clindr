@@ -128,7 +128,6 @@ class SampleDataSeeder extends Seeder
             ],
             [
                 'day_of_week' => 'monday',
-                'end_time' => '12:00:00',
                 'availability_type' => 'clinic',
                 'status' => 'active',
                 'slot_capacity' => 4,
@@ -144,7 +143,6 @@ class SampleDataSeeder extends Seeder
             ],
             [
                 'day_of_week' => 'tuesday',
-                'end_time' => '10:00:00',
                 'availability_type' => 'clinic',
                 'status' => 'active',
                 'slot_capacity' => 4,
@@ -160,7 +158,6 @@ class SampleDataSeeder extends Seeder
             ],
             [
                 'day_of_week' => 'wednesday',
-                'end_time' => '17:00:00',
                 'availability_type' => 'clinic',
                 'status' => 'active',
                 'slot_capacity' => 4,
@@ -387,7 +384,6 @@ class SampleDataSeeder extends Seeder
                 'start_time' => '07:00:00',
             ],
             [
-                'end_time' => '10:00:00',
                 'availability_type' => 'clinic',
                 'status' => 'active',
                 'slot_capacity' => 6,
