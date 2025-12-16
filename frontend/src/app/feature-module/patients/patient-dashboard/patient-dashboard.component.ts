@@ -51,6 +51,15 @@ export class PatientDashboardComponent implements OnInit {
   latestVital: any = null;
   latestVitalDate = '';
   upcomingAppointments: any[] = [];
+  appointments: any[] = [];
+  medicalRecords: any[] = [];
+  prescriptions: any[] = [];
+  invoices: any[] = [];
+  appointmentById: Record<number, any> = {};
+  doctorById: Record<number, any> = {};
+  loadingAppointments = false;
+  loadingMedicalRecords = false;
+  loadingInvoices = false;
   public doctorSliderOptions: OwlOptions = {
     loop: true,
     margin: 24,
@@ -206,6 +215,8 @@ export class PatientDashboardComponent implements OnInit {
     });
     this.loadVitals();
     this.loadAppointments();
+    this.loadMedicalRecords();
+    this.loadInvoices();
   }
 
   private loadVitals(): void {
@@ -219,11 +230,96 @@ export class PatientDashboardComponent implements OnInit {
   }
 
   private loadAppointments(): void {
-    this.appointmentService.listPatientAppointments().subscribe((res) => {
-      const data = Array.isArray(res?.data) ? res.data : res;
-      this.upcomingAppointments = (data || []).filter((a: any) =>
-        ['pending', 'confirmed', 'waiting_payment'].includes(a.status)
-      );
+    this.loadingAppointments = true;
+    this.appointmentService.listPatientAppointments().subscribe({
+      next: (res) => {
+        const data = Array.isArray(res?.data) ? res.data : res;
+        this.appointments = data || [];
+        this.appointmentById = {};
+        this.doctorById = {};
+        this.appointments.forEach((a: any) => {
+          if (a?.id) this.appointmentById[a.id] = a;
+          if (a?.doctor_id && a?.doctor && !this.doctorById[a.doctor_id]) {
+            this.doctorById[a.doctor_id] = a.doctor;
+          }
+        });
+        this.upcomingAppointments = this.appointments.filter((a: any) =>
+          ['pending', 'confirmed', 'waiting_payment'].includes((a?.status || '').toLowerCase())
+        );
+        this.loadingAppointments = false;
+      },
+      error: () => {
+        this.loadingAppointments = false;
+      },
     });
+  }
+
+  private loadMedicalRecords(): void {
+    this.loadingMedicalRecords = true;
+    this.patientService.getMedicalRecords().subscribe({
+      next: (res) => {
+        const data = Array.isArray(res?.data) ? res.data : res;
+        this.medicalRecords = data || [];
+        this.prescriptions = this.medicalRecords.filter((rec: any) =>
+          (rec?.record_type || '').toString().toLowerCase().includes('prescription')
+        );
+        this.loadingMedicalRecords = false;
+      },
+      error: () => {
+        this.loadingMedicalRecords = false;
+      },
+    });
+  }
+
+  private loadInvoices(): void {
+    this.loadingInvoices = true;
+    this.patientService.getInvoices().subscribe({
+      next: (res) => {
+        const data = Array.isArray(res?.data) ? res.data : res;
+        this.invoices = data || [];
+        this.loadingInvoices = false;
+      },
+      error: () => {
+        this.loadingInvoices = false;
+      },
+    });
+  }
+
+  doctorDisplayName(doctorId?: number): string {
+    const doctor = doctorId ? this.doctorById[doctorId] : null;
+    if (!doctor) return 'Doctor';
+    return doctor.display_name || `${doctor.first_name || ''} ${doctor.last_name || ''}`.trim() || 'Doctor';
+  }
+
+  doctorImage(doctorId?: number): string {
+    const doctor = doctorId ? this.doctorById[doctorId] : null;
+    return doctor?.profile_image_path || 'assets/img/doctors/doctor-thumb-01.jpg';
+  }
+
+  appointmentDoctorNameFromRecord(record: any): string {
+    const appointment = record?.appointment_id ? this.appointmentById[record.appointment_id] : null;
+    if (appointment?.doctor_id && this.doctorById[appointment.doctor_id]) {
+      return this.doctorDisplayName(appointment.doctor_id);
+    }
+    return record?.doctor_id ? this.doctorDisplayName(record.doctor_id) : 'Doctor';
+  }
+
+  appointmentDateFromRecord(record: any): string | null {
+    const appointment = record?.appointment_id ? this.appointmentById[record.appointment_id] : null;
+    return appointment?.scheduled_at || null;
+  }
+
+  statusBadgeClass(status: string): string {
+    const normalized = (status || '').toLowerCase();
+    if (normalized === 'completed') return 'badge-soft-success';
+    if (normalized === 'confirmed' || normalized === 'waiting_payment') return 'badge-soft-purple';
+    if (normalized === 'pending') return 'badge-soft-purple';
+    if (normalized === 'cancelled') return 'badge-soft-danger';
+    return 'badge-soft-secondary';
+  }
+
+  statusLabel(status: string): string {
+    const normalized = (status || '').replace('_', ' ');
+    return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'N/A';
   }
 }
