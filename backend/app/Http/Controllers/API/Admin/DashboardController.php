@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $latestDoctors = Doctor::query()->latest()->take(5)->get();
         $latestPatients = Patient::query()->latest()->take(5)->get();
         $recentAppointments = Appointment::query()
-            ->with(['doctor', 'patient'])
+            ->with(['doctor', 'patient', 'invoice'])
             ->latest('scheduled_at')
             ->take(5)
             ->get();
