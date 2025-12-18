@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OwlOptions } from 'ngx-owl-carousel-o';
 import { routes } from 'src/app/shared/routes/routes';
 import { DoctorService } from 'src/app/core/services/doctor.service';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
     selector: 'app-doctor-profile1',
@@ -33,7 +34,7 @@ export class DoctorProfile1Component implements OnInit {
 			margin: 24,
 			dots: false,
 			nav: true,
-			smartSpeed: 2000,			
+			smartSpeed: 2000,
 			navText: ['<i class="fa-solid fa-chevron-left "></i>', '<i class="fa-solid fa-chevron-right"></i>'],
     responsive: {
       0: {
@@ -55,7 +56,7 @@ export class DoctorProfile1Component implements OnInit {
 			margin: 24,
 			dots: false,
 			nav: true,
-			smartSpeed: 2000,		
+			smartSpeed: 2000,
 			navText: ['<i class="fa-solid fa-chevron-left "></i>', '<i class="fa-solid fa-chevron-right"></i>'],
       responsive: {
 				0: {
@@ -80,8 +81,8 @@ export class DoctorProfile1Component implements OnInit {
     margin: 24,
     dots: false,
     nav: true,
-    smartSpeed: 2000,	
-    
+    smartSpeed: 2000,
+
 			navText: ['<i class="fa-solid fa-chevron-left "></i>', '<i class="fa-solid fa-chevron-right"></i>'],
       responsive: {
 				0: {
@@ -117,9 +118,24 @@ export class DoctorProfile1Component implements OnInit {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+
+
+    handleBook(doctor: any): void {
+    if (!this.authService.getToken()) {
+      this.router.navigate(['/authentication/login'], {
+        queryParams: { redirect: '/pages/booking', doctor: doctor.id },
+      });
+      return;
+    }
+    this.router.navigate(['/pages/booking'], {
+      queryParams: { id: doctor.id },
+    });
+  }
   constructor(
     private route: ActivatedRoute,
-    private doctorService: DoctorService
+    private doctorService: DoctorService,
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

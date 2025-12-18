@@ -68,7 +68,7 @@
           <div class="bottom-book-btn">
             <p><span>Price : ${{ getFee() }}</span></p>
             <div class="clinic-booking">
-              <a class="apt-btn" [routerLink]="routes.booking" [queryParams]="{ id: doctor?.id }">Book Appointment</a>
+              <a class="apt-btn" (click)="handleBook(doctor)">Book Appointment</a>
             </div>
           </div>
         </div>
