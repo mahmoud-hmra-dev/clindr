@@ -22,7 +22,7 @@ COPY . .
 
 RUN cp .env.example .env || true
 
-ENV APP_URL=https://payment.clindoctor.net
+ENV APP_URL=https://clindr-payment.hdf.usj.edu.lb
 
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
