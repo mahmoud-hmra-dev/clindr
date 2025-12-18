@@ -12,7 +12,7 @@ const env = <T>(key: string, fallback: T): T => {
 export const environment = {
   production: env('production', false),
   apiBaseUrl: env('apiBaseUrl', 'https://api.clindoctor.net/api'),
-  baseurl: env('baseurl', 'https://clindoctor.net'),
+  baseurl: env('baseurl', 'https://hospital.clindoctor.net'),
   hopePaymentUrl: env('hopePaymentUrl', 'https://payment.clindoctor.net/api/makeHash'),
   paymenturl: env('paymenturl', 'https://payment.clindoctor.net'),
   hopePaymentProjectId: env('hopePaymentProjectId', '4d2ff084-1afd-4c6a-b2e7-6e8de34bd6c8'),
