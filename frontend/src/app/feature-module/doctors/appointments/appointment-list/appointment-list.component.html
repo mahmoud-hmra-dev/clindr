@@ -95,7 +95,7 @@
                     </div>
                   </li>
                   <li class="appointment-info">
-                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at | date:'medium' }}</p>
+                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                     <ul class="d-flex apponitment-types">
                       <li *ngFor="let t of appointmentTypes(appt)">{{ t }}</li>
                     </ul>
@@ -145,7 +145,7 @@
                     </div>
                   </li>
                   <li class="appointment-info">
-                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at | date:'medium' }}</p>
+                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at |date: 'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                     <ul class="d-flex apponitment-types">
                       <li *ngFor="let t of appointmentTypes(appt)">{{ t }}</li>
                     </ul>
@@ -175,7 +175,7 @@
                     </div>
                   </li>
                   <li class="appointment-info">
-                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at | date:'medium' }}</p>
+                    <p><i class="isax isax-clock5"></i>{{ appt.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                     <ul class="d-flex apponitment-types">
                       <li *ngFor="let t of appointmentTypes(appt)">{{ t }}</li>
                     </ul>

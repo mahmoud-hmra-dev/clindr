@@ -245,7 +245,7 @@
                                    <a [routerLink]="routes.doctorProfile1">{{ doctorDisplayName(appt.doctor_id) }}</a>
                                  </h2>
                                </td>
-                               <td>{{ appt.scheduled_at | date:'dd MMM yyyy, hh:mm a' }}</td>
+                               <td>{{ appt.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</td>
                                <td>{{ appt.appointment_type === 'online' ? 'Online' : 'Clinic Visit' }}</td>
                                <td>
                                  <span class="badge badge-xs p-2 inline-flex align-items-center" [ngClass]="statusBadgeClass(appt.status)">

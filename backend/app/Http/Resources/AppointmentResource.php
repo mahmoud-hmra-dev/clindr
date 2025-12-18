@@ -66,7 +66,6 @@ class AppointmentResource extends JsonResource
                 ];
             }),
 
-            // 🔹 booked invoice (السعر الفعلي)
             'invoice' => $this->whenLoaded('invoice', function () {
                 return [
                     'id' => $this->invoice->id,

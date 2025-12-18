@@ -14,7 +14,7 @@
             <h4>Invoice #{{ invoice.id }}</h4>
             <p>Amount: {{ invoice.total_amount || invoice.amount }}</p>
             <p>Status: {{ invoice.status || 'N/A' }}</p>
-            <p>Appointment: {{ invoice.appointment?.scheduled_at | date:'medium' }}</p>
+            <p>Appointment: {{ invoice.appointment?.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</p>
           </div>
         </div>
         <p *ngIf="!loading && !invoice">No invoice found.</p>

@@ -36,8 +36,8 @@
                       <span>{{ inv.patient?.user?.name || inv.patient_name || 'Patient' }}</span>
                     </h2>
                   </td>
-                  <td>{{ inv.appointment?.scheduled_at | date:'medium' }}</td>
-                  <td>{{ inv.booked_on | date:'medium' }}</td>
+                  <td>{{ inv.appointment?.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</td>
+                  <td>{{ inv.booked_on | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</td>
                   <td>${{ inv.total_amount || inv.amount || inv.subtotal }}</td>
                 </tr>
                 <tr *ngIf="!invoices.length">

@@ -221,7 +221,7 @@
                                             </div>
                                         </li>
                                         <li class="appointment-info">
-                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                                             <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
                                         </li>
                                         <li class="appointment-action">
@@ -263,7 +263,7 @@
                                             </div>
                                         </li>
                                         <li class="appointment-info">
-                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                                             <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
                                         </li>
                                         <li class="appointment-action">
@@ -303,7 +303,7 @@
                                             </div>
                                         </li>
                                         <li class="appointment-info">
-                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a' }}</p>
+                                            <p><i class="isax isax-clock5"></i>{{ appt?.scheduled_at | date:'EEE, dd MMM y, h:mm a':'UTC' }}</p>
                                             <p class="mb-0"><i class="isax isax-location5"></i>{{ appt?.clinic_location || appt?.clinic?.address || 'Online' }}</p>
                                         </li>
                                         <li class="appointment-action">

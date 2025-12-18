@@ -98,7 +98,7 @@
             <ul class="detail-card-bottom-info">
               <li>
                 <h6>Appointment Date &amp; Time</h6>
-                <span>{{ appointment.scheduled_at | date:'medium' }}</span>
+                <span>{{ appointment.scheduled_at | date: 'EEE, dd MMM y, h:mm a':'UTC' }}</span>
               </li>
               <li>
                 <h6>Clinic Location</h6>
