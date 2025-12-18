@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonService } from './shared/common/common.service';
 import {
   NavigationEnd,
@@ -10,13 +10,15 @@ import { DataService } from './shared/data/data.service';
 import { SidebarService } from './shared/sidebar/sidebar.service';
 import { routes } from 'src/app/shared/routes/routes';
 import { url } from './shared/models/models';
+import { VersionCheckService } from './core/services/version-check.service';
+import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: false
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   public routes = routes;
   title = 'template';
   base = '';
@@ -26,12 +28,16 @@ export class AppComponent {
   public expandMenu = false;
   public mobileSidebar = false;
   public showMiniSidebar = false;
+  public updateAvailable = false;
+  public latestVersion?: string;
+  private versionSubscription?: Subscription;
 
   constructor(
     private common: CommonService,
     private router: Router,
     private data: DataService,
-    private sidebar: SidebarService
+    private sidebar: SidebarService,
+    private versionCheckService: VersionCheckService
   ) {
     this.common.base.subscribe((res: string) => {
       this.base = res;
@@ -101,10 +107,27 @@ export class AppComponent {
     });
   }
 
+  ngOnInit() {
+    this.versionSubscription = this.versionCheckService.watch(60 * 1000).subscribe((result) => {
+      if (result.hasUpdate) {
+        this.updateAvailable = true;
+        this.latestVersion = result.latest;
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.versionSubscription?.unsubscribe();
+  }
+
   public getRoutes(events: url) {
     const splitVal = events.url.split('/');
     this.common.base.next(splitVal[1]);
     this.common.page.next(splitVal[2]);
     this.common.last.next(splitVal[3]);
+  }
+
+  public reloadForUpdate() {
+    window.location.reload();
   }
 }

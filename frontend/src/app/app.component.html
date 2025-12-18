@@ -29,4 +29,15 @@
   }">
   <router-outlet></router-outlet>
 </div>
+
+<div class="version-banner" *ngIf="updateAvailable">
+  <div class="version-banner__content">
+    <div class="version-banner__text">
+      New version is available.
+      <span *ngIf="latestVersion" class="version-banner__tag">v{{ latestVersion }}</span>
+    </div>
+    <button class="btn btn-primary btn-sm" type="button" (click)="reloadForUpdate()">Reload</button>
+  </div>
+</div>
+
 <app-modal></app-modal>
