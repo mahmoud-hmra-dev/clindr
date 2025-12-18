@@ -87,7 +87,6 @@ class AvailabilityController extends Controller
             'clinic_id' => ['nullable', 'required_if:availability_type,clinic', 'exists:clinics,id'],
             'slots' => ['required', 'array', 'min:1'],
             'slots.*.start_time' => ['required', 'date_format:H:i'],
-            'slots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
         $this->ensureClinicBelongsToDoctor($doctor->id, $validated['clinic_id'] ?? null, $validated['availability_type']);
