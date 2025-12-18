@@ -19,7 +19,6 @@ class DoctorAvailabilityResource extends JsonResource
             'clinic_id' => $this->clinic_id,
             'date' => optional($this->date)->format('Y-m-d'),
             'start_time' => $this->formatTime($this->start_time),
-            'end_time' => $this->formatTime($this->end_time),
             'availability_type' => $this->availability_type,
             'clinic' => $this->when(
                 $this->availability_type === 'clinic' || $this->clinic,

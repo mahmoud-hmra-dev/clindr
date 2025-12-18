@@ -84,7 +84,6 @@ export class AvailableTimingsComponent implements OnInit {
   private buildSlotRow(slot?: any): FormGroup {
     return this.fb.group({
       start_time: [slot?.start_time || '', Validators.required],
-      end_time: [slot?.end_time || ''],
     });
   }
 
@@ -267,6 +266,20 @@ export class AvailableTimingsComponent implements OnInit {
     return value.substring(0, 5);
   }
 
+  endTimeLabel(slot: any): string {
+    const start = this.toTime(slot.start_time);
+    if (!start) {
+      return '';
+    }
+    const [h, m] = start.split(':').map((v) => parseInt(v, 10) || 0);
+    const d = new Date();
+    d.setHours(h, m || 0, 0, 0);
+    d.setMinutes(d.getMinutes() + 30);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
   private buildPayload(): any | null {
     if (!this.modalDate) return null;
 
@@ -282,7 +295,7 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = slot.end_time ? this.timeToMinutes(slot.end_time) : (start !== null ? start + 30 : null);
+      const end = start !== null ? start + 30 : null;
       if (start === null || end === null) {
         issues.push(`Slot ${idx + 1}: time must be HH:mm.`);
         return;
@@ -295,9 +308,9 @@ export class AvailableTimingsComponent implements OnInit {
     for (let i = 0; i < slots.length; i++) {
       for (let j = i + 1; j < slots.length; j++) {
         const aStart = this.timeToMinutes(slots[i].start_time);
-        const aEnd = slots[i].end_time ? this.timeToMinutes(slots[i].end_time) : (aStart !== null ? aStart + 30 : null);
+        const aEnd = aStart !== null ? aStart + 30 : null;
         const bStart = this.timeToMinutes(slots[j].start_time);
-        const bEnd = slots[j].end_time ? this.timeToMinutes(slots[j].end_time) : (bStart !== null ? bStart + 30 : null);
+        const bEnd = bStart !== null ? bStart + 30 : null;
         if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
         if (this.rangesOverlap(aStart, aEnd, bStart, bEnd)) {
           issues.push(`Slots ${i + 1} and ${j + 1} overlap.`);
@@ -310,12 +323,12 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = slot.end_time ? this.timeToMinutes(slot.end_time) : (start !== null ? start + 30 : null);
+      const end = start !== null ? start + 30 : null;
       if (start === null || end === null) return;
 
       existingAvailabilities.forEach((existing) => {
         const existingStart = this.timeToMinutes(existing.start_time || existing.start || '');
-        const existingEnd = this.timeToMinutes(existing.end_time || existing.end || '');
+        const existingEnd = existingStart !== null ? existingStart + 30 : null;
         if (existingStart === null || existingEnd === null) return;
         if (this.rangesOverlap(start, end, existingStart, existingEnd)) {
           issues.push(`Slot ${idx + 1} overlaps existing availability ${this.toTime(existing.start_time)} - ${this.toTime(existing.end_time)}.`);
@@ -362,7 +375,6 @@ export class AvailableTimingsComponent implements OnInit {
       clinic_id: clinicId,
       slots: slots.map((slot) => ({
         start_time: this.normalizeTimeInput(slot.start_time),
-        end_time: slot.end_time ? this.normalizeTimeInput(slot.end_time) : null,
       })),
     };
   }

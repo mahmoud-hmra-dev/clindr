@@ -57,7 +57,7 @@
                       <div class="availability-pill" *ngFor="let slot of selectedDayAvailabilities">
                         <div>
                           <div class="pill-title">{{ formatSlotLabel(slot) }}</div>
-                          <div class="pill-meta">{{ toTime(slot.start_time) }} - {{ toTime(slot.end_time || slot.start_time) }}</div>
+                          <div class="pill-meta">{{ toTime(slot.start_time) }} - {{ endTimeLabel(slot) }}</div>
                         </div>
                       </div>
                     </div>
@@ -143,9 +143,6 @@
                           <label class="form-label">Time</label>
                           <input type="time" class="form-control" formControlName="start_time">
                         </div>
-                        <div class="col-12 col-md-3 d-none">
-                          <input type="time" class="form-control" formControlName="end_time">
-                        </div>
                         <div class="col-12 col-md-3 d-flex justify-content-start">
                           <button type="button" class="btn btn-link text-danger" (click)="removeSlotRow(i)" [disabled]="slots.length === 1">
                             <i class="fa fa-trash"></i>
@@ -165,7 +162,7 @@
                   <div class="pill-title mb-1">Existing availability</div>
                   <div class="availability-pill" *ngFor="let slot of getDayAvailabilities(modalDate!)">
                     <div class="pill-title">{{ formatSlotLabel(slot) }}</div>
-                    <div class="pill-meta">{{ toTime(slot.start_time) }} - {{ toTime(slot.end_time || slot.start_time) }}</div>
+                    <div class="pill-meta">{{ toTime(slot.start_time) }} - {{ endTimeLabel(slot) }}</div>
                     <button type="button"
                             class="btn btn-sm btn-outline-danger ms-2"
                             (click)="deleteAvailability(slot)"

@@ -223,12 +223,8 @@ export class BookingComponent implements OnInit {
       if (!av.start_time) continue;
 
       const startTimeStr = this.getTimePartFromIso(av.start_time) || av.start_time;
-      let endTimeStr   = this.getTimePartFromIso(av.end_time) || av.end_time;
-      if (!endTimeStr && startTimeStr) {
-        endTimeStr = this.addDefaultEndTime(startTimeStr);
-      }
-
-      if (!startTimeStr || !endTimeStr) continue;
+      if (!startTimeStr) continue;
+      const endTimeStr = this.addDefaultEndTime(startTimeStr);
 
       const start = this.combineDateAndTime(this.selectedDate, startTimeStr);
       const end   = this.combineDateAndTime(this.selectedDate, endTimeStr);

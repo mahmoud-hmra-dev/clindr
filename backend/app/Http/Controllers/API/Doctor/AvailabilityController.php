@@ -76,7 +76,6 @@ class AvailabilityController extends Controller
         abort_unless($doctor, 403);
 
         $hasDateColumn = $this->supportsColumn('date');
-        $hasEndColumn = $this->supportsColumn('end_time');
         $hasTypeColumn = $this->supportsColumn('availability_type');
         $hasStatusColumn = $this->supportsColumn('status');
 
@@ -125,7 +124,7 @@ class AvailabilityController extends Controller
             ], 422);
         }
 
-        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn, $startDate, $endDate) {
+        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots, $hasDateColumn, $hasTypeColumn, $hasStatusColumn, $startDate, $endDate) {
             $createdSlots = collect();
 
             $cursor = (clone $startDate);
@@ -144,9 +143,6 @@ class AvailabilityController extends Controller
                     ];
                     if ($hasDateColumn) {
                         $data['date'] = $dateString;
-                    }
-                    if ($hasEndColumn) {
-                        $data['end_time'] = $slot['end_time'];
                     }
                     if ($hasTypeColumn) {
                         $data['availability_type'] = $validated['availability_type'];
@@ -182,7 +178,7 @@ class AvailabilityController extends Controller
             $doctor->id,
             optional($doctorAvailability->date)->format('Y-m-d'),
             $doctorAvailability->start_time,
-            $doctorAvailability->end_time
+            null
         );
 
         if ($hasBooking) {
@@ -213,9 +209,7 @@ class AvailabilityController extends Controller
                     continue;
                 }
                 $startTime = $this->normalizeTime($slot->start_time);
-                $endTime = $slot->end_time
-                    ? $this->normalizeTime($slot->end_time)
-                    : $this->defaultEndFromStart($slot->start_time);
+                $endTime = $this->defaultEndFromStart($slot->start_time);
                 if (! $startTime || ! $endTime) {
                     continue;
                 }
@@ -226,7 +220,6 @@ class AvailabilityController extends Controller
                     'clinic_id' => $slot->clinic_id,
                     'date' => $cursor->toDateString(),
                     'start_time' => $startTime,
-                    'end_time' => $endTime,
                     'availability_type' => $slot->availability_type ?? 'online',
                     'clinic' => $slot->clinic ? [
                         'id' => $slot->clinic->id,
@@ -251,8 +244,7 @@ class AvailabilityController extends Controller
 
         foreach ($slots as $idx => $slot) {
             $start = $this->normalizeTime($slot['start_time'] ?? null);
-            $rawEnd = $slot['end_time'] ?? null;
-            $end = $this->normalizeTime($rawEnd) ?? $this->defaultEndFromStart($slot['start_time'] ?? null);
+            $end = $this->defaultEndFromStart($slot['start_time'] ?? null);
 
             if (! $start || ! $end) {
                 $errors["slots.$idx"] = 'Time must be in HH:mm format.';

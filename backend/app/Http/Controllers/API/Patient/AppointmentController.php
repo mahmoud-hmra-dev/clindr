@@ -133,9 +133,7 @@ public function index(Request $request)
 
             $startTime = strlen($slot->start_time) === 5 ? $slot->start_time . ':00' : $slot->start_time;
             $slotStart = Carbon::createFromFormat('Y-m-d H:i:s', $scheduledAt->toDateString() . ' ' . $startTime);
-            $endTime = $slot->end_time
-                ? (strlen($slot->end_time) === 5 ? $slot->end_time . ':00' : $slot->end_time)
-                : Carbon::createFromFormat('H:i:s', $startTime)->addHour()->format('H:i:s');
+            $endTime = Carbon::createFromFormat('H:i:s', $startTime)->addMinutes(30)->format('H:i:s');
             $slotEnd = Carbon::createFromFormat('Y-m-d H:i:s', $scheduledAt->toDateString() . ' ' . $endTime);
 
             return $scheduledAt >= $slotStart && $appointmentEnd <= $slotEnd;

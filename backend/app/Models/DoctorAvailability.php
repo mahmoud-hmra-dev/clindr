@@ -15,7 +15,6 @@ class DoctorAvailability extends Model
         'date',
         'day_of_week',
         'start_time',
-        'end_time',
         'availability_type',
         'status',
         'slot_capacity',
