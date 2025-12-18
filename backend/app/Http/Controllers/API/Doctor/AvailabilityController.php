@@ -82,56 +82,92 @@ class AvailabilityController extends Controller
 
         $validated = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date'],
             'availability_type' => ['required', Rule::in(['clinic', 'online'])],
             'clinic_id' => ['nullable', 'required_if:availability_type,clinic', 'exists:clinics,id'],
             'slots' => ['required', 'array', 'min:1'],
             'slots.*.start_time' => ['required', 'date_format:H:i'],
-            'slots.*.end_time' => ['required', 'date_format:H:i'],
+            'slots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
         $this->ensureClinicBelongsToDoctor($doctor->id, $validated['clinic_id'] ?? null, $validated['availability_type']);
 
         $normalizedSlots = $this->normalizeSlots($validated['slots']);
-        $conflicts = $this->detectConflicts($doctor->id, $validated['date'], $normalizedSlots);
-        if (! empty($conflicts)) {
+
+        $startDate = Carbon::createFromFormat('Y-m-d', $validated['date'])->startOfDay();
+        $endDate = isset($validated['to'])
+            ? Carbon::createFromFormat('Y-m-d', $validated['to'])->endOfDay()
+            : (clone $startDate)->endOfDay();
+
+        if ($startDate->gt($endDate)) {
             return response()->json([
-                'message' => 'Availability conflicts detected.',
-                'errors' => $conflicts,
+                'message' => 'Invalid date range.',
+                'errors' => ['to must be after or equal to date.'],
             ], 422);
         }
 
-        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn) {
-            $dayOfWeek = strtolower(Carbon::createFromFormat('Y-m-d', $validated['date'])->englishDayOfWeek);
+        $allErrors = [];
+        $cursor = (clone $startDate);
+        while ($cursor->lte($endDate)) {
+            $dateString = $cursor->toDateString();
+            $conflicts = $this->detectConflicts($doctor->id, $dateString, $normalizedSlots);
+            if (! empty($conflicts)) {
+                foreach ($conflicts as $err) {
+                    $allErrors[] = "{$dateString}: {$err}";
+                }
+            }
+            $cursor->addDay();
+        }
 
-            return collect($normalizedSlots)->map(function ($slot) use ($doctor, $validated, $dayOfWeek, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn) {
-                $data = [
-                    'doctor_id' => $doctor->id,
-                    'clinic_id' => $validated['clinic_id'] ?? null,
-                    'day_of_week' => $dayOfWeek,
-                    'start_time' => $slot['start_time'],
-                    'slot_capacity' => $slot['slot_capacity'] ?? 1,
-                    'fee_amount' => $slot['fee_amount'] ?? null,
-                ];
-                if ($hasDateColumn) {
-                    $data['date'] = $validated['date'];
-                }
-                if ($hasEndColumn) {
-                    $data['end_time'] = $slot['end_time'];
-                }
-                if ($hasTypeColumn) {
-                    $data['availability_type'] = $validated['availability_type'];
-                }
-                if ($hasStatusColumn) {
-                    $data['status'] = 'active';
+        if (! empty($allErrors)) {
+            return response()->json([
+                'message' => 'Availability conflicts detected.',
+                'errors' => array_values(array_unique($allErrors)),
+            ], 422);
+        }
+
+        $created = DB::transaction(function () use ($doctor, $validated, $normalizedSlots, $hasDateColumn, $hasEndColumn, $hasTypeColumn, $hasStatusColumn, $startDate, $endDate) {
+            $createdSlots = collect();
+
+            $cursor = (clone $startDate);
+            while ($cursor->lte($endDate)) {
+                $dayOfWeek = strtolower($cursor->englishDayOfWeek);
+                $dateString = $cursor->toDateString();
+
+                foreach ($normalizedSlots as $slot) {
+                    $data = [
+                        'doctor_id' => $doctor->id,
+                        'clinic_id' => $validated['clinic_id'] ?? null,
+                        'day_of_week' => $dayOfWeek,
+                        'start_time' => $slot['start_time'],
+                        'slot_capacity' => $slot['slot_capacity'] ?? 1,
+                        'fee_amount' => $slot['fee_amount'] ?? null,
+                    ];
+                    if ($hasDateColumn) {
+                        $data['date'] = $dateString;
+                    }
+                    if ($hasEndColumn) {
+                        $data['end_time'] = $slot['end_time'];
+                    }
+                    if ($hasTypeColumn) {
+                        $data['availability_type'] = $validated['availability_type'];
+                    }
+                    if ($hasStatusColumn) {
+                        $data['status'] = 'active';
+                    }
+
+                    $createdSlots->push(DoctorAvailability::create($data));
                 }
 
-                return DoctorAvailability::create($data);
-            });
+                $cursor->addDay();
+            }
+
+            return $createdSlots;
         });
 
         $responseAvailabilities = $hasDateColumn
             ? DoctorAvailabilityResource::collection($created)->resolve()
-            : $this->expandRecurringAvailabilities($created, $validated['date'], $validated['date']);
+            : $this->expandRecurringAvailabilities($created, $validated['date'], $validated['to'] ?? $validated['date']);
 
         return response()->json([
             'availabilities' => $responseAvailabilities,
@@ -216,7 +252,8 @@ class AvailabilityController extends Controller
 
         foreach ($slots as $idx => $slot) {
             $start = $this->normalizeTime($slot['start_time'] ?? null);
-            $end = $this->normalizeTime($slot['end_time'] ?? null);
+            $rawEnd = $slot['end_time'] ?? null;
+            $end = $this->normalizeTime($rawEnd) ?? $this->defaultEndFromStart($slot['start_time'] ?? null);
 
             if (! $start || ! $end) {
                 $errors["slots.$idx"] = 'Time must be in HH:mm format.';
@@ -373,7 +410,7 @@ class AvailabilityController extends Controller
             return null;
         }
 
-        return Carbon::createFromFormat('H:i:s', $start)->addHour()->format('H:i:s');
+        return Carbon::createFromFormat('H:i:s', $start)->addMinutes(30)->format('H:i:s');
     }
 
     private function slotsOverlap(Carbon $startA, Carbon $endA, Carbon $startB, Carbon $endB): bool

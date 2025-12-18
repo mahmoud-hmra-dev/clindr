@@ -675,6 +675,22 @@ body {
   }
 }
 
+.theme-green .bs-datepicker-body table td.booking-available span {
+  position: relative;
+}
+
+.theme-green .bs-datepicker-body table td.booking-available span::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #0E82FD;
+}
+
 .datepicker-container {
   &.datepicker-default {
     input {

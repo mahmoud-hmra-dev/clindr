@@ -29,6 +29,7 @@ export class AvailableTimingsComponent implements OnInit {
   modalOpen = false;
   modalDate: string | null = null;
   modalError = '';
+  deletingId: number | null = null;
 
   selectedDate = this.formatDate(new Date());
   calendarRange = { from: '', to: '' };
@@ -59,6 +60,7 @@ export class AvailableTimingsComponent implements OnInit {
     this.modalForm = this.fb.group({
       availability_type: ['online', Validators.required],
       clinic_id: [null],
+      scope: ['day'],
       slots: this.fb.array([this.buildSlotRow()]),
     });
   }
@@ -82,7 +84,7 @@ export class AvailableTimingsComponent implements OnInit {
   private buildSlotRow(slot?: any): FormGroup {
     return this.fb.group({
       start_time: [slot?.start_time || '', Validators.required],
-      end_time: [slot?.end_time || '', Validators.required],
+      end_time: [slot?.end_time || ''],
     });
   }
 
@@ -191,9 +193,14 @@ export class AvailableTimingsComponent implements OnInit {
     this.modalForm.reset({
       availability_type: this.modalForm.get('availability_type')?.value || 'online',
       clinic_id: null,
+      scope: this.modalForm.get('scope')?.value || 'day',
     });
     this.slots.clear();
     this.slots.push(this.buildSlotRow());
+  }
+
+  setScope(scope: 'day' | 'week' | 'month'): void {
+    this.modalForm.patchValue({ scope });
   }
 
   closeModal(): void {
@@ -275,7 +282,7 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = this.timeToMinutes(slot.end_time);
+      const end = slot.end_time ? this.timeToMinutes(slot.end_time) : (start !== null ? start + 30 : null);
       if (start === null || end === null) {
         issues.push(`Slot ${idx + 1}: time must be HH:mm.`);
         return;
@@ -288,9 +295,9 @@ export class AvailableTimingsComponent implements OnInit {
     for (let i = 0; i < slots.length; i++) {
       for (let j = i + 1; j < slots.length; j++) {
         const aStart = this.timeToMinutes(slots[i].start_time);
-        const aEnd = this.timeToMinutes(slots[i].end_time);
+        const aEnd = slots[i].end_time ? this.timeToMinutes(slots[i].end_time) : (aStart !== null ? aStart + 30 : null);
         const bStart = this.timeToMinutes(slots[j].start_time);
-        const bEnd = this.timeToMinutes(slots[j].end_time);
+        const bEnd = slots[j].end_time ? this.timeToMinutes(slots[j].end_time) : (bStart !== null ? bStart + 30 : null);
         if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
         if (this.rangesOverlap(aStart, aEnd, bStart, bEnd)) {
           issues.push(`Slots ${i + 1} and ${j + 1} overlap.`);
@@ -303,7 +310,7 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = this.timeToMinutes(slot.end_time);
+      const end = slot.end_time ? this.timeToMinutes(slot.end_time) : (start !== null ? start + 30 : null);
       if (start === null || end === null) return;
 
       existingAvailabilities.forEach((existing) => {
@@ -330,13 +337,32 @@ export class AvailableTimingsComponent implements OnInit {
       return null;
     }
 
+    // حساب نطاق التاريخ حسب scope
+    const scope = this.modalForm.value.scope || 'day';
+    const fromDate = this.modalDate;
+    let toDate = this.modalDate;
+
+    if (scope === 'week') {
+      const base = new Date(this.modalDate);
+      const day = base.getDay(); // 0-6
+      const diffToSunday = 6 - day;
+      const end = new Date(base);
+      end.setDate(base.getDate() + diffToSunday);
+      toDate = this.formatDate(end);
+    } else if (scope === 'month') {
+      const base = new Date(this.modalDate);
+      const end = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+      toDate = this.formatDate(end);
+    }
+
     return {
-      date: this.modalDate,
+      date: fromDate,
+      to: toDate,
       availability_type: availabilityType,
       clinic_id: clinicId,
       slots: slots.map((slot) => ({
         start_time: this.normalizeTimeInput(slot.start_time),
-        end_time: this.normalizeTimeInput(slot.end_time),
+        end_time: slot.end_time ? this.normalizeTimeInput(slot.end_time) : null,
       })),
     };
   }
@@ -428,9 +454,28 @@ export class AvailableTimingsComponent implements OnInit {
     const [h, m] = time.split(':').map((v) => parseInt(v, 10) || 0);
     const d = new Date();
     d.setHours(h, m || 0, 0, 0);
-    d.setMinutes(d.getMinutes() + 60);
+    d.setMinutes(d.getMinutes() + 30);
     const hh = d.getHours().toString().padStart(2, '0');
     const mm = d.getMinutes().toString().padStart(2, '0');
     return `${hh}:${mm}:00`;
+  }
+
+  deleteAvailability(slot: any): void {
+    if (!slot?.id) return;
+    this.deletingId = slot.id;
+    this.modalError = '';
+    this.error = '';
+    this.doctorService.deleteAvailability(slot.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        const from = this.calendarRange.from || this.modalDate!;
+        const to = this.calendarRange.to || this.modalDate!;
+        this.fetchRange(from, to);
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.modalError = err?.error?.message || 'Failed to delete availability.';
+      },
+    });
   }
 }

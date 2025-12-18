@@ -1,5 +1,5 @@
 ﻿import { HttpClient, HttpContext, HttpContextToken, HttpHeaders } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { routes } from 'src/app/shared/routes/routes';
 import { DoctorService } from 'src/app/core/services/doctor.service';
@@ -15,7 +15,7 @@ import { BsDatepickerConfig, DatepickerDateCustomClasses } from 'ngx-bootstrap/d
   templateUrl: './booking.component.html',
   styleUrl: './booking.component.scss'
 })
-export class BookingComponent {
+export class BookingComponent implements OnInit {
   routes = routes;
   public selectedFieldSet = [0];
   loading = false;
@@ -42,26 +42,31 @@ export class BookingComponent {
   private bookedRange = { from: '', to: '' };
   private bookingHorizonDays = 60;
 
-  // مبالغ الدفع
-  amount = 0;              // المجموع النهائي
-  bookingFee = 0;          // لو بدك تضيف رسوم حجز
-  taxAmount = 0;           // لو في ضريبة
-  discountAmount = 0;      // لو في خصم
+  amount = 0;
+  bookingFee = 0;
+  taxAmount = 0;
+  discountAmount = 0;
 
   currentUser: AuthUser | null = null;
 
   timeSlots: { value: string; label: string }[] = [];
 
+  ngOnInit(): void {
+    this.bsInlineConfig = {
+      ...this.bsInlineConfig,
+      containerClass: 'theme-green'
+    };
+  }
+
   private getTimePartFromIso(iso: string): string | null {
     if (!iso) return null;
 
-    // مثال: 2025-12-11T16:59:00.000000Z
     const parts = iso.split('T');
     if (parts.length < 2) return null;
 
-    let timePart = parts[1];              // "16:59:00.000000Z"
-    timePart = timePart.replace('Z', ''); // "16:59:00.000000"
-    timePart = timePart.substring(0, 8);  // "16:59:00"
+    let timePart = parts[1];
+    timePart = timePart.replace('Z', '');
+    timePart = timePart.substring(0, 8);
 
     return timePart;
   }
@@ -84,7 +89,9 @@ export class BookingComponent {
     const selectedDay = this.selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const selectedDateKey = this.formatDateKey(this.selectedDate);
     return avs.filter((a: any) => {
-      const matchesDate = a.date ? a.date === selectedDateKey : (a.day_of_week || '').toLowerCase() === selectedDay;
+      const matchesDate = a.date
+        ? a.date === selectedDateKey
+        : (a.day_of_week || '').toLowerCase() === selectedDay;
       if (!matchesDate) return false;
 
       if (this.selectedAppointmentType === 'online') {
@@ -154,7 +161,6 @@ export class BookingComponent {
           this.selectedAppointmentType = 'online';
         }
 
-        // حساب المبلغ بعد تحميل الداتا
         this.updateAmount();
         this.loading = false;
         this.loadBookedSlots();
@@ -190,7 +196,6 @@ export class BookingComponent {
 
   selectService(id: number, price: number): void {
     this.selectedServiceId = id;
-    // price موجود لو حاب تستعمله، بس نضمن الحساب統 واحد
     this.updateAmount();
   }
 
@@ -286,7 +291,6 @@ export class BookingComponent {
     const mm = date.getMinutes().toString().padStart(2, '0');
     const ss = date.getSeconds().toString().padStart(2, '0');
 
-    // Laravel و Carbon يحبّوا هذا الشكل
     return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
   }
 
@@ -294,7 +298,7 @@ export class BookingComponent {
     const [hours, minutes] = start.split(':').map((v) => parseInt(v, 10) || 0);
     const d = new Date();
     d.setHours(hours, minutes, 0, 0);
-    d.setHours(d.getHours() + 1);
+    d.setMinutes(d.getMinutes() + 30);
     const hh = d.getHours().toString().padStart(2, '0');
     const mm = d.getMinutes().toString().padStart(2, '0');
     const ss = d.getSeconds().toString().padStart(2, '0');
@@ -323,9 +327,7 @@ export class BookingComponent {
         this.bookedRange = { from, to };
         this.recalculateTimeSlots();
       },
-      error: () => {
-        // لو فشل الطلب نكتفي بالتحقق من التعارض في الباك-إند
-      }
+      error: () => {}
     });
   }
 
@@ -372,7 +374,6 @@ confirmAndPay(): void {
   if (this.selectedAppointmentType === 'online') {
     this.createOnlineMeetingAndBook();
   } else {
-    // لو عيادة: ما في داعي لمكالمة فيديو
     this.createOnlineMeetingAndBook();
   }
 }
@@ -403,12 +404,10 @@ private createOnlineMeetingAndBook(): void {
         return;
       }
 
-              onlineMeetingUrl = onlineMeetingUrl.replace(
-              'https://127.0.0.1:8082',
-              `${environment.onlineMeetingApiUrl}`
-            );
-
-      // بعد ما يجهز الـ URL نحجز الموعد
+      onlineMeetingUrl = onlineMeetingUrl.replace(
+        'https://127.0.0.1:8082',
+        `${environment.onlineMeetingApiUrl}`
+      );
       this.bookAppointment(onlineMeetingUrl);
     },
     error: (err) => {

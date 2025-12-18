@@ -109,18 +109,44 @@
                     </select>
                   </div>
 
+                  <div class="col-12">
+                    <label class="form-label">Apply to</label>
+                    <div class="btn-group w-100">
+                      <button type="button"
+                              class="btn btn-outline-secondary"
+                              [class.active]="modalForm.value.scope === 'day'"
+                              (click)="setScope('day')">
+                        This day
+                      </button>
+                      <button type="button"
+                              class="btn btn-outline-secondary"
+                              [class.active]="modalForm.value.scope === 'week'"
+                              (click)="setScope('week')">
+                        This week
+                      </button>
+                      <button type="button"
+                              class="btn btn-outline-secondary"
+                              [class.active]="modalForm.value.scope === 'month'"
+                              (click)="setScope('month')">
+                        This month
+                      </button>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                      The same times will be repeated across the selected range (day / week / month) without conflicts with bookings.
+                    </small>
+                  </div>
+
                   <div class="col-12" formArrayName="slots">
                     <div class="slot-row" *ngFor="let slot of slots.controls; let i = index" [formGroupName]="i">
                       <div class="row g-2 align-items-end">
-                        <div class="col-12 col-md-5">
-                          <label class="form-label">Start</label>
+                        <div class="col-12 col-md-6">
+                          <label class="form-label">Time</label>
                           <input type="time" class="form-control" formControlName="start_time">
                         </div>
-                        <div class="col-12 col-md-5">
-                          <label class="form-label">End</label>
+                        <div class="col-12 col-md-3 d-none">
                           <input type="time" class="form-control" formControlName="end_time">
                         </div>
-                        <div class="col-12 col-md-2 d-flex justify-content-start">
+                        <div class="col-12 col-md-3 d-flex justify-content-start">
                           <button type="button" class="btn btn-link text-danger" (click)="removeSlotRow(i)" [disabled]="slots.length === 1">
                             <i class="fa fa-trash"></i>
                           </button>
@@ -140,6 +166,13 @@
                   <div class="availability-pill" *ngFor="let slot of getDayAvailabilities(modalDate!)">
                     <div class="pill-title">{{ formatSlotLabel(slot) }}</div>
                     <div class="pill-meta">{{ toTime(slot.start_time) }} - {{ toTime(slot.end_time || slot.start_time) }}</div>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger ms-2"
+                            (click)="deleteAvailability(slot)"
+                            [disabled]="deletingId === slot.id">
+                      <span *ngIf="deletingId === slot.id" class="spinner-border spinner-border-sm me-1"></span>
+                      Delete
+                    </button>
                   </div>
                   <div class="text-muted small" *ngIf="!getDayAvailabilities(modalDate!).length">No availability for this day.</div>
                 </div>
