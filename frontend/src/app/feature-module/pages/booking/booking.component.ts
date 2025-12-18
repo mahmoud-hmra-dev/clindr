@@ -47,6 +47,7 @@ export class BookingComponent implements OnInit {
   bookingFee = 0;
   taxAmount = 0;
   discountAmount = 0;
+  bookingLoading = false;
 
   currentUser: AuthUser | null = null;
 
@@ -392,6 +393,7 @@ confirmAndPay(): void {
   }
 
   this.bookingError = '';
+  this.bookingLoading = true;
 
   if (this.selectedAppointmentType === 'online') {
     this.createOnlineMeetingAndBook();
@@ -423,6 +425,7 @@ private createOnlineMeetingAndBook(): void {
 
       if (!onlineMeetingUrl) {
         this.bookingError = 'Meeting created but URL is missing.';
+        this.bookingLoading = false;
         return;
       }
 
@@ -435,6 +438,7 @@ private createOnlineMeetingAndBook(): void {
     error: (err) => {
       console.error('Meeting create error:', err);
       this.bookingError = 'Failed to create online meeting.';
+      this.bookingLoading = false;
     }
   });
 }
@@ -483,27 +487,31 @@ private bookAppointment(onlineMeetingUrl: string): void {
         appointment_id: appointment?.id,
       };
 
-      this.paymentService.createHopePayment(paymentPayload).subscribe({
-        next: (url) => {
-          let redirectUrl = (url || '').trim();
-              redirectUrl = redirectUrl.replace(
+        this.paymentService.createHopePayment(paymentPayload).subscribe({
+          next: (url) => {
+            let redirectUrl = (url || '').trim();
+                redirectUrl = redirectUrl.replace(
               'http://localhost:8001',
               `${environment.paymenturl}`
             );
-          if (redirectUrl) {
-            window.location.href = redirectUrl;
-          } else {
-            this.bookingMessage = 'Appointment created. Proceed to payment.';
-            this.selectedFieldSet[0] = 5;
+            if (redirectUrl) {
+              this.bookingLoading = false;
+              window.location.href = redirectUrl;
+            } else {
+              this.bookingMessage = 'Appointment created. Proceed to payment.';
+              this.selectedFieldSet[0] = 5;
+              this.bookingLoading = false;
+            }
+          },
+          error: () => {
+            this.bookingError = 'Payment initiation failed';
+            this.bookingLoading = false;
           }
-        },
-        error: () => {
-          this.bookingError = 'Payment initiation failed';
-        }
-      });
+        });
     },
     error: (err) => {
       this.bookingError = err?.error?.message || 'Failed to create appointment';
+      this.bookingLoading = false;
     }
   });
 }

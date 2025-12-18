@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { SettingsComponent } from './settings.component';
 import { DoctorProfileSettingsComponent } from './doctor-profile-settings/doctor-profile-settings.component';
 import { DoctorInsuranceSettingsComponent } from './doctor-insurance-settings/doctor-insurance-settings.component';
-import { DoctorBusinessSettingsComponent } from './doctor-business-settings/doctor-business-settings.component';
 import { DoctorClinicsSettingsComponent } from './doctor-clinics-settings/doctor-clinics-settings.component';
 import { DoctorEducationSettingsComponent } from './doctor-education-settings/doctor-education-settings.component';
 import { DoctorExperienceSettingsComponent } from './doctor-experience-settings/doctor-experience-settings.component';
@@ -21,10 +20,6 @@ const routes: Routes = [
       {
         path: 'doctor-insurance-settings',
         component: DoctorInsuranceSettingsComponent,
-      },
-      {
-        path: 'doctor-business-settings',
-        component: DoctorBusinessSettingsComponent,
       },
       {
         path: 'doctor-clinics-settings',

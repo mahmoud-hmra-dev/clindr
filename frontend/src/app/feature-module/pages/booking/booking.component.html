@@ -547,21 +547,27 @@
     <div class="card-footer">
       <div class="d-flex align-items-center flex-wrap rpw-gap-2 justify-content-between">
         <a
-          href="javascript:void(0);"
           (click)="selectedFieldSet[0] = 3"
           class="btn btn-md btn-dark prev_btns inline-flex align-items-center rounded-pill"
         >
           <i class="isax isax-arrow-left-2 me-1"></i>
           Back
         </a>
-        <a
-          href="javascript:void(0);"
+        <div class="flex-grow-1 text-end">
+          <div *ngIf="bookingError" class="alert alert-danger py-2 mb-2 d-inline-block text-start">
+            {{ bookingError }}
+          </div>
+          <button
+            type="button"
           (click)="confirmAndPay()"
-          class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill"
-        >
-          Confirm & Pay
-          <i class="isax isax-arrow-right-3 ms-1"></i>
-        </a>
+            [disabled]="bookingLoading"
+            class="btn btn-md btn-primary-gradient next_btns inline-flex align-items-center rounded-pill"
+          >
+            <span *ngIf="bookingLoading" class="spinner-border spinner-border-sm me-2"></span>
+            Confirm & Pay
+            <i class="isax isax-arrow-right-3 ms-1"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
