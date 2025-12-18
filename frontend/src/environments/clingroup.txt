@@ -20,5 +20,5 @@ export const environment = {
   hopePaymentCurrency: env('hopePaymentCurrency', 'USD'),
   websocketUrl: env('websocketUrl', 'ws://localhost:6001'),
   websocketPort: env('websocketPort', 6001),
-  onlineMeetingApiUrl: env('onlineMeetingApiUrl', 'https://call.clidoctor.net')
+  onlineMeetingApiUrl: env('onlineMeetingApiUrl', 'https://call.clindoctor.net')
 };
