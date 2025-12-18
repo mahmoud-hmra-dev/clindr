@@ -30,7 +30,7 @@ Patient: {id, userId, firstName, lastName, dob, bloodGroup, phone, email, addres
 Specialty: {id, name, description?} → specialties(id, name, description).
 DoctorService/SpecialityService: {id, doctorId, specialtyId, name, price, description} → doctor_services(id, doctor_id, specialty_id, name, price, description).
 Clinic: {id, doctorId, name, address, city, imageUrl?} → clinics(id, doctor_id, name, address, city, image_url).
-DoctorAvailability: {id, doctorId, clinicId?, dayOfWeek, startTime, endTime, slotCapacity, fee} → doctor_availabilities(id, doctor_id, clinic_id, day_of_week, start_time, end_time, slot_capacity, fee_amount).
+DoctorAvailability: {id, doctorId, clinicId?, dayOfWeek, startTime, slotCapacity, fee} → doctor_availabilities(id, doctor_id, clinic_id, day_of_week, start_time, slot_capacity, fee_amount).
 Appointment: {id, doctorId, patientId, appointmentType in_clinic|online, visitType general|consultation|follow_up|direct, scheduledAt, durationMinutes, status pending|confirmed|completed|cancelled|no_show, reason?, notes?, clinicLocation?, onlineMeetingUrl?, twilioRoomSid?, areebaTransactionId?, areebaPaymentStatus pending|authorized|paid|failed|refunded, createdBy, cancelledBy?, cancelledReason?, patientEmail?, patientPhone?} → appointments table with same snake_case columns.
 Dependent: {id, patientId, name, gender, relationship, phone?, email?, bloodGroup?, dob?, isActive} → dependents(id, patient_id, name, gender, relationship, phone, email, blood_group, dob, is_active).
 MedicalRecord: {id, patientId, dependentId?, doctorId?, appointmentId?, recordType, title, date, comments?, fileUrl?} → medical_records(id, patient_id, dependent_id, doctor_id, appointment_id, record_type, title, recorded_at, comments, file_url).

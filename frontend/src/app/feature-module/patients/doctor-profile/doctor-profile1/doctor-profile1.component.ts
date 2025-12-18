@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { OwlOptions } from 'ngx-owl-carousel-o';
 import { routes } from 'src/app/shared/routes/routes';
 import { DoctorService } from 'src/app/core/services/doctor.service';
-import { formatDate } from '@angular/common';
 
 @Component({
     selector: 'app-doctor-profile1',
@@ -28,6 +27,7 @@ export class DoctorProfile1Component implements OnInit {
   bussinessHourSection?: HTMLElement;
   reviewSection?: HTMLElement;
   availabilityByDay: { day: string; slots: string[] }[] = [];
+  private readonly slotDurationMinutes = 30;
   public ourDoctorOption: OwlOptions = {
     loop: true,
 			margin: 24,
@@ -174,9 +174,10 @@ export class DoctorProfile1Component implements OnInit {
   formatAvailability(slot: any): string {
     if (!slot) return '';
     const day = slot.day_of_week ? slot.day_of_week.toString() : '';
-    const start = slot.start_time ? formatDate(slot.start_time, 'shortTime', 'en-US') : '';
-    const end = slot.end_time ? formatDate(slot.end_time, 'shortTime', 'en-US') : '';
-    return `${day} ${start} - ${end}`.trim();
+    const start = this.toTime(slot.start_time);
+    const end = this.toTime(this.endTimeFromStart(slot.start_time));
+    const range = [start, end].filter(Boolean).join(' - ');
+    return [day, range].filter(Boolean).join(' ').trim();
   }
 
   private buildAvailabilityByDay(): void {
@@ -194,5 +195,29 @@ export class DoctorProfile1Component implements OnInit {
       day,
       slots: grouped[day],
     }));
+  }
+
+  private toTime(value: any): string {
+    if (!value) return '';
+    const str = typeof value === 'string' ? value : String(value);
+    if (str.includes('T')) return str.split('T')[1].substring(0, 5);
+    if (str.includes(' ')) return str.split(' ')[1].substring(0, 5);
+    return str.substring(0, 5);
+  }
+
+  private endTimeFromStart(time: any): string {
+    if (!time) return '';
+    const raw = typeof time === 'string' ? time : String(time);
+    const timePart = raw.includes('T') ? raw.split('T')[1] : (raw.includes(' ') ? raw.split(' ')[1] : raw);
+    const [hRaw, mRaw] = timePart.split(':');
+    const h = parseInt(hRaw ?? '', 10);
+    const m = parseInt(mRaw ?? '0', 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return '';
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    d.setMinutes(d.getMinutes() + this.slotDurationMinutes);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    return `${hh}:${mm}:00`;
   }
 }

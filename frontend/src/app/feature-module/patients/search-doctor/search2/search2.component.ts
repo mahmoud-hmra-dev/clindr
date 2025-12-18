@@ -66,31 +66,28 @@ export class Search2Component implements OnInit {
     this.loadSpecialties();
     this.loadDoctors();
   }
-public isDoctorAvailableNow(doctor: any): boolean {
-  const availabilities = doctor?.availabilities || [];
-  if (!availabilities.length) return false;
+  public isDoctorAvailableNow(doctor: any): boolean {
+    const availabilities = doctor?.availabilities || [];
+    if (!availabilities.length) return false;
 
-  const now = new Date();
-  const currentDay = now.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const now = new Date();
+    const currentDay = now.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const slotDurationMinutes = 30;
 
-  for (const a of availabilities) {
-    if (!a?.day_of_week || !a?.start_time) continue;
-    if (a.day_of_week.toLowerCase() !== currentDay) continue;
+    for (const a of availabilities) {
+      if (!a?.day_of_week || !a?.start_time) continue;
+      if (a.day_of_week.toLowerCase() !== currentDay) continue;
 
-    const [sh, sm] = a.start_time.split(':').map(Number);
-    const startMinutes = sh * 60 + sm;
+      const [sh, sm] = a.start_time.split(':').map(Number);
+      const startMinutes = sh * 60 + sm;
 
-    let endMinutes = startMinutes + 60;
-    if (a.end_time) {
-      const [eh, em] = a.end_time.split(':').map(Number);
-      endMinutes = eh * 60 + em;
+      const endMinutes = startMinutes + slotDurationMinutes;
+
+      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+        return true;
+      }
     }
-
-    if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-      return true;
-    }
-  }
 
   return false;
 }

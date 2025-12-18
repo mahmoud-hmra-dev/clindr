@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class AvailabilityController extends Controller
 {
+    private int $slotDurationMinutes = 30;
+
     public function index(Request $request)
     {
         $doctor = $request->user()->doctor;
@@ -251,14 +253,9 @@ class AvailabilityController extends Controller
                 continue;
             }
 
-            if ($end <= $start) {
-                $errors["slots.$idx"] = 'End time must be after start time.';
-                continue;
-            }
-
             $normalized[] = [
                 'start_time' => $start,
-                'end_time' => $end,
+                'ends_at' => $end,
                 'index' => $idx,
             ];
         }
@@ -276,9 +273,9 @@ class AvailabilityController extends Controller
         $unique = [];
 
         foreach ($slots as $slot) {
-            $key = $slot['start_time'] . '-' . $slot['end_time'];
+            $key = $slot['start_time'] . '-' . $slot['ends_at'];
             if (isset($unique[$key])) {
-                $errors[] = "Duplicate slot {$slot['start_time']} - {$slot['end_time']}.";
+                $errors[] = "Duplicate slot {$slot['start_time']} - {$slot['ends_at']}.";
             }
             $unique[$key] = true;
         }
@@ -287,12 +284,12 @@ class AvailabilityController extends Controller
         for ($i = 0; $i < count($slots); $i++) {
             for ($j = $i + 1; $j < count($slots); $j++) {
                 $aStart = $this->combineDateTime($date, $slots[$i]['start_time']);
-                $aEnd = $this->combineDateTime($date, $slots[$i]['end_time']);
+                $aEnd = $this->combineDateTime($date, $slots[$i]['ends_at']);
                 $bStart = $this->combineDateTime($date, $slots[$j]['start_time']);
-                $bEnd = $this->combineDateTime($date, $slots[$j]['end_time']);
+                $bEnd = $this->combineDateTime($date, $slots[$j]['ends_at']);
 
                 if ($this->slotsOverlap($aStart, $aEnd, $bStart, $bEnd)) {
-                    $errors[] = "Slot {$slots[$i]['start_time']} - {$slots[$i]['end_time']} overlaps with {$slots[$j]['start_time']} - {$slots[$j]['end_time']}.";
+                    $errors[] = "Slot {$slots[$i]['start_time']} - {$slots[$i]['ends_at']} overlaps with {$slots[$j]['start_time']} - {$slots[$j]['ends_at']}.";
                 }
             }
         }
@@ -306,7 +303,7 @@ class AvailabilityController extends Controller
 
         foreach ($slots as $slot) {
             $slotStart = $this->combineDateTime($date, $slot['start_time']);
-            $slotEnd = $this->combineDateTime($date, $slot['end_time']);
+            $slotEnd = $this->combineDateTime($date, $slot['ends_at']);
 
             foreach ($existing as $existingSlot) {
                 if (! $this->supportsColumn('date') && strtolower((string) $existingSlot->day_of_week) !== strtolower(Carbon::parse($date)->englishDayOfWeek)) {
@@ -319,21 +316,18 @@ class AvailabilityController extends Controller
                     $date,
                     $this->normalizeTime($existingSlot->start_time) ?? $existingSlot->start_time
                 );
-                $existingEndTime = $existingSlot->end_time
-                    ? ($this->normalizeTime($existingSlot->end_time) ?? $existingSlot->end_time)
-                    : $this->defaultEndFromStart($existingSlot->start_time);
-                if (! $existingEndTime) {
-                    continue;
-                }
-                $existingEnd = $this->combineDateTime($date, $existingEndTime);
+                $existingEnd = $this->combineDateTime(
+                    $date,
+                    $this->defaultEndFromStart($existingSlot->start_time) ?? $existingSlot->start_time
+                );
 
                 if ($this->slotsOverlap($slotStart, $slotEnd, $existingStart, $existingEnd)) {
-                    $errors[] = "Slot {$slot['start_time']} - {$slot['end_time']} overlaps existing availability {$existingStart->format('H:i')} - {$existingEnd->format('H:i')}.";
+                    $errors[] = "Slot {$slot['start_time']} - {$slot['ends_at']} overlaps existing availability {$existingStart->format('H:i')} - {$existingEnd->format('H:i')}.";
                 }
             }
 
-            if ($this->hasBookingOverlap($doctorId, $date, $slot['start_time'], $slot['end_time'])) {
-                $errors[] = "Slot {$slot['start_time']} - {$slot['end_time']} conflicts with a booked appointment.";
+            if ($this->hasBookingOverlap($doctorId, $date, $slot['start_time'], $slot['ends_at'])) {
+                $errors[] = "Slot {$slot['start_time']} - {$slot['ends_at']} conflicts with a booked appointment.";
             }
         }
 
@@ -363,7 +357,7 @@ class AvailabilityController extends Controller
                 continue;
             }
             $bookingStart = Carbon::parse($booking->scheduled_at);
-            $bookingEnd = (clone $bookingStart)->addMinutes($booking->duration_minutes ?? 30);
+            $bookingEnd = (clone $bookingStart)->addMinutes($booking->duration_minutes ?? $this->slotDurationMinutes);
 
             if ($this->slotsOverlap($start, $end, $bookingStart, $bookingEnd)) {
                 return true;

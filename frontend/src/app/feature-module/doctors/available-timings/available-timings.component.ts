@@ -53,6 +53,8 @@ export class AvailableTimingsComponent implements OnInit {
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false }
   };
 
+  private readonly slotDurationMinutes = 30;
+
   constructor(
     private fb: FormBuilder,
     private doctorService: DoctorService
@@ -139,7 +141,10 @@ export class AvailableTimingsComponent implements OnInit {
       if (!slot?.date || !slot?.start_time) {
         return;
       }
-      const endTime = slot.end_time || this.addDefaultEnd(slot.start_time);
+      const endTime = this.endTimeFromStart(slot.start_time);
+      if (!endTime) {
+        return;
+      }
       events.push({
         id: `avail-${slot.id}`,
         title: slot.availability_type === 'clinic'
@@ -267,17 +272,7 @@ export class AvailableTimingsComponent implements OnInit {
   }
 
   endTimeLabel(slot: any): string {
-    const start = this.toTime(slot.start_time);
-    if (!start) {
-      return '';
-    }
-    const [h, m] = start.split(':').map((v) => parseInt(v, 10) || 0);
-    const d = new Date();
-    d.setHours(h, m || 0, 0, 0);
-    d.setMinutes(d.getMinutes() + 30);
-    const hh = d.getHours().toString().padStart(2, '0');
-    const mm = d.getMinutes().toString().padStart(2, '0');
-    return `${hh}:${mm}`;
+    return this.toTime(this.endTimeFromStart(slot?.start_time));
   }
 
   private buildPayload(): any | null {
@@ -295,7 +290,7 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = start !== null ? start + 30 : null;
+      const end = start !== null ? start + this.slotDurationMinutes : null;
       if (start === null || end === null) {
         issues.push(`Slot ${idx + 1}: time must be HH:mm.`);
         return;
@@ -308,9 +303,9 @@ export class AvailableTimingsComponent implements OnInit {
     for (let i = 0; i < slots.length; i++) {
       for (let j = i + 1; j < slots.length; j++) {
         const aStart = this.timeToMinutes(slots[i].start_time);
-        const aEnd = aStart !== null ? aStart + 30 : null;
+        const aEnd = aStart !== null ? aStart + this.slotDurationMinutes : null;
         const bStart = this.timeToMinutes(slots[j].start_time);
-        const bEnd = bStart !== null ? bStart + 30 : null;
+        const bEnd = bStart !== null ? bStart + this.slotDurationMinutes : null;
         if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
         if (this.rangesOverlap(aStart, aEnd, bStart, bEnd)) {
           issues.push(`Slots ${i + 1} and ${j + 1} overlap.`);
@@ -323,15 +318,15 @@ export class AvailableTimingsComponent implements OnInit {
 
     slots.forEach((slot, idx) => {
       const start = this.timeToMinutes(slot.start_time);
-      const end = start !== null ? start + 30 : null;
+      const end = start !== null ? start + this.slotDurationMinutes : null;
       if (start === null || end === null) return;
 
       existingAvailabilities.forEach((existing) => {
         const existingStart = this.timeToMinutes(existing.start_time || existing.start || '');
-        const existingEnd = existingStart !== null ? existingStart + 30 : null;
+        const existingEnd = existingStart !== null ? existingStart + this.slotDurationMinutes : null;
         if (existingStart === null || existingEnd === null) return;
         if (this.rangesOverlap(start, end, existingStart, existingEnd)) {
-          issues.push(`Slot ${idx + 1} overlaps existing availability ${this.toTime(existing.start_time)} - ${this.toTime(existing.end_time)}.`);
+          issues.push(`Slot ${idx + 1} overlaps existing availability ${this.toTime(existing.start_time)} - ${this.toTime(this.endTimeFromStart(existing.start_time))}.`);
         }
       });
 
@@ -462,11 +457,17 @@ export class AvailableTimingsComponent implements OnInit {
     return dateStr;
   }
 
-  private addDefaultEnd(time: string): string {
-    const [h, m] = time.split(':').map((v) => parseInt(v, 10) || 0);
+  private endTimeFromStart(time: string | null | undefined): string {
+    if (!time || typeof time !== 'string' || !time.includes(':')) {
+      return '';
+    }
+    const [h, m] = time.split(':').map((v) => parseInt(v, 10));
+    if (Number.isNaN(h) || Number.isNaN(m)) {
+      return '';
+    }
     const d = new Date();
     d.setHours(h, m || 0, 0, 0);
-    d.setMinutes(d.getMinutes() + 30);
+    d.setMinutes(d.getMinutes() + this.slotDurationMinutes);
     const hh = d.getHours().toString().padStart(2, '0');
     const mm = d.getMinutes().toString().padStart(2, '0');
     return `${hh}:${mm}:00`;

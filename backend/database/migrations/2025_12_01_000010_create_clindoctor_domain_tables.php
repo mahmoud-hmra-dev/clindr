@@ -85,7 +85,6 @@ return new class extends Migration
             $table->date('date');
             $table->string('day_of_week', 20)->nullable(); // kept for backward compatibility
             $table->time('start_time');
-            $table->time('end_time');
             $table->string('availability_type', 20)->default('online'); // clinic | online
             $table->string('status', 30)->default('active');
             $table->unsignedInteger('slot_capacity')->default(1);
@@ -104,11 +103,8 @@ return new class extends Migration
                 if (! Schema::hasColumn('doctor_availabilities', 'day_of_week')) {
                     $table->string('day_of_week', 20)->nullable()->after('date');
                 }
-                if (! Schema::hasColumn('doctor_availabilities', 'end_time')) {
-                    $table->time('end_time')->nullable()->after('start_time');
-                }
                 if (! Schema::hasColumn('doctor_availabilities', 'availability_type')) {
-                    $table->string('availability_type', 20)->default('online')->after('end_time');
+                    $table->string('availability_type', 20)->default('online')->after('start_time');
                 }
                 if (! Schema::hasColumn('doctor_availabilities', 'status')) {
                     $table->string('status', 30)->default('active')->after('availability_type');

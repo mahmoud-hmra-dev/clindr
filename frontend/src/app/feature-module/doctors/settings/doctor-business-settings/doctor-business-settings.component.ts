@@ -34,7 +34,6 @@ export class DoctorBusinessSettingsComponent implements OnInit {
       this.fb.group({
         day_of_week: [data.day_of_week || '', Validators.required],
         start_time: [this.toInputTime(data.start_time) || '', Validators.required],
-        end_time: [this.toInputTime(data.end_time) || '', Validators.required],
         fee_amount: [data.fee_amount || ''],
         clinic_id: [data.clinic_id || ''],
         slot_capacity: [data.slot_capacity || ''],
@@ -74,7 +73,6 @@ export class DoctorBusinessSettingsComponent implements OnInit {
     const payload = this.availabilities.value.map((av: any) => ({
       ...av,
       start_time: this.toApiTime(av.start_time),
-      end_time: this.toApiTime(av.end_time),
     }));
     this.doctorService.updateMyProfile({ availabilities: payload }).subscribe({
       next: () => {
