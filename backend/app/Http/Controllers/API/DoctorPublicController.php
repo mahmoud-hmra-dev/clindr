@@ -9,9 +9,12 @@ use App\Models\Doctor;
 use App\Models\Specialty;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class DoctorPublicController extends Controller
 {
+    private int $slotDurationMinutes = 30;
+
     public function index(Request $request)
     {
         $query = Doctor::query()
@@ -91,6 +94,11 @@ class DoctorPublicController extends Controller
             'reviews',
         ]);
 
+        $doctor->setRelation(
+            'availabilities',
+            $this->filterBookedOutSlots($doctor->availabilities, $doctor->id)
+        );
+
         return new DoctorResource($doctor);
     }
 
@@ -149,5 +157,72 @@ class DoctorPublicController extends Controller
         return response()->json([
             'data' => $specialties
         ]);
+    }
+
+    private function filterBookedOutSlots(Collection $availabilities, int $doctorId): Collection
+    {
+        if (! $availabilities->count()) {
+            return $availabilities;
+        }
+
+        $dates = $availabilities->pluck('date')->filter()->map(function ($d) {
+            return $d instanceof Carbon ? $d->format('Y-m-d') : (is_string($d) ? $d : null);
+        })->filter()->unique()->values();
+
+        if (! $dates->count()) {
+            return $availabilities;
+        }
+
+        $bookings = Appointment::query()
+            ->where('doctor_id', $doctorId)
+            ->whereNotIn('status', ['cancelled'])
+            ->whereBetween('scheduled_at', [
+                Carbon::createFromFormat('Y-m-d', $dates->min())->startOfDay(),
+                Carbon::createFromFormat('Y-m-d', $dates->max())->endOfDay(),
+            ])
+            ->get();
+
+        return $availabilities->filter(function ($slot) use ($bookings) {
+            if (! $slot->date || ! $slot->start_time) {
+                return false;
+            }
+
+            $dateString = $slot->date instanceof Carbon ? $slot->date->format('Y-m-d') : (string) $slot->date;
+            $startTime = $this->normalizeTime($slot->start_time) ?? $slot->start_time;
+
+            $slotStart = Carbon::createFromFormat(
+                strlen($startTime) === 5 ? 'Y-m-d H:i' : 'Y-m-d H:i:s',
+                "{$dateString} {$startTime}"
+            );
+            $slotEnd = (clone $slotStart)->addMinutes($this->slotDurationMinutes);
+
+            foreach ($bookings as $booking) {
+                if (! $booking->scheduled_at) {
+                    continue;
+                }
+                $bookingStart = Carbon::parse($booking->scheduled_at);
+                $bookingEnd = (clone $bookingStart)->addMinutes($booking->duration_minutes ?? $this->slotDurationMinutes);
+
+                if ($slotStart < $bookingEnd && $bookingStart < $slotEnd) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
+    }
+
+    private function normalizeTime(?string $time): ?string
+    {
+        if (! $time) {
+            return null;
+        }
+
+        $format = strlen($time) === 5 ? 'H:i' : 'H:i:s';
+        try {
+            return Carbon::createFromFormat($format, $time)->format('H:i:s');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

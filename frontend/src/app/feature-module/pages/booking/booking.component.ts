@@ -275,8 +275,28 @@ export class BookingComponent implements OnInit {
 
   private toDate(value: string | Date | null | undefined): Date | null {
     if (!value) return null;
-    const d = value instanceof Date ? value : new Date(String(value).replace(' ', 'T'));
-    return Number.isNaN(d.getTime()) ? null : d;
+    if (value instanceof Date) {
+      return value;
+    }
+
+    const str = String(value).trim();
+    if (!str) return null;
+
+    // Remove timezone / milliseconds so we always compare wall-clock times consistently.
+    const cleaned = str
+      .replace('T', ' ')
+      .replace(/(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/, '');
+
+    const [datePart, timePartRaw] = cleaned.split(' ');
+    if (!datePart) return null;
+
+    const [y, m, d] = datePart.split('-').map((v) => parseInt(v, 10));
+    if ([y, m, d].some((n) => Number.isNaN(n))) return null;
+
+    const [hh, mm, ss] = (timePartRaw || '00:00:00').split(':').map((v) => parseInt(v, 10) || 0);
+    if ([hh, mm, ss].some((n) => Number.isNaN(n))) return null;
+
+    return new Date(y, m - 1, d, hh, mm, ss, 0);
   }
 
   private formatLocalDateTime(date: Date): string {
@@ -337,8 +357,8 @@ export class BookingComponent implements OnInit {
     const end = new Date(start.getTime() + durationMs);
 
     this.bookedSlots.push({
-      start: start.toISOString(),
-      end: end.toISOString(),
+      start: this.formatLocalDateTime(start),
+      end: this.formatLocalDateTime(end),
       status: appointment.status,
       appointment_type: appointment.appointment_type,
       clinic_id: appointment.clinic_id,

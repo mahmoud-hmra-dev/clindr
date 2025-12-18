@@ -44,6 +44,7 @@ class AvailabilityController extends Controller
                 ->orderBy('date')
                 ->orderBy('start_time')
                 ->get();
+            $availabilities = $this->filterBookedOutSlots($availabilities, $doctor->id);
             $availabilityData = DoctorAvailabilityResource::collection($availabilities)->resolve();
         } else {
             $availabilities = DoctorAvailability::with('clinic')
@@ -52,15 +53,16 @@ class AvailabilityController extends Controller
             $availabilityData = $this->expandRecurringAvailabilities($availabilities, $from, $to);
         }
 
-        $bookings = Appointment::with('patient')
+        $bookingModels = Appointment::with('patient')
             ->where('doctor_id', $doctor->id)
             ->whereNotIn('status', ['cancelled'])
             ->whereBetween('scheduled_at', [
                 Carbon::createFromFormat('Y-m-d', $from)->startOfDay(),
                 Carbon::createFromFormat('Y-m-d', $to)->endOfDay(),
             ])
-            ->get()
-            ->map(fn ($appt) => $this->formatBooking($appt));
+            ->get();
+
+        $bookings = $bookingModels->map(fn ($appt) => $this->formatBooking($appt));
 
         return response()->json([
             'range' => [
@@ -365,6 +367,51 @@ class AvailabilityController extends Controller
         }
 
         return false;
+    }
+
+    private function filterBookedOutSlots($availabilities, int $doctorId)
+    {
+        if (! $availabilities->count()) {
+            return $availabilities;
+        }
+
+        $dates = $availabilities->pluck('date')->filter()->map(fn ($d) => $d->format('Y-m-d'))->unique()->values();
+        if (! $dates->count()) {
+            return $availabilities;
+        }
+
+        $bookings = Appointment::query()
+            ->where('doctor_id', $doctorId)
+            ->whereNotIn('status', ['cancelled'])
+            ->whereBetween('scheduled_at', [
+                Carbon::createFromFormat('Y-m-d', $dates->min())->startOfDay(),
+                Carbon::createFromFormat('Y-m-d', $dates->max())->endOfDay(),
+            ])
+            ->get();
+
+        return $availabilities->filter(function ($slot) use ($bookings) {
+            if (! $slot->date || ! $slot->start_time) {
+                return false;
+            }
+
+            $startTime = $this->normalizeTime($slot->start_time) ?? $slot->start_time;
+            $slotStart = $this->combineDateTime($slot->date->format('Y-m-d'), $startTime);
+            $slotEnd = $slotStart->copy()->addMinutes($this->slotDurationMinutes);
+
+            foreach ($bookings as $booking) {
+                if (! $booking->scheduled_at) {
+                    continue;
+                }
+                $bookingStart = Carbon::parse($booking->scheduled_at);
+                $bookingEnd = (clone $bookingStart)->addMinutes($booking->duration_minutes ?? $this->slotDurationMinutes);
+
+                if ($this->slotsOverlap($slotStart, $slotEnd, $bookingStart, $bookingEnd)) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
     }
 
     private function combineDateTime(string $date, string $time): Carbon
