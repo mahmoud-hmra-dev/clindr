@@ -30,6 +30,7 @@ export class BookingComponent implements OnInit {
   selectedClinicId: number | null = null;
   slotDurationMinutes = 30;
   selectedDate = new Date();
+  availableSlotsList: { value: string; label: string; dateLabel: string; clinicName?: string }[] = [];
 
   patientName = '';
   patientEmail = '';
@@ -165,6 +166,7 @@ export class BookingComponent implements OnInit {
         this.loading = false;
         this.loadBookedSlots();
         this.recalculateTimeSlots();
+        this.buildAvailableSlotsList();
         this.rebuildAvailableDateClasses();
       },
       error: () => {
@@ -181,6 +183,7 @@ export class BookingComponent implements OnInit {
       this.selectedClinicId = this.selectedClinicId ?? this.doctor.clinics[0].id;
       this.selectedDateTime = null;
       this.recalculateTimeSlots();
+      this.buildAvailableSlotsList();
       this.rebuildAvailableDateClasses();
     }
   }
@@ -191,6 +194,7 @@ export class BookingComponent implements OnInit {
     this.selectedClinicId = null;
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
+    this.buildAvailableSlotsList();
     this.rebuildAvailableDateClasses();
   }
 
@@ -342,6 +346,7 @@ export class BookingComponent implements OnInit {
         this.bookedSlots = res?.data ?? res ?? [];
         this.bookedRange = { from, to };
         this.recalculateTimeSlots();
+        this.buildAvailableSlotsList();
       },
       error: () => {}
     });
@@ -371,6 +376,7 @@ export class BookingComponent implements OnInit {
     this.selectedClinicId = id;
     this.selectedDateTime = null;
     this.recalculateTimeSlots();
+    this.buildAvailableSlotsList();
     this.rebuildAvailableDateClasses();
   }
 
@@ -562,12 +568,62 @@ private formatDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-private parseDateKey(key: string): Date | null {
-  const parts = key.split('-').map((v) => parseInt(v, 10));
-  if (parts.length !== 3) return null;
-  const [y, m, d] = parts;
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-}
+  private parseDateKey(key: string): Date | null {
+    const parts = key.split('-').map((v) => parseInt(v, 10));
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  }
+
+  private buildAvailableSlotsList(): void {
+    const slots: { value: string; label: string; dateLabel: string; clinicName?: string }[] = [];
+    const now = new Date();
+
+    const matchesType = (av: any): boolean => {
+      if (this.selectedAppointmentType === 'online') {
+        return !av?.clinic_id;
+      }
+      if (!this.selectedClinicId) {
+        return false;
+      }
+      return av?.clinic_id === this.selectedClinicId;
+    };
+
+    (this.doctor?.availabilities || []).forEach((av: any) => {
+      if (!av?.date || !av?.start_time) return;
+      if (!matchesType(av)) return;
+
+      const dateStr = typeof av.date === 'string' ? av.date.split('T')[0] : av.date;
+      const timeStr = (this.getTimePartFromIso(av.start_time) || av.start_time || '').substring(0, 8);
+      if (!dateStr || !timeStr) return;
+
+      const start = this.toDate(`${dateStr} ${timeStr}`);
+      if (!start || start <= now) return;
+
+      const end = new Date(start.getTime() + this.slotDurationMinutes * 60000);
+      if (this.hasBookingOverlap(start, end)) return;
+
+      slots.push({
+        value: this.formatLocalDateTime(start),
+        label: start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+        dateLabel: start.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+        clinicName: av?.clinic?.name,
+      });
+    });
+
+    this.availableSlotsList = slots
+      .sort((a, b) => new Date(a.value).getTime() - new Date(b.value).getTime())
+      .slice(0, 50);
+  }
+
+  private hasBookingOverlap(start: Date, end: Date): boolean {
+    return this.bookedSlots.some((booking) => {
+      const bookingStart = this.toDate(booking.start);
+      const bookingEnd = this.toDate(booking.end);
+      if (!bookingStart || !bookingEnd) return false;
+      return bookingStart < end && start < bookingEnd;
+    });
+  }
 
 }
