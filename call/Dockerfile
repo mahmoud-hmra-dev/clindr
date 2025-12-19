@@ -23,7 +23,7 @@ RUN apk add --no-cache \
     g++ \
     openssl-dev \
     mariadb-connector-c-dev \
-    && npm ci --only=production --silent \
+    && npm ci --omit=dev \
     && npm cache clean --force \
     && rm -rf /tmp/* /var/tmp/* /usr/share/doc/*
 
