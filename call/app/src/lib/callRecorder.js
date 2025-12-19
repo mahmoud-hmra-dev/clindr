@@ -4,13 +4,12 @@ const mysql = require('mysql2/promise');
 const Logs = require('../logs');
 const log = new Logs('CallRecorder');
 
-const {
-    CALL_DB_HOST,
-    CALL_DB_PORT,
-    CALL_DB_NAME,
-    CALL_DB_USER,
-    CALL_DB_PASSWORD,
-} = process.env;
+// Defaults fall back to docker-compose service values if env not provided
+const CALL_DB_HOST = process.env.CALL_DB_HOST || 'mysql_call';
+const CALL_DB_PORT = Number(process.env.CALL_DB_PORT) || 3306;
+const CALL_DB_NAME = process.env.CALL_DB_NAME || 'clindoctor_call';
+const CALL_DB_USER = process.env.CALL_DB_USER || 'clindoctor';
+const CALL_DB_PASSWORD = process.env.CALL_DB_PASSWORD || 'clindoctorpass';
 
 const enabled = !!(CALL_DB_HOST && CALL_DB_NAME && CALL_DB_USER && CALL_DB_PASSWORD);
 let pool = null;
@@ -27,7 +26,7 @@ async function init() {
     try {
         pool = mysql.createPool({
             host: CALL_DB_HOST,
-            port: Number(CALL_DB_PORT) || 3306,
+            port: CALL_DB_PORT,
             user: CALL_DB_USER,
             password: CALL_DB_PASSWORD,
             database: CALL_DB_NAME,

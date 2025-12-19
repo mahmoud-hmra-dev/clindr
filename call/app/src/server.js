@@ -98,7 +98,13 @@ const port = process.env.PORT || 3000; // must be the same to client.js signalin
 const host = process.env.HOST || `http://localhost:${port}`;
 
 const authHost = new Host(); // Authenticated IP by Login
-callRecorder.init();
+(async () => {
+    try {
+        await callRecorder.init();
+    } catch (err) {
+        log.error('Call recorder init failed', err);
+    }
+})();
 
 // Define paths to the SSL key and certificate files
 const keyPath = path.join(__dirname, '../ssl/key.pem');
