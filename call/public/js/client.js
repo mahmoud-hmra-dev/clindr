@@ -13017,7 +13017,7 @@ function selectFileToShare(peer_id, broadcast = false) {
  * @param {boolean} broadcast send to all (default false)
  * @returns
  */
-function sendFileInformations(file, peer_id, broadcast = false) {
+async function sendFileInformations(file, peer_id, broadcast = false) {
     fileToSend = file;
     // check if valid
     if (fileToSend && fileToSend.size > 0) {
@@ -13030,6 +13030,16 @@ function sendFileInformations(file, peer_id, broadcast = false) {
         if (isHtml(fileToSend.name) || !isValidFileName(fileToSend.name))
             return userLog('warning', 'Invalid file name!');
 
+        let uploadResult = null;
+        try {
+            uploadResult = await uploadFileToServer(roomId, fileToSend, peer_id);
+        } catch (err) {
+            console.warn('Upload file to server failed', err);
+        }
+
+        const downloadUrl = uploadResult?.file?.downloadUrl || null;
+        const storedPath = uploadResult?.file?.storedPath || null;
+
         const fileInfo = {
             room_id: roomId,
             broadcast: broadcast,
@@ -13040,8 +13050,14 @@ function sendFileInformations(file, peer_id, broadcast = false) {
                 fileName: fileToSend.name,
                 fileSize: fileToSend.size,
                 fileType: fileToSend.type,
+                downloadUrl: downloadUrl,
+                storedPath: storedPath,
             },
         };
+
+        const linkItem = downloadUrl
+            ? `<li><a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" download>Download</a></li>`
+            : '';
 
         // keep trace of sent file in chat
         appendMessage(
@@ -13053,15 +13069,13 @@ function sendFileInformations(file, peer_id, broadcast = false) {
             <ul>
                 <li>Name: ${fileToSend.name}</li>
                 <li>Size: ${bytesToSize(fileToSend.size)}</li>
+                ${linkItem}
             </ul>`,
             false
         );
 
-        // send some metadata about our file to peers in the room
+        // send some metadata about our file to peers in the room (with download link if available)
         sendToServer('fileInfo', fileInfo);
-
-        // Upload to server for persistence (best effort)
-        uploadFileToServer(roomId, fileToSend, peer_id);
 
         // send the File
         setTimeout(() => {
@@ -13088,25 +13102,12 @@ async function uploadFileToServer(callId, file, peerId) {
         });
         if (res.ok) {
             const data = await res.json();
-            const downloadUrl = data?.file?.downloadUrl;
-            if (downloadUrl) {
-                appendMessage(
-                    myPeerName,
-                    rightChatAvatar,
-                    'right',
-                    `${icons.fileSend} File uploaded: 
-                <br/>
-                <ul>
-                    <li>Name: ${file.name}</li>
-                    <li>Size: ${bytesToSize(file.size)}</li>
-                    <li><a href="${downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>
-                </ul>`,
-                    false
-                );
-            }
+            return data;
         }
+        return null;
     } catch (err) {
         console.warn('Upload file to server failed', err);
+        return null;
     }
 }
 
@@ -13144,6 +13145,10 @@ function handleFileInfo(config) {
     // generate chat avatar by peer_name
     setPeerChatAvatarImgName('left', incomingFileInfo.peer_name, incomingFileInfo.peer_avatar);
     // keep track of received file on chat
+    const downloadLink =
+        incomingFileInfo.file.downloadUrl && incomingFileInfo.file.downloadUrl !== 'null'
+            ? `<li><a href="${incomingFileInfo.file.downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>`
+            : '';
     appendMessage(
         incomingFileInfo.peer_name,
         leftChatAvatar,
@@ -13154,6 +13159,7 @@ function handleFileInfo(config) {
             <li>From: ${incomingFileInfo.peer_name}</li>
             <li>Name: ${incomingFileInfo.file.fileName}</li>
             <li>Size: ${bytesToSize(incomingFileInfo.file.fileSize)}</li>
+            ${downloadLink}
         </ul>`,
         !incomingFileInfo.broadcast,
         incomingFileInfo.peer_id
