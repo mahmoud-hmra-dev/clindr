@@ -45,7 +45,6 @@ async function releaseWakeLock() {
     if (isDesktopDevice) return;
     try {
         await wakeLockSentinel?.release();
-        userLog('toast', '⚪ Wake Lock released');
     } catch {}
     wakeLockSentinel = null;
     switchKeepAwake.checked = false;
