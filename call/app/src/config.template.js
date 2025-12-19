@@ -191,14 +191,14 @@ module.exports = {
             showShareVideoAudioBtn: true,
             showGeoLocationBtn: true,
             showPrivateMessageBtn: true,
-            showZoomInOutBtn: false,
+            showZoomInOutBtn: true,
             showVideoFocusBtn: true,
         },
         local: {
             showVideoPipBtn: true,
             showSnapShotBtn: true,
             showVideoCircleBtn: true,
-            showZoomInOutBtn: false,
+            showZoomInOutBtn: true,
             showVideoFocusBtn: true,
         },
         whiteboard: {
