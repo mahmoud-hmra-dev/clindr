@@ -44,8 +44,9 @@ services:
     depends_on:
       - mysql_backend
       - mysql_payment
+      - mysql_call
     environment:
-      PMA_HOSTS: mysql_backend,mysql_payment
+      PMA_HOSTS: mysql_backend,mysql_payment,mysql_call
       PMA_USER: clindoctor
       PMA_PASSWORD: clindoctorpass
     ports:
@@ -131,14 +132,37 @@ services:
     image: clindoctorcall/p2p:local
     container_name: mirotalk
     hostname: mirotalk
+    depends_on:
+      mysql_call:
+        condition: service_healthy
     volumes:
       - ./.env:/src/.env:ro
     restart: unless-stopped
     ports:
       - "8082:3000"
 
+  mysql_call:
+    image: mysql:8.0
+    container_name: clindoctor-mysql-call
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: clindoctor_call
+      MYSQL_USER: clindoctor
+      MYSQL_PASSWORD: clindoctorpass
+    ports:
+      - "3309:3306"
+    volumes:
+      - db_call:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 volumes:
   db_backend:
   db_payment:
   backend_storage:
   payment_storage:
+  db_call:

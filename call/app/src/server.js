@@ -73,6 +73,7 @@ const HtmlInjector = require('./htmlInjector');
 const Host = require('./host');
 const Logs = require('./logs');
 const log = new Logs('server');
+const callRecorder = require('./lib/callRecorder');
 
 // Custom Brand and buttons
 const config = safeRequire('./config');
@@ -97,6 +98,7 @@ const port = process.env.PORT || 3000; // must be the same to client.js signalin
 const host = process.env.HOST || `http://localhost:${port}`;
 
 const authHost = new Host(); // Authenticated IP by Login
+callRecorder.init();
 
 // Define paths to the SSL key and certificate files
 const keyPath = path.join(__dirname, '../ssl/key.pem');
@@ -1224,6 +1226,7 @@ io.sockets.on('connect', async (socket) => {
         for (let channel in socket.channels) {
             await removePeerFrom(channel, socket, reason);
         }
+        callRecorder.registerLeave(socket.id);
         log.debug('[' + socket.id + '] disconnected', { reason: reason });
         delete sockets[socket.id];
     });
@@ -1355,6 +1358,14 @@ io.sockets.on('connect', async (socket) => {
             peer_info,
         } = config;
 
+        // Log join event
+        callRecorder.registerJoin({
+            socketId: socket.id,
+            callId: channel,
+            peerUuid: peer_uuid,
+            peerName: peer_name,
+        });
+
         if (!Validate.isValidRoomName(channel)) {
             log.warn('[' + socket.id + '] - Invalid room name', channel);
             return socket.emit('unauthorized');
@@ -1445,6 +1456,14 @@ io.sockets.on('connect', async (socket) => {
 
         // Some peer info data
         const { osName, osVersion, browserName, browserVersion, extras } = peer_info;
+
+        // Log join event
+        callRecorder.registerJoin({
+            socketId: socket.id,
+            callId: channel,
+            peerUuid: peer_uuid,
+            peerName: peer_name,
+        });
 
         // collect peers info grp by channels
         peers[channel][socket.id] = {
@@ -1845,6 +1864,25 @@ io.sockets.on('connect', async (socket) => {
     });
 
     /**
+     * Persist chat messages
+     */
+    socket.on('chatLog', async (cfg) => {
+        const config = checkXSS(cfg);
+        if (!Validate.isValidData(config)) return;
+        const { room_id, peer_id, peer_uuid, peer_name, message, private: isPrivate, to } = config;
+        if (!room_id || !message) return;
+        callRecorder.logMessage({
+            callId: room_id,
+            peerId: peer_id || socket.id,
+            peerUuid: peer_uuid,
+            peerName: peer_name,
+            message,
+            msgTo: to,
+            isPrivate: !!isPrivate,
+        });
+    });
+
+    /**
      * Relay File info
      */
     socket.on('fileInfo', async (cfg) => {
@@ -1876,6 +1914,18 @@ io.sockets.on('connect', async (socket) => {
             fileSize: bytesToSize(file.fileSize),
             fileType: file.fileType,
             broadcast: broadcast,
+        });
+
+        // persist file metadata
+        callRecorder.logFile({
+            callId: room_id,
+            peerId: socket.id,
+            peerUuid: peers?.[room_id]?.[socket.id]?.peer_uuid,
+            peerName: peer_name,
+            fileName: file.fileName,
+            fileSize: file.fileSize,
+            fileType: file.fileType,
+            broadcast: !!broadcast,
         });
 
         if (broadcast) {

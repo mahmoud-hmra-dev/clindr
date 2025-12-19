@@ -10213,6 +10213,17 @@ function emitMsg(from, fromAvatar, to, msg, privateMsg, id) {
     };
     console.log('Send msg', chatMessage);
     sendToDataChannel(chatMessage);
+
+    // log to server for persistence
+    sendToServer('chatLog', {
+        room_id: roomId,
+        peer_id: myPeerId,
+        peer_uuid: myPeerUUID,
+        peer_name: getFrom,
+        message: getMsg,
+        private: !!getPrivateMsg,
+        to: getTo,
+    });
 }
 
 /**
