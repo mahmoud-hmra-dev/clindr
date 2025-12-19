@@ -155,7 +155,7 @@ module.exports = {
             showMaxBtn: true,
             showSaveMessageBtn: true,
             showMarkDownBtn: true,
-            showChatGPTBtn: true,
+            showChatGPTBtn: false,
             showFileShareBtn: true,
             showShareVideoAudioBtn: true,
             showParticipantsBtn: true,
