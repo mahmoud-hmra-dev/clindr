@@ -143,7 +143,10 @@ async function logFile({ callId, peerId, peerUuid, peerName, fileName, fileSize,
 }
 
 async function getMessages(callId, limit = 100, offset = 0) {
-    if (!pool) return [];
+    if (!pool) {
+        log.warn('DB pool not initialized when fetching messages', { callId });
+        return [];
+    }
     try {
         const [rows] = await pool.execute(
             `SELECT id, call_id, peer_id, peer_uuid, peer_name, msg_to, is_private, message, created_at
@@ -153,6 +156,7 @@ async function getMessages(callId, limit = 100, offset = 0) {
              LIMIT ? OFFSET ?`,
             [callId, Number(limit), Number(offset)]
         );
+        log.debug('Fetched messages', { callId, count: rows.length });
         return rows;
     } catch (err) {
         log.error('Error fetching messages', {
@@ -169,7 +173,10 @@ async function getMessages(callId, limit = 100, offset = 0) {
 }
 
 async function getFiles(callId, limit = 100, offset = 0) {
-    if (!pool) return [];
+    if (!pool) {
+        log.warn('DB pool not initialized when fetching files', { callId });
+        return [];
+    }
     try {
         const [rows] = await pool.execute(
             `SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, created_at
@@ -179,6 +186,7 @@ async function getFiles(callId, limit = 100, offset = 0) {
              LIMIT ? OFFSET ?`,
             [callId, Number(limit), Number(offset)]
         );
+        log.debug('Fetched files', { callId, count: rows.length });
         return rows;
     } catch (err) {
         log.error('Error fetching files', {
