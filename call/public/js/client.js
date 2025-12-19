@@ -9356,10 +9356,19 @@ function handleChatHistory(payload) {
         const from = f.peer_name || 'Guest';
         const side = from === myPeerName ? 'right' : 'left';
         const avatarImg = genAvatarSvg(from, 32);
-        const fileLabel = `File: ${f.file_name || 'unknown'} (${bytesToSize(f.file_size || 0)})${
+        const link = f.downloadUrl ? `<li><a href="${f.downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>` : '';
+        const fileLabel = `${icons.fileReceive || ''} File: ${f.file_name || 'unknown'} (${bytesToSize(f.file_size || 0)})${
             f.file_type ? ' [' + f.file_type + ']' : ''
         }`;
-        appendMessage(from, avatarImg, side, fileLabel, false, f.peer_id || null, '');
+        appendMessage(
+            from,
+            avatarImg,
+            side,
+            `${fileLabel}<br/><ul>${link}</ul>`,
+            false,
+            f.peer_id || null,
+            ''
+        );
     };
 
     // oldest first
@@ -13073,10 +13082,29 @@ async function uploadFileToServer(callId, file, peerId) {
         form.append('peer_id', peerId || myPeerId);
         form.append('peer_uuid', myPeerUUID);
         form.append('peer_name', myPeerName);
-        await fetch(`/api/v1/calls/${encodeURIComponent(callId)}/files/upload`, {
+        const res = await fetch(`/api/v1/calls/${encodeURIComponent(callId)}/files/upload`, {
             method: 'POST',
             body: form,
         });
+        if (res.ok) {
+            const data = await res.json();
+            const downloadUrl = data?.file?.downloadUrl;
+            if (downloadUrl) {
+                appendMessage(
+                    myPeerName,
+                    rightChatAvatar,
+                    'right',
+                    `${icons.fileSend} File uploaded: 
+                <br/>
+                <ul>
+                    <li>Name: ${file.name}</li>
+                    <li>Size: ${bytesToSize(file.size)}</li>
+                    <li><a href="${downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>
+                </ul>`,
+                    false
+                );
+            }
+        }
     } catch (err) {
         console.warn('Upload file to server failed', err);
     }
