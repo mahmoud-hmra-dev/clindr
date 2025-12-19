@@ -18,6 +18,9 @@ COPY ./app/src/config.template.js ./app/src/config.js
 RUN apk add --no-cache \
     bash \
     vim \
+    python3 \
+    make \
+    g++ \
     && npm ci --only=production --silent \
     && npm cache clean --force \
     && rm -rf /tmp/* /var/tmp/* /usr/share/doc/*
