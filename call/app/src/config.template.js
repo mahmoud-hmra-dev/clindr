@@ -48,16 +48,16 @@ module.exports = {
             notFoundTitle: 'ClindoctorCall - 404 Page not found.',
         },
         html: {
-            topSponsors: true,
-            features: true,
-            browsers: true,
-            teams: true, // please keep me always true ;)
-            tryEasier: true,
-            poweredBy: true,
-            sponsors: true,
-            advertisers: true,
-            supportUs: true,
-            footer: true,
+            topSponsors: false,
+            features: false,
+            browsers: false,
+            teams: false, // please keep me always true ;)
+            tryEasier: false,
+            poweredBy: false,
+            sponsors: false,
+            advertisers: false,
+            supportUs: false,
+            footer: false,
         },
         about: {
             imageUrl: '../images/mirotalk-logo.gif',
