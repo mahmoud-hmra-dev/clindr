@@ -2,7 +2,7 @@
 
 # Configuration
 API_KEY_SECRET="mirotalkp2p_default_secret"
-MIROTALK_URL="https://p2p.mirotalk.com/api/v1/join"
+MIROTALK_URL="https://clindoctor.call/api/v1/join"
 # Alternative URLs:
 # MIROTALK_URL="http://localhost:3000/api/v1/join"
 # MIROTALK_URL="https://mirotalk.up.railway.app/api/v1/join"

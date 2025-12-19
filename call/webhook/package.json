@@ -1,7 +1,7 @@
 {
     "name": "mirotalk-webhook",
     "version": "1.0.0",
-    "description": "MiroTalk WebHook endpoint example",
+    "description": "Clindoctor Call webhook endpoint example",
     "main": "server.js",
     "scripts": {
         "start": "node server.js"

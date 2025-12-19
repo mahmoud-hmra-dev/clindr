@@ -26,8 +26,8 @@ class HtmlInjector {
             OG_DESCRIPTION:
                 this.config?.og?.description ||
                 'ClindoctorCall provides real-time HD quality and latency simply not available with traditional technology.',
-            OG_IMAGE: this.config?.og?.image || 'https://p2p.mirotalk.com/images/preview.png',
-            OG_URL: this.config?.og?.url || 'https://p2p.mirotalk.com',
+            OG_IMAGE: this.config?.og?.image || 'https://clindoctor.call/assets/preview.png',
+            OG_URL: this.config?.og?.url || 'https://clindoctor.call',
             // Add more data here as needed with fallbacks
         };
     }

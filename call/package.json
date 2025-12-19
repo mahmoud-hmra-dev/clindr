@@ -1,7 +1,7 @@
 {
-    "name": "mirotalk",
+    "name": "clindoctor-call",
     "version": "1.6.88",
-    "description": "A free WebRTC browser-based video call",
+    "description": "Clindoctor Call telehealth visits for patients and doctors, powered by WebRTC",
     "main": "server.js",
     "scripts": {
         "start": "node app/src/server.js",

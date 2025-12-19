@@ -1,8 +1,8 @@
 ![restAPI](restAPI.png)
 
-## Create a Meeting
+## Create a Visit
 
-To initiate a meeting, send an HTTP request to MiroTalk’s server with your API key. Replace the default secret key in `.env` with your own.
+To initiate a doctor–patient visit, send an HTTP request to the Clindoctor Call server with your API key. Replace the default secret key in `.env` with your own.
 
 ```bash
 API_KEY_SECRET=mirotalkp2p_default_secret
@@ -36,14 +36,14 @@ The server response will contain a meeting URL that can be embedded in your clie
 
 ---
 
-## Embed a Meeting
+## Embed a Visit
 
-To embed a meeting in your service or app, use an iframe with the source attribute set to the meeting URL obtained from the HTTP response.
+To embed a visit in your service or app, use an iframe with the source attribute set to the visit URL obtained from the HTTP response.
 
 ```html
 <iframe
     allow="camera; microphone; display-capture; fullscreen; clipboard-read; clipboard-write; web-share; autoplay"
-    src="https://p2p.mirotalk.com/join/test"
+    src="https://your-clindoctor-call-domain/join/test"
     style="height: 100vh; width: 100vw; border: 0px;"
 ></iframe>
 ```
@@ -52,12 +52,12 @@ To embed a meeting in your service or app, use an iframe with the source attribu
 
 ## Fast Integration
 
-Integrate video meetings into your website or application quickly by incorporating the following iframe code:
+Integrate video visits into your website or application quickly by incorporating the following iframe code:
 
 ```html
 <iframe
     allow="camera; microphone; display-capture; fullscreen; clipboard-read; clipboard-write; web-share; autoplay"
-    src="https://p2p.mirotalk.com/newcall"
+    src="https://your-clindoctor-call-domain/newcall"
     style="height: 100vh; width: 100vw; border: 0px;"
 ></iframe>
 ```

@@ -876,6 +876,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     } catch (error) {
-        console.error('Failed to auto-initialize MiroTalk Widget:', error);
+        console.error('Failed to auto-initialize Clindoctor Call widget:', error);
     }
 });

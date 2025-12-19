@@ -4,7 +4,7 @@
 const brandDataKey = 'brandDataClindoctorCall';
 const legacyBrandKeys = ['brandDataP2P'];
 
-// Drop any cached legacy brand data so old MiroTalk values do not override new branding.
+// Drop any cached legacy brand data so old values do not override new branding.
 legacyBrandKeys.forEach((key) => {
     if (key !== brandDataKey && window.sessionStorage.getItem(key)) {
         window.sessionStorage.removeItem(key);
@@ -59,8 +59,8 @@ let brand = {
         joinLastLabel: 'Your recent room:',
     },
     site: {
-        shortcutIcon: '../images/logo.svg',
-        appleTouchIcon: '../images/logo.svg',
+        shortcutIcon: '../images/clindoctor-logo.png',
+        appleTouchIcon: '../images/clindoctor-logo.png',
         landingTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
         newCallTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
         newCallRoomTitle: 'Pick name. <br />Share URL. <br />Start conference.',
@@ -85,7 +85,7 @@ let brand = {
         footer: true,
     },
     about: {
-        imageUrl: '../images/mirotalk-logo.gif',
+        imageUrl: '../images/clindoctor-logo.png',
         title: 'WebRTC P2P v1.6.88',
         html: `
             <button 
@@ -272,7 +272,7 @@ function handleWidget() {
         if (typeof MiroTalkWidget !== 'undefined') {
             new MiroTalkWidget(domain, roomId, userName, brand.widget);
         } else {
-            console.warn('MiroTalkWidget is not defined. Please check widget.js loading.', {
+            console.warn('Widget is not defined. Please check widget.js loading.', {
                 domain,
                 roomId,
                 userName,
@@ -294,3 +294,5 @@ function elementDisplay(element, display, mode = 'block') {
 }
 
 initBrand();
+
+

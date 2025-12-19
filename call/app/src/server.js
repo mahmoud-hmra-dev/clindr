@@ -39,11 +39,11 @@ dependencies: {
 /**
  * ClindoctorCall - Server component
  *
- * @link    GitHub: https://github.com/miroslavpejic85/mirotalk
- * @link    Official Live demo: https://p2p.mirotalk.com
+ * @link    GitHub: https://github.com/miroslavpejic85/ClindoctorCall
+ * @link    Official Live demo: https://p2p.ClindoctorCall.com
  * @license For open source use: AGPLv3
- * @license For commercial use or closed source, contact us at license.mirotalk@gmail.com or purchase directly from CodeCanyon
- * @license CodeCanyon: https://codecanyon.net/item/mirotalk-p2p-webrtc-realtime-video-conferences/38376661
+ * @license For commercial use or closed source, contact us at license.ClindoctorCall@gmail.com or purchase directly from CodeCanyon
+ * @license CodeCanyon: https://codecanyon.net/item/ClindoctorCall-p2p-webrtc-realtime-video-conferences/38376661
  * @author  Miroslav Pejic - miroslav.pejic.85@gmail.com
  * @version 1.6.88
  *
@@ -169,7 +169,7 @@ const hostCfg = {
 
 // JWT config
 const jwtCfg = {
-    JWT_KEY: process.env.JWT_KEY || 'mirotalk_jwt_secret',
+    JWT_KEY: process.env.JWT_KEY || 'ClindoctorCall_jwt_secret',
     JWT_EXP: process.env.JWT_EXP || '1h',
 };
 
@@ -186,7 +186,7 @@ const swaggerDocument = yaml.load(fs.readFileSync(path.join(__dirname, '/../api/
 const { v4: uuidV4 } = require('uuid');
 const apiBasePath = '/api/v1'; // api endpoint path
 const api_docs = host + apiBasePath + '/docs'; // api docs
-const api_key_secret = process.env.API_KEY_SECRET || 'mirotalkp2p_default_secret';
+const api_key_secret = process.env.API_KEY_SECRET || 'ClindoctorCallp2p_default_secret';
 const apiDisabledString = process.env.API_DISABLED || '["token", "meetings"]';
 const api_disabled = JSON.parse(apiDisabledString);
 
@@ -391,7 +391,7 @@ const mattermostCfg = {
 // stats configuration
 const statsData = {
     enabled: process.env.STATS_ENABLED ? getEnvBoolean(process.env.STATS_ENABLED) : true,
-    src: process.env.STATS_SCR || 'https://stats.mirotalk.com/script.js',
+    src: process.env.STATS_SCR || 'https://stats.ClindoctorCall.com/script.js',
     id: process.env.STATS_ID || 'c7615aa7-ceec-464a-baba-54cb605d7261',
 };
 
@@ -588,7 +588,7 @@ app.get('/stats', (req, res) => {
     res.send(statsData);
 });
 
-// mirotalk about
+// ClindoctorCall about
 app.get(['/about'], (req, res) => {
     res.sendFile(views.about);
 });
@@ -633,9 +633,9 @@ app.get('/join/', async (req, res) => {
     if (Object.keys(req.query).length > 0) {
         log.debug('Request Query', req.query);
         /* 
-            http://localhost:3000/join?room=test&name=mirotalk&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
-            https://p2p.mirotalk.com/join?room=test&name=mirotalk&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
-            https://mirotalk.up.railway.app/join?room=test&name=mirotalk&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
+            http://localhost:3000/join?room=test&name=ClindoctorCall&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
+            https://p2p.ClindoctorCall.com/join?room=test&name=ClindoctorCall&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
+            https://ClindoctorCall.up.railway.app/join?room=test&name=ClindoctorCall&audio=1&video=1&screen=0&chat=1&notify=0&hide=0
         */
         const { room, name, audio, video, screen, chat, notify, hide, token } = checkXSS(req.query);
 
@@ -830,7 +830,7 @@ app.get('/:roomId', (req, res) => {
 });
 
 /**
-    MiroTalk API v1
+    ClindoctorCall API v1
     For api docs we use: https://swagger.io/
 */
 
@@ -846,7 +846,7 @@ app.get(`${apiBasePath}/stats`, (req, res) => {
     const { host, authorization } = req.headers;
     const api = new ServerApi(host, authorization, api_key_secret);
     if (!api.isAuthorized()) {
-        log.debug('MiroTalk get stats - Unauthorized', {
+        log.debug('ClindoctorCall get stats - Unauthorized', {
             header: req.headers,
             body: req.body,
         });
@@ -861,7 +861,7 @@ app.get(`${apiBasePath}/stats`, (req, res) => {
         totalPeers,
     });
     // log.debug the output if all done
-    log.debug('MiroTalk get stats - Authorized', {
+    log.debug('ClindoctorCall get stats - Authorized', {
         header: req.headers,
         body: req.body,
         timestamp,
@@ -882,7 +882,7 @@ app.post(`${apiBasePath}/token`, (req, res) => {
     const { host, authorization } = req.headers;
     const api = new ServerApi(host, authorization, api_key_secret);
     if (!api.isAuthorized()) {
-        log.debug('MiroTalk get token - Unauthorized', {
+        log.debug('ClindoctorCall get token - Unauthorized', {
             header: req.headers,
             body: req.body,
         });
@@ -892,7 +892,7 @@ app.post(`${apiBasePath}/token`, (req, res) => {
     const token = api.getToken(req.body);
     res.json({ token: token });
     // log.debug the output if all done
-    log.debug('MiroTalk get token - Authorized', {
+    log.debug('ClindoctorCall get token - Authorized', {
         header: req.headers,
         body: req.body,
         token: token,
@@ -911,7 +911,7 @@ app.get(`${apiBasePath}/meetings`, (req, res) => {
     const { host, authorization } = req.headers;
     const api = new ServerApi(host, authorization, api_key_secret);
     if (!api.isAuthorized()) {
-        log.debug('MiroTalk get meetings - Unauthorized', {
+        log.debug('ClindoctorCall get meetings - Unauthorized', {
             header: req.headers,
             body: req.body,
         });
@@ -921,7 +921,7 @@ app.get(`${apiBasePath}/meetings`, (req, res) => {
     const meetings = api.getMeetings(peers);
     res.json({ meetings: meetings });
     // log.debug the output if all done
-    log.debug('MiroTalk get meetings - Authorized', {
+    log.debug('ClindoctorCall get meetings - Authorized', {
         header: req.headers,
         body: req.body,
         meetings: meetings,
@@ -939,7 +939,7 @@ app.post(`${apiBasePath}/meeting`, (req, res) => {
     const { host, authorization } = req.headers;
     const api = new ServerApi(host, authorization, api_key_secret);
     if (!api.isAuthorized()) {
-        log.debug('MiroTalk get meeting - Unauthorized', {
+        log.debug('ClindoctorCall get meeting - Unauthorized', {
             header: req.headers,
             body: req.body,
         });
@@ -947,7 +947,7 @@ app.post(`${apiBasePath}/meeting`, (req, res) => {
     }
     const meetingURL = api.getMeetingURL();
     res.json({ meeting: meetingURL });
-    log.debug('MiroTalk get meeting - Authorized', {
+    log.debug('ClindoctorCall get meeting - Authorized', {
         header: req.headers,
         body: req.body,
         meeting: meetingURL,
@@ -965,7 +965,7 @@ app.post(`${apiBasePath}/join`, (req, res) => {
     const { host, authorization } = req.headers;
     const api = new ServerApi(host, authorization, api_key_secret);
     if (!api.isAuthorized()) {
-        log.debug('MiroTalk get join - Unauthorized', {
+        log.debug('ClindoctorCall get join - Unauthorized', {
             header: req.headers,
             body: req.body,
         });
@@ -973,7 +973,7 @@ app.post(`${apiBasePath}/join`, (req, res) => {
     }
     const joinURL = api.getJoinURL(req.body);
     res.json({ join: joinURL });
-    log.debug('MiroTalk get join - Authorized', {
+    log.debug('ClindoctorCall get join - Authorized', {
         header: req.headers,
         body: req.body,
         join: joinURL,
@@ -981,7 +981,7 @@ app.post(`${apiBasePath}/join`, (req, res) => {
 });
 
 /*
-    MiroTalk Slack app v1
+    ClindoctorCall Slack app v1
     https://api.slack.com/authentication/verifying-requests-from-slack
 */
 
@@ -1046,14 +1046,14 @@ app.get(`${apiBasePath}/activeRooms`, (req, res) => {
     res.json({ activeRooms: activeRooms });
 
     // log.debug the output if all done
-    log.debug('MiroTalk get active rooms - Authorized', {
+    log.debug('ClindoctorCall get active rooms - Authorized', {
         header: req.headers,
         body: req.body,
         activeRooms: activeRooms,
     });
 });
 
-// end of MiroTalk API v1
+// end of ClindoctorCall API v1
 
 // not match any of page before, so 404 not found
 app.use((req, res) => {

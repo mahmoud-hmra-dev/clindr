@@ -1,7 +1,7 @@
 #!/bin/bash
 
 API_KEY_SECRET="mirotalkp2p_default_secret"
-MIROTALK_URL="https://p2p.mirotalk.com/api/v1/token"
+MIROTALK_URL="https://clindoctor.call/api/v1/token"
 #MIROTALK_URL="http://localhost:3000/api/v1/token"
 
 curl $MIROTALK_URL \

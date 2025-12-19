@@ -1,4 +1,4 @@
-## Expose MiroTalk on HTTPS
+## Expose Clindoctor Call on HTTPS
 
 ![mirotalk-https](https.png)
 

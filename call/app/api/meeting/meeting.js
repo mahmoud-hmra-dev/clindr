@@ -9,7 +9,7 @@ async function getMeeting() {
 
         const API_KEY_SECRET = 'mirotalkp2p_default_secret';
         // const MIROTALK_URL = "http://localhost:3000/api/v1/meeting";
-        const MIROTALK_URL = 'https://p2p.mirotalk.com/api/v1/meeting';
+        const MIROTALK_URL = 'https://clindoctor.call/api/v1/meeting';
         // const MIROTALK_URL = "https://mirotalk.up.railway.app/api/v1/meeting";
 
         const response = await fetch(MIROTALK_URL, {
@@ -31,3 +31,4 @@ async function getMeeting() {
 }
 
 getMeeting();
+

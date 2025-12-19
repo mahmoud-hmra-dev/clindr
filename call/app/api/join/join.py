@@ -3,7 +3,7 @@ import requests
 import json
 
 API_KEY_SECRET = "mirotalkp2p_default_secret"
-MIROTALK_URL = "https://p2p.mirotalk.com/api/v1/join"
+MIROTALK_URL = "https://clindoctor.call/api/v1/join"
 # MIROTALK_URL = "http://localhost:3000/api/v1/join"
 # MIROTALK_URL = "https://mirotalk.up.railway.app/api/v1/join"
 
@@ -39,3 +39,4 @@ response = requests.post(
 print("Status code:", response.status_code)
 data = json.loads(response.text)
 print("join:", data["join"])
+

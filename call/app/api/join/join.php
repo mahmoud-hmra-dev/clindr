@@ -1,7 +1,7 @@
 <?php
 
 $API_KEY_SECRET = "mirotalkp2p_default_secret";
-$MIROTALK_URL = "https://p2p.mirotalk.com/api/v1/join";
+$MIROTALK_URL = "https://clindoctor.call/api/v1/join";
 // $MIROTALK_URL = "http://localhost:3000/api/v1/join";
 // $MIROTALK_URL = "https://mirotalk.up.railway.app/api/v1/join";
 
@@ -45,3 +45,4 @@ curl_close($ch);
 echo "Status code: $httpcode \n";
 $data = json_decode($response);
 echo "join: ", $data->{'join'}, "\n";
+

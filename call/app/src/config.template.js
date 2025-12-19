@@ -30,12 +30,12 @@ module.exports = {
             title: 'Click the link to make a call.',
             description:
                 'ClindoctorCall provides real-time HD quality and latency simply not available with traditional technology.',
-            image: 'https://p2p.mirotalk.com/images/preview.png',
-            url: 'https://p2p.mirotalk.com',
+            image: 'https://clindoctor.call/assets/preview.png',
+            url: 'https://clindoctor.call',
         },
         site: {
-            shortcutIcon: '../images/logo.svg',
-            appleTouchIcon: '../images/logo.svg',
+            shortcutIcon: '../images/clindoctor-logo.png',
+            appleTouchIcon: '../images/clindoctor-logo.png',
             landingTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
             newCallTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
             newCallRoomTitle: 'Pick name. <br />Share URL. <br />Start conference.',
@@ -60,35 +60,35 @@ module.exports = {
             footer: false,
         },
         about: {
-            imageUrl: '../images/mirotalk-logo.gif',
+            imageUrl: '../images/clindoctor-logo.png',
             title: `WebRTC P2P v${packageJson.version}`,
             html: `
                 <button 
                     id="support-button" 
                     data-umami-event="Support button" 
-                    onclick="window.open('https://codecanyon.net/user/miroslavpejic85')">
+                    onclick="window.open('https://clindoctor.call')">
                     <i class="fas fa-heart" ></i>&nbsp;Support
                 </button>
                 <br /><br /><br />
                 Author:<a 
                     id="linkedin-button" 
                     data-umami-event="Linkedin button" 
-                    href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" target="_blank"> 
-                    Miroslav Pejic
+                    href="https://clindoctor.call" target="_blank"> 
+                    Clindoctor Team
                 </a>
                 <br />
                 Email:<a 
                     id="email-button" 
                     data-umami-event="Email button" 
-                href="mailto:miroslav.pejic.85@gmail.com?subject=ClindoctorCall info"> 
-                miroslav.pejic.85@gmail.com
-            </a>
-            <br /><br />
-            <hr />
-            <span>&copy; 2025 ClindoctorCall, all rights reserved</span>
-            <hr />
-        `,
-    },
+                    href="mailto:support@clindoctor.call?subject=ClindoctorCall info"> 
+                    support@clindoctor.call
+                </a>
+                <br /><br />
+                <hr />
+                <span>&copy; 2025 ClindoctorCall, all rights reserved</span>
+                <hr />
+            `,
+        },
         // https://docs.mirotalk.com/mirotalk-p2p/integration/#widgets-integration
         widget: {
             enabled: false,
@@ -210,3 +210,4 @@ module.exports = {
         url: 'http://localhost:8888/webhook-endpoint', // Webhook server URL
     },
 };
+

@@ -6,7 +6,7 @@ async function getMeetings() {
         const { default: fetch } = await import('node-fetch');
 
         const API_KEY_SECRET = 'mirotalkp2p_default_secret';
-        const MIROTALK_URL = 'https://p2p.mirotalk.com/api/v1/meetings';
+        const MIROTALK_URL = 'https://clindoctor.call/api/v1/meetings';
         //const MIROTALK_URL = 'http://localhost:3000/api/v1/meetings';
 
         const response = await fetch(MIROTALK_URL, {
@@ -32,3 +32,4 @@ async function getMeetings() {
 }
 
 getMeetings();
+

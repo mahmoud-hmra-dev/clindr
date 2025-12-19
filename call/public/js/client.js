@@ -10,7 +10,7 @@
  * ClindoctorCall - Client component
  *
  * @link    GitHub: https://github.com/miroslavpejic85/mirotalk
- * @link    Official Live demo: https://p2p.mirotalk.com
+ * @link    Official Live demo: https://clindoctor.call
  * @license For open source use: AGPLv3
  * @license For commercial use or closed source, contact us at license.mirotalk@gmail.com or purchase directly from CodeCanyon
  * @license CodeCanyon: https://codecanyon.net/item/mirotalk-p2p-webrtc-realtime-video-conferences/38376661
@@ -46,10 +46,10 @@ const images = {
     message: '../images/message.png',
     leave: '../images/leave-room.png',
     vaShare: '../images/va-share.png',
-    about: '../images/mirotalk-logo.gif',
+    about: '../images/clindoctor-logo.png',
     feedback: '../images/feedback.png',
     forbidden: '../images/forbidden.png',
-    avatar: '../images/mirotalk-logo.png',
+    avatar: '../images/clindoctor-logo.png',
     recording: '../images/recording.png',
     poster: '../images/loader.gif',
     geoLocation: '../images/geolocation.png',
@@ -14469,3 +14469,5 @@ function displayElements(elements) {
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+

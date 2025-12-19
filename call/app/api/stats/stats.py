@@ -3,7 +3,7 @@ import requests
 import json
 
 API_KEY_SECRET = "mirotalkp2p_default_secret"
-MIROTALK_URL = "https://p2p.mirotalk.com/api/v1/stats"
+MIROTALK_URL = "https://clindoctor.call/api/v1/stats"
 #MIROTALK_URL = "http://localhost:3000/api/v1/stats"
 
 headers = {
@@ -24,3 +24,4 @@ if response.status_code == 200:
     print(data)
 else:
     print("Failed to retrieve data. Error:", response.text)
+
