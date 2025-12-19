@@ -21,6 +21,8 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
+    openssl-dev \
+    mariadb-connector-c-dev \
     && npm ci --only=production --silent \
     && npm cache clean --force \
     && rm -rf /tmp/* /var/tmp/* /usr/share/doc/*
