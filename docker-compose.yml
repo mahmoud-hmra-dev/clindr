@@ -137,6 +137,11 @@ services:
         condition: service_healthy
     environment:
       API_KEY_SECRET: ${API_KEY_SECRET:-mirotalkp2p_default_secret}
+      CALL_DB_HOST: ${CALL_DB_HOST:-mysql_call}
+      CALL_DB_PORT: ${CALL_DB_PORT:-3306}
+      CALL_DB_NAME: ${CALL_DB_NAME:-clindoctor_call}
+      CALL_DB_USER: ${CALL_DB_USER:-clindoctor}
+      CALL_DB_PASSWORD: ${CALL_DB_PASSWORD:-clindoctorpass}
     volumes:
       - ./.env:/src/.env:ro
     restart: unless-stopped
