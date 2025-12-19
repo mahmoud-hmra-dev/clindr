@@ -37,7 +37,7 @@ dependencies: {
 */
 
 /**
- * MiroTalk P2P - Server component
+ * ClindoctorCall - Server component
  *
  * @link    GitHub: https://github.com/miroslavpejic85/mirotalk
  * @link    Official Live demo: https://p2p.mirotalk.com
@@ -156,7 +156,7 @@ const io = new Server({
 // Host protection (disabled by default)
 const hostProtected = getEnvBoolean(process.env.HOST_PROTECTED);
 const userAuth = getEnvBoolean(process.env.HOST_USER_AUTH);
-const hostUsersString = process.env.HOST_USERS || '[{"username": "MiroTalk", "password": "P2P"}]';
+const hostUsersString = process.env.HOST_USERS || '[{"username": "ClindoctorCall", "password": "P2P"}]';
 const hostUsers = JSON.parse(hostUsersString);
 const hostCfg = {
     protected: hostProtected,
@@ -174,7 +174,7 @@ const jwtCfg = {
 };
 
 // Room presenters
-const roomPresentersString = process.env.PRESENTERS || '["MiroTalk P2P"]';
+const roomPresentersString = process.env.PRESENTERS || '["ClindoctorCall"]';
 const roomPresenters = JSON.parse(roomPresentersString);
 
 // Swagger config

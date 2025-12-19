@@ -125,7 +125,10 @@ services:
       - payment
 
   mirotalk:
-    image: mirotalk/p2p:latest
+    build:
+      context: ./call
+      dockerfile: Dockerfile
+    image: clindoctorcall/p2p:local
     container_name: mirotalk
     hostname: mirotalk
     volumes:
