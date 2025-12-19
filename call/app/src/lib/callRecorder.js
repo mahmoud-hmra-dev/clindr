@@ -155,7 +155,15 @@ async function getMessages(callId, limit = 100, offset = 0) {
         );
         return rows;
     } catch (err) {
-        log.error('Error fetching messages', { err: err.message, callId });
+        log.error('Error fetching messages', {
+            err: err.message,
+            code: err.code,
+            errno: err.errno,
+            sqlMessage: err.sqlMessage,
+            callId,
+            limit,
+            offset,
+        });
         return [];
     }
 }
@@ -173,7 +181,15 @@ async function getFiles(callId, limit = 100, offset = 0) {
         );
         return rows;
     } catch (err) {
-        log.error('Error fetching files', { err: err.message, callId });
+        log.error('Error fetching files', {
+            err: err.message,
+            code: err.code,
+            errno: err.errno,
+            sqlMessage: err.sqlMessage,
+            callId,
+            limit,
+            offset,
+        });
         return [];
     }
 }
