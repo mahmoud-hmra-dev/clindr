@@ -142,10 +142,48 @@ async function logFile({ callId, peerId, peerUuid, peerName, fileName, fileSize,
     }
 }
 
+async function getMessages(callId, limit = 100, offset = 0) {
+    if (!pool) return [];
+    try {
+        const [rows] = await pool.execute(
+            `SELECT id, call_id, peer_id, peer_uuid, peer_name, msg_to, is_private, message, created_at
+             FROM call_messages
+             WHERE call_id = ?
+             ORDER BY id DESC
+             LIMIT ? OFFSET ?`,
+            [callId, Number(limit), Number(offset)]
+        );
+        return rows;
+    } catch (err) {
+        log.error('Error fetching messages', { err: err.message, callId });
+        return [];
+    }
+}
+
+async function getFiles(callId, limit = 100, offset = 0) {
+    if (!pool) return [];
+    try {
+        const [rows] = await pool.execute(
+            `SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, created_at
+             FROM call_files
+             WHERE call_id = ?
+             ORDER BY id DESC
+             LIMIT ? OFFSET ?`,
+            [callId, Number(limit), Number(offset)]
+        );
+        return rows;
+    } catch (err) {
+        log.error('Error fetching files', { err: err.message, callId });
+        return [];
+    }
+}
+
 module.exports = {
     init,
     registerJoin,
     registerLeave,
     logMessage,
     logFile,
+    getMessages,
+    getFiles,
 };

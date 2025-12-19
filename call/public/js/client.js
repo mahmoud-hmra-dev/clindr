@@ -1283,6 +1283,7 @@ function initClientPeer() {
     signalingSocket.on('fileInfo', handleFileInfo);
     signalingSocket.on('fileAbort', handleFileAbort);
     signalingSocket.on('fileReceiveAbort', abortFileTransfer);
+    signalingSocket.on('chatHistory', handleChatHistory);
     signalingSocket.on('kickOut', handleKickedOut);
     signalingSocket.on('disconnect', handleDisconnect);
     signalingSocket.on('removePeer', handleRemovePeer);
@@ -9329,6 +9330,47 @@ function handleDataChannelChat(dataMessage) {
     if (!speechInMessages) {
         screenReaderAccessibility.announceMessage(`New message from ${msgFrom}`);
     }
+}
+
+/**
+ * Handle chat/file history from server on join/refresh
+ */
+function handleChatHistory(payload) {
+    if (!payload) return;
+    const messages = Array.isArray(payload.messages) ? payload.messages : [];
+    const files = Array.isArray(payload.files) ? payload.files : [];
+
+    const renderMsg = (m) => {
+        const from = m.peer_name || 'Guest';
+        const to = m.msg_to || '';
+        const isPrivate = !!m.is_private;
+        // respect private scope
+        if (isPrivate && from !== myPeerName && to !== myPeerName) return;
+
+        const side = from === myPeerName ? 'right' : 'left';
+        const avatarImg = genAvatarSvg(from, 32);
+        appendMessage(from, avatarImg, side, m.message || '', isPrivate, m.peer_id || null, to);
+    };
+
+    const renderFile = (f) => {
+        const from = f.peer_name || 'Guest';
+        const side = from === myPeerName ? 'right' : 'left';
+        const avatarImg = genAvatarSvg(from, 32);
+        const fileLabel = `File: ${f.file_name || 'unknown'} (${bytesToSize(f.file_size || 0)})${
+            f.file_type ? ' [' + f.file_type + ']' : ''
+        }`;
+        appendMessage(from, avatarImg, side, fileLabel, false, f.peer_id || null, '');
+    };
+
+    // oldest first
+    messages
+        .slice()
+        .reverse()
+        .forEach(renderMsg);
+    files
+        .slice()
+        .reverse()
+        .forEach(renderFile);
 }
 
 /**

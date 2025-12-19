@@ -137,6 +137,74 @@ paths:
                         $ref: '#/definitions/JoinResponse'
                 '403':
                     description: 'Unauthorized!'
+    /calls/{callId}/messages:
+        get:
+            tags:
+                - 'calls'
+            summary: 'Get messages for a call'
+            description: 'Return chat messages for a call_id (paginated)'
+            produces:
+                - 'application/json'
+            parameters:
+                - in: path
+                  name: callId
+                  required: true
+                  type: string
+                  description: 'Call/room id'
+                - in: query
+                  name: limit
+                  type: integer
+                  default: 100
+                  maximum: 500
+                  description: 'Max number of rows'
+                - in: query
+                  name: offset
+                  type: integer
+                  default: 0
+                  description: 'Offset for pagination'
+            security:
+                - secretApiKey: []
+            responses:
+                '200':
+                    description: 'Call messages'
+                    schema:
+                        $ref: '#/definitions/CallMessagesResponse'
+                '403':
+                    description: 'Unauthorized!'
+    /calls/{callId}/files:
+        get:
+            tags:
+                - 'calls'
+            summary: 'Get files for a call'
+            description: 'Return file metadata for a call_id (paginated)'
+            produces:
+                - 'application/json'
+            parameters:
+                - in: path
+                  name: callId
+                  required: true
+                  type: string
+                  description: 'Call/room id'
+                - in: query
+                  name: limit
+                  type: integer
+                  default: 100
+                  maximum: 500
+                  description: 'Max number of rows'
+                - in: query
+                  name: offset
+                  type: integer
+                  default: 0
+                  description: 'Offset for pagination'
+            security:
+                - secretApiKey: []
+            responses:
+                '200':
+                    description: 'Call files'
+                    schema:
+                        $ref: '#/definitions/CallFilesResponse'
+                '403':
+                    description: 'Unauthorized!'
 
     /token:
         post:
@@ -223,6 +291,70 @@ definitions:
         properties:
             token:
                 type: string
+    CallMessage:
+        type: object
+        properties:
+            id:
+                type: integer
+            call_id:
+                type: string
+            peer_id:
+                type: string
+            peer_uuid:
+                type: string
+            peer_name:
+                type: string
+            msg_to:
+                type: string
+            is_private:
+                type: boolean
+            message:
+                type: string
+            created_at:
+                type: string
+                format: date-time
+    CallMessagesResponse:
+        type: object
+        properties:
+            callId:
+                type: string
+            messages:
+                type: array
+                items:
+                    $ref: '#/definitions/CallMessage'
+    CallFile:
+        type: object
+        properties:
+            id:
+                type: integer
+            call_id:
+                type: string
+            peer_id:
+                type: string
+            peer_uuid:
+                type: string
+            peer_name:
+                type: string
+            file_name:
+                type: string
+            file_size:
+                type: integer
+            file_type:
+                type: string
+            broadcast:
+                type: boolean
+            created_at:
+                type: string
+                format: date-time
+    CallFilesResponse:
+        type: object
+        properties:
+            callId:
+                type: string
+            files:
+                type: array
+                items:
+                    $ref: '#/definitions/CallFile'
     Peer:
         type: object
         properties:

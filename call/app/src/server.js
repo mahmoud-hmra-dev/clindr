@@ -1061,6 +1061,38 @@ app.get(`${apiBasePath}/activeRooms`, (req, res) => {
     });
 });
 
+// Get call messages
+app.get(`${apiBasePath}/calls/:callId/messages`, async (req, res) => {
+    const { host, authorization = api_key_secret } = req.headers;
+    const api = new ServerApi(host, authorization, api_key_secret);
+    if (!api.isAuthorized()) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    const { callId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit || '100', 10), 500);
+    const offset = parseInt(req.query.offset || '0', 10);
+
+    const messages = await callRecorder.getMessages(callId, limit, offset);
+    res.json({ callId, messages });
+});
+
+// Get call files
+app.get(`${apiBasePath}/calls/:callId/files`, async (req, res) => {
+    const { host, authorization = api_key_secret } = req.headers;
+    const api = new ServerApi(host, authorization, api_key_secret);
+    if (!api.isAuthorized()) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    const { callId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit || '100', 10), 500);
+    const offset = parseInt(req.query.offset || '0', 10);
+
+    const files = await callRecorder.getFiles(callId, limit, offset);
+    res.json({ callId, files });
+});
+
 // end of ClindoctorCall API v1
 
 // not match any of page before, so 404 not found
@@ -1462,6 +1494,15 @@ io.sockets.on('connect', async (socket) => {
 
         // Some peer info data
         const { osName, osVersion, browserName, browserVersion, extras } = peer_info;
+
+        // Send chat/file history to joining peer
+        try {
+            const historyMessages = await callRecorder.getMessages(channel, 200, 0);
+            const historyFiles = await callRecorder.getFiles(channel, 200, 0);
+            socket.emit('chatHistory', { messages: historyMessages, files: historyFiles });
+        } catch (err) {
+            log.error('History fetch error', { err: err.message, room: channel });
+        }
 
         // Log join event
         callRecorder.registerJoin({
