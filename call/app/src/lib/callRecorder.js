@@ -148,14 +148,16 @@ async function getMessages(callId, limit = 100, offset = 0) {
         return [];
     }
     try {
-        const [rows] = await pool.execute(
-            `SELECT id, call_id, peer_id, peer_uuid, peer_name, msg_to, is_private, message, created_at
-             FROM call_messages
-             WHERE call_id = ?
-             ORDER BY id DESC
-             LIMIT ? OFFSET ?`,
-            [callId, Number(limit) || 100, Number(offset) || 0]
-        );
+        const lim = Number.isFinite(Number(limit)) ? Math.min(Number(limit), 500) : 100;
+        const off = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+        const query = `
+            SELECT id, call_id, peer_id, peer_uuid, peer_name, msg_to, is_private, message, created_at
+            FROM call_messages
+            WHERE call_id = ?
+            ORDER BY id DESC
+            LIMIT ${lim} OFFSET ${off}
+        `;
+        const [rows] = await pool.execute(query, [callId]);
         log.debug('Fetched messages', { callId, count: rows.length });
         return rows;
     } catch (err) {
@@ -181,14 +183,16 @@ async function getFiles(callId, limit = 100, offset = 0) {
         return [];
     }
     try {
-        const [rows] = await pool.execute(
-            `SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, created_at
-             FROM call_files
-             WHERE call_id = ?
-             ORDER BY id DESC
-             LIMIT ? OFFSET ?`,
-            [callId, Number(limit) || 100, Number(offset) || 0]
-        );
+        const lim = Number.isFinite(Number(limit)) ? Math.min(Number(limit), 500) : 100;
+        const off = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+        const query = `
+            SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, created_at
+            FROM call_files
+            WHERE call_id = ?
+            ORDER BY id DESC
+            LIMIT ${lim} OFFSET ${off}
+        `;
+        const [rows] = await pool.execute(query, [callId]);
         log.debug('Fetched files', { callId, count: rows.length });
         return rows;
     } catch (err) {
