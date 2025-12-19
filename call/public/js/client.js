@@ -7,7 +7,7 @@
 */
 
 /**
- * MiroTalk P2P - Client component
+ * ClindoctorCall - Client component
  *
  * @link    GitHub: https://github.com/miroslavpejic85/mirotalk
  * @link    Official Live demo: https://p2p.mirotalk.com
@@ -1699,7 +1699,7 @@ async function whoAreYou() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         background: swBg,
-        title: brand.app?.name || 'MiroTalk P2P',
+        title: brand.app?.name || 'ClindoctorCall',
         position: 'center',
         input: 'text',
         inputPlaceholder: 'Enter your email or name',
@@ -7538,7 +7538,7 @@ function shareRoomByEmail() {
             const selectedDateTime = document.getElementById('datetimePicker').value;
             const roomPassword = isRoomLocked && thisRoomPassword ? 'Password: ' + thisRoomPassword + newLine : '';
             const email = '';
-            const emailSubject = `Please join our MiroTalk P2P Video Chat Meeting`;
+            const emailSubject = `Please join our ClindoctorCall Video Chat Meeting`;
             const emailBody = `The meeting is scheduled at: ${newLine} DateTime: ${selectedDateTime} ${newLine}${roomPassword}Click to join: ${roomURL} ${newLine}`;
             document.location = 'mailto:' + email + '?subject=' + emailSubject + '&body=' + emailBody;
         },
@@ -13492,7 +13492,7 @@ function handleKickedOut(config) {
 }
 
 /**
- * MiroTalk about info
+ * ClindoctorCall about info
  */
 function showAbout() {
     playSound('newMessage');
@@ -13530,12 +13530,12 @@ function showAbout() {
                         <a 
                             id="email-button" 
                             data-umami-event="Email button" 
-                            href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
+                            href="mailto:miroslav.pejic.85@gmail.com?subject=ClindoctorCall info"> 
                             miroslav.pejic.85@gmail.com
                         </a>
                         <br /><br />
                         <hr />
-                        <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
+                        <span>&copy; 2025 ClindoctorCall, all rights reserved</span>
                         <hr />
                         `
                 }
@@ -13577,7 +13577,7 @@ function leaveFeedback() {
         imageUrl: images.feedback,
         position: 'top',
         title: 'Leave a feedback',
-        text: 'Do you want to rate your MiroTalk experience?',
+        text: 'Do you want to rate your ClindoctorCall experience?',
         confirmButtonText: `Yes`,
         denyButtonText: `No`,
         cancelButtonText: `Cancel`,

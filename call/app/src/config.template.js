@@ -2,7 +2,7 @@
 
 /**
  * ==============================================
- * MiroTalk P2P v.1.6.88 - Configuration File
+ * ClindoctorCall v.1.6.88 - Configuration File
  * ==============================================
  *
  * Branding and customizations require a license:
@@ -16,8 +16,8 @@ module.exports = {
         htmlInjection: true,
         app: {
             language: 'en', // https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
-            name: 'MiroTalk',
-            title: '<h1>MiroTalk</h1>Free browser based Real-time video calls.<br />Simple, Secure, Fast.',
+            name: 'ClindoctorCall',
+            title: '<h1>ClindoctorCall</h1>Free browser based Real-time video calls.<br />Simple, Secure, Fast.',
             description:
                 'Start your next video call with a single click. No download, plug-in, or login is required. Just get straight to talking, messaging, and sharing your screen.',
             joinDescription: 'Pick a room name.<br />How about this one?',
@@ -26,26 +26,26 @@ module.exports = {
         },
         og: {
             type: 'app-webrtc',
-            siteName: 'MiroTalk',
+            siteName: 'ClindoctorCall',
             title: 'Click the link to make a call.',
             description:
-                'MiroTalk calling provides real-time HD quality and latency simply not available with traditional technology.',
+                'ClindoctorCall provides real-time HD quality and latency simply not available with traditional technology.',
             image: 'https://p2p.mirotalk.com/images/preview.png',
             url: 'https://p2p.mirotalk.com',
         },
         site: {
             shortcutIcon: '../images/logo.svg',
             appleTouchIcon: '../images/logo.svg',
-            landingTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
-            newCallTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
+            landingTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
+            newCallTitle: 'ClindoctorCall a Free Secure Video Calls, Chat & Screen Sharing.',
             newCallRoomTitle: 'Pick name. <br />Share URL. <br />Start conference.',
             newCallRoomDescription:
                 "Each room has its disposable URL. Just pick a room name and share your custom URL. It's that easy.",
-            loginTitle: 'MiroTalk - Host Protected login required.',
-            clientTitle: 'MiroTalk WebRTC Video call, Chat Room & Screen Sharing.',
-            privacyPolicyTitle: 'MiroTalk - privacy and policy.',
+            loginTitle: 'ClindoctorCall - Host Protected login required.',
+            clientTitle: 'ClindoctorCall WebRTC Video call, Chat Room & Screen Sharing.',
+            privacyPolicyTitle: 'ClindoctorCall - privacy and policy.',
             stunTurnTitle: 'Test Stun/Turn Servers.',
-            notFoundTitle: 'MiroTalk - 404 Page not found.',
+            notFoundTitle: 'ClindoctorCall - 404 Page not found.',
         },
         html: {
             topSponsors: true,
@@ -80,15 +80,15 @@ module.exports = {
                 Email:<a 
                     id="email-button" 
                     data-umami-event="Email button" 
-                    href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
-                    miroslav.pejic.85@gmail.com
-                </a>
-                <br /><br />
-                <hr />
-                <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
-                <hr />
-            `,
-        },
+                href="mailto:miroslav.pejic.85@gmail.com?subject=ClindoctorCall info"> 
+                miroslav.pejic.85@gmail.com
+            </a>
+            <br /><br />
+            <hr />
+            <span>&copy; 2025 ClindoctorCall, all rights reserved</span>
+            <hr />
+        `,
+    },
         // https://docs.mirotalk.com/mirotalk-p2p/integration/#widgets-integration
         widget: {
             enabled: false,
@@ -116,14 +116,14 @@ module.exports = {
                     connectText: 'connect in < 5 seconds',
                     onlineText: 'We are online',
                     offlineText: 'We are offline',
-                    poweredBy: 'Powered by MiroTalk',
+                    poweredBy: 'Powered by ClindoctorCall',
                 },
             },
         },
         //...
     },
     /**
-     * Configuration for controlling the visibility of buttons in the MiroTalk P2P client.
+     * Configuration for controlling the visibility of buttons in the ClindoctorCall client.
      * Set properties to true to show the corresponding buttons, or false to hide them.
      * captionBtn, showSwapCameraBtn, showScreenShareBtn, showFullScreenBtn, showVideoPipBtn, showDocumentPipBtn -> (auto-detected).
      */

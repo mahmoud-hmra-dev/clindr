@@ -128,7 +128,7 @@ services:
     build:
       context: ./call
       dockerfile: Dockerfile
-    image: mirotalk/p2p:local
+    image: clindoctorcall/p2p:local
     container_name: mirotalk
     hostname: mirotalk
     volumes:
