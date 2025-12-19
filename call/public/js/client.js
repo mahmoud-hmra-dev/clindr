@@ -5426,7 +5426,7 @@ function manageButtons() {
     setMyFileShareBtn();
     setDocumentPiPBtn();
     setMySettingsBtn();
-    setAboutBtn();
+    // setAboutBtn();
 
     // Buttons bottom
     setToggleExtraButtons();
