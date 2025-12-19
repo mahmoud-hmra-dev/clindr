@@ -9356,7 +9356,10 @@ function handleChatHistory(payload) {
         const from = f.peer_name || 'Guest';
         const side = from === myPeerName ? 'right' : 'left';
         const avatarImg = genAvatarSvg(from, 32);
-        const link = f.downloadUrl ? `<li><a href="${f.downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>` : '';
+        const link =
+            f.downloadUrl && f.downloadUrl !== 'null'
+                ? `<li><a href="${f.downloadUrl}"  rel="noopener noreferrer" download>Download</a></li>`
+                : '';
         const fileLabel = `${icons.fileReceive || ''} File: ${f.file_name || 'unknown'} (${bytesToSize(f.file_size || 0)})${
             f.file_type ? ' [' + f.file_type + ']' : ''
         }`;
@@ -13056,7 +13059,7 @@ async function sendFileInformations(file, peer_id, broadcast = false) {
         };
 
         const linkItem = downloadUrl
-            ? `<li><a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" download>Download</a></li>`
+            ? `<li><a href="${downloadUrl}" rel="noopener noreferrer" download>Download</a></li>`
             : '';
 
         // keep trace of sent file in chat
@@ -13147,7 +13150,7 @@ function handleFileInfo(config) {
     // keep track of received file on chat
     const downloadLink =
         incomingFileInfo.file.downloadUrl && incomingFileInfo.file.downloadUrl !== 'null'
-            ? `<li><a href="${incomingFileInfo.file.downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a></li>`
+            ? `<li><a href="${incomingFileInfo.file.downloadUrl}" rel="noopener noreferrer" download>Download</a></li>`
             : '';
     appendMessage(
         incomingFileInfo.peer_name,
