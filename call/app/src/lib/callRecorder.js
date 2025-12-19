@@ -1,8 +1,8 @@
 'use strict';
 
 const mysql = require('mysql2/promise');
-const Logger = require('./logs');
-const log = new Logger('CallRecorder');
+const Logs = require('../logs');
+const log = new Logs('CallRecorder');
 
 const {
     CALL_DB_HOST,
