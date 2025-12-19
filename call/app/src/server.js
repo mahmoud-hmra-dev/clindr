@@ -74,6 +74,7 @@ const Host = require('./host');
 const Logs = require('./logs');
 const log = new Logs('server');
 const callRecorder = require('./lib/callRecorder');
+const multer = require('multer');
 
 // Custom Brand and buttons
 const config = safeRequire('./config');
@@ -115,6 +116,21 @@ const options = {
     key: fs.readFileSync(keyPath, 'utf-8'),
     cert: fs.readFileSync(certPath, 'utf-8'),
 };
+
+// uploads directory
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+    destination: uploadsDir,
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const safeName = file.originalname.replace(/\s+/g, '_');
+        cb(null, `${uniqueSuffix}-${safeName}`);
+    },
+});
+const upload = multer({ storage });
 
 // Server both http and https
 const server = httpolyglot.createServer(options, app);
@@ -450,6 +466,9 @@ app.use(express.static(dir.public, staticOptions));
 
 // Also serve the same files under /mattermost
 app.use('/mattermost', express.static(dir.public, staticOptions));
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(cors(corsOptions)); // Enable CORS with options
 app.use(compression()); // Compress all HTTP responses using GZip
@@ -1090,7 +1109,50 @@ app.get(`${apiBasePath}/calls/:callId/files`, async (req, res) => {
     const offset = parseInt(req.query.offset || '0', 10);
 
     const files = await callRecorder.getFiles(callId, limit, offset);
-    res.json({ callId, files });
+
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    const filesWithUrl = files.map((f) => ({
+        ...f,
+        downloadUrl: f.stored_path ? hostUrl + f.stored_path : null,
+    }));
+
+    res.json({ callId, files: filesWithUrl });
+});
+
+// Upload file for a call
+app.post(`${apiBasePath}/calls/:callId/files/upload`, upload.single('file'), async (req, res) => {
+    const { host, authorization = api_key_secret } = req.headers;
+    const api = new ServerApi(host, authorization, api_key_secret);
+    if (!api.isAuthorized()) {
+        return res.status(403).json({ error: 'Unauthorized!' });
+    }
+
+    const { callId } = req.params;
+    const { peer_id, peer_uuid, peer_name } = req.body || {};
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const storedPath = `/uploads/${file.filename}`;
+
+    await callRecorder.updateFileStoredPath({
+        callId,
+        fileName: file.originalname,
+        peerId: peer_id || 'unknown',
+        storedPath,
+    });
+
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    res.json({
+        callId,
+        file: {
+            fileName: file.originalname,
+            fileSize: file.size,
+            fileType: file.mimetype,
+            storedPath,
+            downloadUrl: hostUrl + storedPath,
+        },
+    });
 });
 
 // end of ClindoctorCall API v1

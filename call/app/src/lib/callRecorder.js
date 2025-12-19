@@ -77,6 +77,7 @@ async function init() {
                 file_size BIGINT UNSIGNED NOT NULL,
                 file_type VARCHAR(191) DEFAULT NULL,
                 broadcast TINYINT(1) DEFAULT 0,
+                stored_path VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 INDEX idx_call_file_call (call_id),
                 INDEX idx_call_file_peer (peer_id)
@@ -133,9 +134,19 @@ async function logFile({ callId, peerId, peerUuid, peerName, fileName, fileSize,
     if (!pool) return;
     try {
         await pool.execute(
-            `INSERT INTO call_files (call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [callId, peerId, peerUuid || null, peerName || null, fileName, fileSize, fileType || null, broadcast ? 1 : 0]
+            `INSERT INTO call_files (call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, stored_path)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                callId,
+                peerId,
+                peerUuid || null,
+                peerName || null,
+                fileName,
+                fileSize,
+                fileType || null,
+                broadcast ? 1 : 0,
+                null,
+            ]
         );
     } catch (err) {
         log.error('Error logging call file', { err: err.message, callId, peerId, fileName });
@@ -186,7 +197,7 @@ async function getFiles(callId, limit = 100, offset = 0) {
         const lim = Number.isFinite(Number(limit)) ? Math.min(Number(limit), 500) : 100;
         const off = Number.isFinite(Number(offset)) ? Number(offset) : 0;
         const query = `
-            SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, created_at
+            SELECT id, call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, stored_path, created_at
             FROM call_files
             WHERE call_id = ?
             ORDER BY id DESC
@@ -212,6 +223,36 @@ async function getFiles(callId, limit = 100, offset = 0) {
     }
 }
 
+async function updateFileStoredPath({ callId, fileName, peerId, storedPath }) {
+    if (!pool) return;
+    try {
+        const [result] = await pool.execute(
+            `UPDATE call_files
+             SET stored_path = ?
+             WHERE call_id = ? AND file_name = ? AND peer_id = ?
+             ORDER BY id DESC
+             LIMIT 1`,
+            [storedPath, callId, fileName, peerId]
+        );
+        if (result && result.affectedRows === 0) {
+            // if no existing row, insert new metadata
+            await pool.execute(
+                `INSERT INTO call_files (call_id, peer_id, peer_uuid, peer_name, file_name, file_size, file_type, broadcast, stored_path)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [callId, peerId || 'unknown', null, null, fileName, 0, null, 0, storedPath]
+            );
+        }
+    } catch (err) {
+        log.error('Error updating file stored_path', {
+            err: err.message,
+            callId,
+            fileName,
+            peerId,
+            storedPath,
+        });
+    }
+}
+
 module.exports = {
     init,
     registerJoin,
@@ -220,4 +261,5 @@ module.exports = {
     logFile,
     getMessages,
     getFiles,
+    updateFileStoredPath,
 };

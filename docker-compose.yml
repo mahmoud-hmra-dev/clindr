@@ -144,6 +144,7 @@ services:
       CALL_DB_PASSWORD: ${CALL_DB_PASSWORD:-clindoctorpass}
     volumes:
       - ./.env:/src/.env:ro
+      - ./call/uploads:/src/uploads
     restart: unless-stopped
     ports:
       - "8082:3000"

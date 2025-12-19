@@ -13051,6 +13051,9 @@ function sendFileInformations(file, peer_id, broadcast = false) {
         // send some metadata about our file to peers in the room
         sendToServer('fileInfo', fileInfo);
 
+        // Upload to server for persistence (best effort)
+        uploadFileToServer(roomId, fileToSend, peer_id);
+
         // send the File
         setTimeout(() => {
             sendFileData(peer_id, broadcast);
@@ -13060,6 +13063,22 @@ function sendFileInformations(file, peer_id, broadcast = false) {
         screenReaderAccessibility.announceMessage(`Sending file ${fileToSend.name}`);
     } else {
         userLog('error', 'File dragged not valid or empty.');
+    }
+}
+
+async function uploadFileToServer(callId, file, peerId) {
+    try {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('peer_id', peerId || myPeerId);
+        form.append('peer_uuid', myPeerUUID);
+        form.append('peer_name', myPeerName);
+        await fetch(`/api/v1/calls/${encodeURIComponent(callId)}/files/upload`, {
+            method: 'POST',
+            body: form,
+        });
+    } catch (err) {
+        console.warn('Upload file to server failed', err);
     }
 }
 
