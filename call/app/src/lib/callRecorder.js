@@ -154,7 +154,7 @@ async function getMessages(callId, limit = 100, offset = 0) {
              WHERE call_id = ?
              ORDER BY id DESC
              LIMIT ? OFFSET ?`,
-            [callId, Number(limit), Number(offset)]
+            [callId, Number(limit) || 100, Number(offset) || 0]
         );
         log.debug('Fetched messages', { callId, count: rows.length });
         return rows;
@@ -187,7 +187,7 @@ async function getFiles(callId, limit = 100, offset = 0) {
              WHERE call_id = ?
              ORDER BY id DESC
              LIMIT ? OFFSET ?`,
-            [callId, Number(limit), Number(offset)]
+            [callId, Number(limit) || 100, Number(offset) || 0]
         );
         log.debug('Fetched files', { callId, count: rows.length });
         return rows;
