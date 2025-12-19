@@ -159,15 +159,18 @@ async function getMessages(callId, limit = 100, offset = 0) {
         log.debug('Fetched messages', { callId, count: rows.length });
         return rows;
     } catch (err) {
-        log.error('Error fetching messages', {
-            err: err.message,
-            code: err.code,
-            errno: err.errno,
-            sqlMessage: err.sqlMessage,
-            callId,
-            limit,
-            offset,
-        });
+        log.error(
+            `Error fetching messages: ${err && err.message ? err.message : 'unknown'}`,
+            {
+                code: err.code,
+                errno: err.errno,
+                sqlMessage: err.sqlMessage,
+                callId,
+                limit,
+                offset,
+                stack: err.stack,
+            }
+        );
         return [];
     }
 }
@@ -189,15 +192,18 @@ async function getFiles(callId, limit = 100, offset = 0) {
         log.debug('Fetched files', { callId, count: rows.length });
         return rows;
     } catch (err) {
-        log.error('Error fetching files', {
-            err: err.message,
-            code: err.code,
-            errno: err.errno,
-            sqlMessage: err.sqlMessage,
-            callId,
-            limit,
-            offset,
-        });
+        log.error(
+            `Error fetching files: ${err && err.message ? err.message : 'unknown'}`,
+            {
+                code: err.code,
+                errno: err.errno,
+                sqlMessage: err.sqlMessage,
+                callId,
+                limit,
+                offset,
+                stack: err.stack,
+            }
+        );
         return [];
     }
 }
