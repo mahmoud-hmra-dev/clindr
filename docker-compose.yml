@@ -135,6 +135,8 @@ services:
     depends_on:
       mysql_call:
         condition: service_healthy
+    environment:
+      API_KEY_SECRET: ${API_KEY_SECRET:-mirotalkp2p_default_secret}
     volumes:
       - ./.env:/src/.env:ro
     restart: unless-stopped
