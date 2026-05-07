@@ -18,7 +18,8 @@ export const environment = {
   hopePaymentProjectId: env('hopePaymentProjectId', '4d2ff084-1afd-4c6a-b2e7-6e8de34bd6c8'),
   hopePaymentProjectName: env('hopePaymentProjectName', 'clindoctor_test'),
   hopePaymentCurrency: env('hopePaymentCurrency', 'USD'),
-  websocketUrl: env('websocketUrl', 'ws://localhost:6001'),
+  websocketUrl: env('websocketUrl', 'wss://clindr-ws.hdf.usj.edu.lb'),
   websocketPort: env('websocketPort', 6001),
-  onlineMeetingApiUrl: env('onlineMeetingApiUrl', 'https://clindr-call.hdf.usj.edu.lb')
+  onlineMeetingApiUrl: env('onlineMeetingApiUrl', 'https://clindr-call.hdf.usj.edu.lb'),
+  onlineMeetingApiSecret: env('onlineMeetingApiSecret', '')
 };

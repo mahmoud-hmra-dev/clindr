@@ -14,8 +14,8 @@ class AreebaPaymentService
     private $api_code;
 
     public function __construct() {
-        $this->merchant_id = "TEST222206160001";
-        $this->api_code = "9e7088633ee4c5f5567155bd8825e053";
+        $this->merchant_id = env('AREEBA_MERCHANT_ID') ?: throw new \RuntimeException('AREEBA_MERCHANT_ID is not configured');
+        $this->api_code = env('AREEBA_API_CODE') ?: throw new \RuntimeException('AREEBA_API_CODE is not configured');
     }
 
     private function createBasicAuthToken() {

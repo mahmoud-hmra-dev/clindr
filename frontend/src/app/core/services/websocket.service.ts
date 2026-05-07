@@ -23,9 +23,11 @@ export class WebsocketService {
 
   private createSocket(conversationId: number, subject: Subject<any>): WebSocket {
     const token = localStorage.getItem('auth_token') || '';
+    // Always use wss:// in production; fall back to wss:// (not ws://) for security
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'wss';
     const base =
       environment.websocketUrl ||
-      `ws://${window.location.hostname}:${environment.websocketPort || 6001}`;
+      `${protocol}://${window.location.hostname}:${environment.websocketPort || 6001}`;
     const baseClean = base.endsWith('/') ? base.slice(0, -1) : base;
     const wsUrl = `${baseClean}/conversation/${conversationId}`;
     const urlWithToken = token ? `${wsUrl}?token=${token}` : wsUrl;

@@ -19,8 +19,10 @@ class InvoiceController extends Controller
         return InvoiceResource::collection($invoices);
     }
 
-    public function show(Invoice $invoice)
+    public function show(Request $request, Invoice $invoice)
     {
+        abort_unless($invoice->doctor_id === $request->user()->doctor?->id, 403);
+
         return new InvoiceResource($invoice);
     }
 }

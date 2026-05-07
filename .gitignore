@@ -1,0 +1,12 @@
+# Environment files — NEVER commit these
+.env
+*.env
+!.env.example
+!.env.template
+
+# Docker volumes and local overrides
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db

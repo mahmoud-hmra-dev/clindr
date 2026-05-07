@@ -36,10 +36,14 @@ use App\Http\Controllers\API\Doctor\ChatController as DoctorChatController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
-    Route::post('register', [AuthController::class, 'register']);
-    Route::post('register-patient', [AuthController::class, 'registerPatient']);
-    Route::post('register-doctor', [AuthController::class, 'registerDoctor']);
-    Route::post('login', [AuthController::class, 'login']);
+    // Rate limit: 10 attempts per minute for registration, 5 for login
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('register', [AuthController::class, 'register']);
+        Route::post('register-patient', [AuthController::class, 'registerPatient']);
+        Route::post('register-doctor', [AuthController::class, 'registerDoctor']);
+    });
+
+    Route::middleware('throttle:5,1')->post('login', [AuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
@@ -70,8 +74,10 @@ Route::middleware(['auth:sanctum', 'role:patient', 'permission:appointment.view_
     Route::get('reviews', [PatientReviewController::class, 'index']);
 });
 
-Route::middleware(['auth:sanctum', 'role:patient'])->post('payments/areeba/create', [AreebaPaymentController::class, 'create']);
-Route::match(['get', 'post'], 'payments/areeba/callback', [AreebaPaymentController::class, 'callback']);
+Route::middleware(['auth:sanctum', 'role:patient', 'throttle:10,1'])->group(function () {
+    Route::post('payments/areeba/create', [AreebaPaymentController::class, 'create']);
+    Route::match(['get', 'post'], 'payments/areeba/callback', [AreebaPaymentController::class, 'callback']);
+});
 
 Route::get('doctors', [DoctorPublicController::class, 'index']);
 Route::get('doctors/{doctor}', [DoctorPublicController::class, 'show']);

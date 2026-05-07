@@ -4,16 +4,18 @@ services:
     container_name: clindoctor-mysql-backend
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: clindoctor
-      MYSQL_USER: clindoctor
-      MYSQL_PASSWORD: clindoctorpass
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${DB_DATABASE:-clindoctor}
+      MYSQL_USER: ${DB_USERNAME:-clindoctor}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - db_backend:/var/lib/mysql
+    networks:
+      - db_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -23,20 +25,23 @@ services:
     container_name: clindoctor-mysql-payment
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: clindoctor_payment
-      MYSQL_USER: clindoctor
-      MYSQL_PASSWORD: clindoctorpass
+      MYSQL_ROOT_PASSWORD: ${PAYMENT_DB_ROOT_PASSWORD:?PAYMENT_DB_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${PAYMENT_DB_DATABASE:-clindoctor_payment}
+      MYSQL_USER: ${PAYMENT_DB_USERNAME:-clindoctor}
+      MYSQL_PASSWORD: ${PAYMENT_DB_PASSWORD:?PAYMENT_DB_PASSWORD is required}
     ports:
-      - "3308:3306"
+      - "127.0.0.1:3308:3306"
     volumes:
       - db_payment:/var/lib/mysql
+    networks:
+      - db_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${PAYMENT_DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 3s
       retries: 20
 
+  # PHPMyAdmin: bound to localhost only — never expose publicly
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: clindoctor-phpmyadmin
@@ -47,10 +52,13 @@ services:
       - mysql_call
     environment:
       PMA_HOSTS: mysql_backend,mysql_payment,mysql_call
-      PMA_USER: clindoctor
-      PMA_PASSWORD: clindoctorpass
+      PMA_USER: ${DB_USERNAME:-clindoctor}
+      PMA_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      PMA_ABSOLUTE_URI: http://localhost:8080/
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
+    networks:
+      - db_network
 
   backend:
     build:
@@ -66,16 +74,19 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      APP_ENV: development
-      APP_DEBUG: "true"
+      APP_ENV: production
+      APP_DEBUG: "false"
       DB_CONNECTION: mysql
       DB_HOST: mysql_backend
       DB_PORT: 3306
-      DB_DATABASE: clindoctor
-      DB_USERNAME: clindoctor
-      DB_PASSWORD: clindoctorpass
+      DB_DATABASE: ${DB_DATABASE:-clindoctor}
+      DB_USERNAME: ${DB_USERNAME:-clindoctor}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     volumes:
       - backend_storage:/var/www/html/storage
+    networks:
+      - app_network
+      - db_network
 
   websocket:
     build:
@@ -84,9 +95,12 @@ services:
     container_name: clindoctor-websocket
     restart: unless-stopped
     ports:
-      - "6001:6001"
+      - "127.0.0.1:6001:6001"
     environment:
       WS_PORT: 6001
+      BACKEND_URL: http://backend:8000
+    networks:
+      - app_network
 
   payment:
     build:
@@ -95,7 +109,7 @@ services:
     container_name: clindoctor-payment
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "127.0.0.1:8001:8000"
     depends_on:
       mysql_payment:
         condition: service_healthy
@@ -107,11 +121,14 @@ services:
       DB_CONNECTION: mysql
       DB_HOST: mysql_payment
       DB_PORT: 3306
-      DB_DATABASE: clindoctor_payment
-      DB_USERNAME: clindoctor
-      DB_PASSWORD: clindoctorpass
+      DB_DATABASE: ${PAYMENT_DB_DATABASE:-clindoctor_payment}
+      DB_USERNAME: ${PAYMENT_DB_USERNAME:-clindoctor}
+      DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?PAYMENT_DB_PASSWORD is required}
     volumes:
       - payment_storage:/var/www/html/storage
+    networks:
+      - app_network
+      - db_network
 
   frontend:
     build:
@@ -124,6 +141,8 @@ services:
     depends_on:
       - backend
       - payment
+    networks:
+      - app_network
 
   mirotalk:
     build:
@@ -136,34 +155,39 @@ services:
       mysql_call:
         condition: service_healthy
     environment:
-      API_KEY_SECRET: ${API_KEY_SECRET:-mirotalkp2p_default_secret}
+      API_KEY_SECRET: ${API_KEY_SECRET:?API_KEY_SECRET is required}
       CALL_DB_HOST: ${CALL_DB_HOST:-mysql_call}
       CALL_DB_PORT: ${CALL_DB_PORT:-3306}
       CALL_DB_NAME: ${CALL_DB_NAME:-clindoctor_call}
       CALL_DB_USER: ${CALL_DB_USER:-clindoctor}
-      CALL_DB_PASSWORD: ${CALL_DB_PASSWORD:-clindoctorpass}
+      CALL_DB_PASSWORD: ${CALL_DB_PASSWORD:?CALL_DB_PASSWORD is required}
     volumes:
       - ./.env:/src/.env:ro
       - ./call/uploads:/src/uploads
     restart: unless-stopped
     ports:
       - "8082:3000"
+    networks:
+      - app_network
+      - db_network
 
   mysql_call:
     image: mysql:8.0
     container_name: clindoctor-mysql-call
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: clindoctor_call
-      MYSQL_USER: clindoctor
-      MYSQL_PASSWORD: clindoctorpass
+      MYSQL_ROOT_PASSWORD: ${CALL_DB_ROOT_PASSWORD:?CALL_DB_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${CALL_DB_NAME:-clindoctor_call}
+      MYSQL_USER: ${CALL_DB_USER:-clindoctor}
+      MYSQL_PASSWORD: ${CALL_DB_PASSWORD:?CALL_DB_PASSWORD is required}
     ports:
-      - "3309:3306"
+      - "127.0.0.1:3309:3306"
     volumes:
       - db_call:/var/lib/mysql
+    networks:
+      - db_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${CALL_DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -174,3 +198,10 @@ volumes:
   backend_storage:
   payment_storage:
   db_call:
+
+networks:
+  app_network:
+    driver: bridge
+  db_network:
+    driver: bridge
+    internal: true

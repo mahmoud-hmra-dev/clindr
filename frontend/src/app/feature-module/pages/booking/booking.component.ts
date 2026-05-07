@@ -405,22 +405,20 @@ private createOnlineMeetingAndBook(): void {
   const SKIP_AUTH = new HttpContextToken(() => false);
   const onlineMeetingApiUrl = environment.onlineMeetingApiUrl;
 
-  console.log('Creating online meeting...');
+  const apiSecret = environment.onlineMeetingApiSecret;
 
   this.HttpClient.post<any>(
     `${onlineMeetingApiUrl}/api/v1/meeting`,
     {},
     {
       headers: new HttpHeaders({
-        Authorization: 'mirotalkp2p_default_secret',
+        Authorization: apiSecret,
         'Content-Type': 'application/json'
       }),
       context: new HttpContext().set(SKIP_AUTH, true)
     }
   ).subscribe({
     next: (meetingResponse) => {
-      console.log('Meeting response:', meetingResponse);
-
       let onlineMeetingUrl = meetingResponse?.meeting;
 
       if (!onlineMeetingUrl) {
@@ -436,7 +434,6 @@ private createOnlineMeetingAndBook(): void {
       this.bookAppointment(onlineMeetingUrl);
     },
     error: (err) => {
-      console.error('Meeting create error:', err);
       this.bookingError = 'Failed to create online meeting.';
       this.bookingLoading = false;
     }

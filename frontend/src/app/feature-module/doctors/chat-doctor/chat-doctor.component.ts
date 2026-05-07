@@ -53,12 +53,10 @@ isOwnMessage(msg: any): boolean {
     private AuthService : AuthService
   ) {
     this.AuthService.getCurrentUser().subscribe((user:any) => {
-      console.log('Current User:', user);
       if (user) {
         this.currentUserId = user.user.id.toString();
       }
-    }
-    );
+    });
   }
 
   ngOnInit(): void {

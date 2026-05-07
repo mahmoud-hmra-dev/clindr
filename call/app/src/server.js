@@ -60,6 +60,7 @@ const compression = require('compression');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const crypto = require('crypto');
 const path = require('path');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
@@ -449,7 +450,27 @@ const peers = {}; // collect peers info grp by channels
 const presenters = {}; // collect presenters grp by channels
 
 app.set('trust proxy', trustProxy); // Enables trust for proxy headers (e.g., X-Forwarded-For) based on the trustProxy setting
-app.use(helmet.noSniff()); // Enable content type sniffing prevention
+// Full Helmet security headers suite
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // WebRTC client requires inline scripts
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'blob:'],
+            mediaSrc: ["'self'", 'blob:'],
+            connectSrc: ["'self'", 'wss:', 'ws:', 'https:'],
+            workerSrc: ["'self'", 'blob:'],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+        },
+    },
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    frameguard: { action: 'deny' },
+    noSniff: true,
+    xssFilter: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
 
 // Use all static files from the public folder
 const staticOptions = {
@@ -1037,8 +1058,14 @@ app.post('/slack', (req, res) => {
     const sigBaseString = 'v0:' + timeStamp + ':' + requestBody;
     const mySignature = 'v0=' + CryptoJS.HmacSHA256(sigBaseString, slackSigningSecret);
 
-    // Valid Signature return a meetingURL
-    if (mySignature == slackSignature) {
+    // Valid Signature — use timing-safe comparison to prevent timing attacks
+    const mySignatureBuffer = Buffer.from(mySignature.toString(), 'utf8');
+    const slackSignatureBuffer = Buffer.from(slackSignature, 'utf8');
+    const signaturesMatch =
+        mySignatureBuffer.length === slackSignatureBuffer.length &&
+        crypto.timingSafeEqual(mySignatureBuffer, slackSignatureBuffer);
+
+    if (signaturesMatch) {
         const host = req.headers.host;
         const meetingURL = getMeetingURL(host);
         log.debug('Slack', { meeting: meetingURL });

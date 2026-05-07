@@ -45,7 +45,7 @@ class ChatController extends Controller
             'doctor_id' => 'nullable|exists:doctors,id',
             'body' => 'nullable|string',
             'message_type' => 'nullable|string|in:text,file,image,audio',
-            'attachment' => 'nullable|file|max:51200',
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp,gif,mp3,ogg,wav|max:10240',
         ]);
 
         $conversation = null;

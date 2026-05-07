@@ -6,17 +6,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Services\AreebaPaymentService;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Redirect;
 use App\Models\Payment;
 use App\Models\Project;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
     private $payment_service;
 
+    // Allowed redirect URL base domains (whitelist)
+    private array $allowedRedirectDomains = [];
+
     public function __construct(AreebaPaymentService $payment_service)
     {
         $this->payment_service = $payment_service;
+
+        // Load allowed domains from config; fallback to APP_URL domain
+        $allowedDomains = env('PAYMENT_ALLOWED_REDIRECT_DOMAINS', parse_url(env('APP_URL', ''), PHP_URL_HOST) ?? '');
+        $this->allowedRedirectDomains = array_filter(array_map('trim', explode(',', $allowedDomains)));
     }
 
     public function index()
@@ -31,7 +38,7 @@ class PaymentController extends Controller
         $payment_details = $request->all();
         $project_id = $payment_details['project_id'] ?? null;
 
-        if(!$project_id || !Project::where('uuid', $project_id)->exists()){
+        if (!$project_id || !Project::where('uuid', $project_id)->exists()) {
             return response()->json(['error' => 'project id is not valid'], 400);
         }
 
@@ -40,7 +47,6 @@ class PaymentController extends Controller
 
         $app_url = URL::to('/');
         $paymentUrl = $app_url . '/payment?p=' . $base64EncodedData;
-
         $paymentUrl = str_replace(['\/', '\\/'], '/', $paymentUrl);
 
         return response($paymentUrl, 200)->header('Content-Type', 'text/plain');
@@ -53,14 +59,14 @@ class PaymentController extends Controller
         $decodedData = json_decode($order);
 
         $price = $decodedData->price ?? null;
-        if ($price === null) {
+        if ($price === null || !is_numeric($price) || $price <= 0) {
             return view('pages.booking.payment_failed');
         }
 
         $call_id = Str::uuid()->toString();
         $data = $this->payment_service->generateSessionId($call_id, $price);
 
-        if($data){
+        if ($data) {
             $session_id = $data['session_id'];
             $call_id    = $data['order_id'];
             $price      = $data['price'];
@@ -94,15 +100,46 @@ class PaymentController extends Controller
 
     private function handleCallback(Request $request, string $status, string $callbackField)
     {
-        // ✅ حل مشكلة amp;order_id
         $order_id = $request->query('order_id') ?? $request->query('amp;order_id');
         $data     = $request->query('data');
 
         if (!$order_id || !$data) {
+            Log::warning('Payment callback missing required params', [
+                'order_id' => $order_id,
+                'has_data' => !empty($data),
+                'status' => $status,
+                'ip' => $request->ip(),
+            ]);
             return response('Missing order_id or data', 400);
         }
 
+        // Idempotency: if order already processed successfully, skip re-processing
+        $existing = Payment::where('order_id', $order_id)->where('status', 'paid')->first();
+        if ($existing) {
+            Log::info('Payment callback duplicate — skipping', ['order_id' => $order_id]);
+            $baseUrl = (string) (json_decode(base64_decode($data))->{$callbackField} ?? '');
+            if ($baseUrl !== '' && $this->isAllowedRedirectUrl($baseUrl)) {
+                return $this->buildRedirectResponse($baseUrl, ['order_id' => $order_id, 'status' => $status]);
+            }
+            return response('Already processed', 200);
+        }
+
         $decodedData = json_decode(base64_decode($data));
+
+        // Validate redirect URL before storing or redirecting
+        $baseUrl = (string) ($decodedData->{$callbackField} ?? '');
+        if ($baseUrl === '') {
+            return response('Callback URL missing in payload', 400);
+        }
+
+        if (!$this->isAllowedRedirectUrl($baseUrl)) {
+            Log::warning('Payment callback redirect to disallowed domain blocked', [
+                'url' => $baseUrl,
+                'order_id' => $order_id,
+                'ip' => $request->ip(),
+            ]);
+            return response('Invalid redirect URL', 400);
+        }
 
         Payment::create([
             'project_id'      => $decodedData->project_id ?? null,
@@ -121,20 +158,45 @@ class PaymentController extends Controller
             'status'          => $status,
         ]);
 
-        $additionalParameters = [
+        Log::info('Payment callback processed', [
             'order_id' => $order_id,
-            'status'   => $status,
-        ];
+            'status' => $status,
+        ]);
 
-        $baseUrl = (string) ($decodedData->{$callbackField} ?? '');
-        if ($baseUrl === '') {
-            return response('Callback URL missing in payload', 400);
+        return $this->buildRedirectResponse($baseUrl, ['order_id' => $order_id, 'status' => $status]);
+    }
+
+    private function isAllowedRedirectUrl(string $url): bool
+    {
+        $parsed = parse_url($url);
+        if (!$parsed || empty($parsed['host'])) {
+            return false;
         }
 
-        // ✅ نبني الرابط بدون ما نلمس baseUrl
-        $redirectUrl = $this->buildRedirectUrl($baseUrl, $additionalParameters);
+        // Only allow https in production
+        if (app()->isProduction() && ($parsed['scheme'] ?? '') !== 'https') {
+            return false;
+        }
 
-        // ✅ حل نهائي: redirect عبر JS (ما في Location header أبداً)
+        if (empty($this->allowedRedirectDomains)) {
+            return true; // No restriction configured — allow all (should be configured)
+        }
+
+        $host = strtolower($parsed['host']);
+        foreach ($this->allowedRedirectDomains as $allowed) {
+            $allowed = strtolower($allowed);
+            if ($host === $allowed || str_ends_with($host, '.' . $allowed)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function buildRedirectResponse(string $baseUrl, array $parameters): \Illuminate\Http\Response
+    {
+        $redirectUrl = $this->buildRedirectUrl($baseUrl, $parameters);
+
         return response(
             '<!doctype html><html><head><meta charset="utf-8"></head><body>
             <script>
@@ -149,10 +211,9 @@ class PaymentController extends Controller
     {
         if (empty($parameters)) return $baseUrl;
 
-        // append فقط - بدون تغيير baseUrl
         $pairs = [];
         foreach ($parameters as $k => $v) {
-            $pairs[] = $k . '=' . urlencode((string) $v);
+            $pairs[] = rawurlencode($k) . '=' . rawurlencode((string) $v);
         }
 
         $sep = str_contains($baseUrl, '?') ? '&' : '?';
