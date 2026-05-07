@@ -47,9 +47,9 @@ class FavouriteController extends Controller
         return response()->json(['success' => true, 'data' => $fav], 201);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, int $id)
     {
-        $patient = request()->user()->patient;
+        $patient = $request->user()->patient;
         abort_unless($patient, 403);
 
         $fav = Favourite::where('patient_id', $patient->id)->where('doctor_id', $id)->first();

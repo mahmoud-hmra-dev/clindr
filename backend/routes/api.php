@@ -99,9 +99,6 @@ Route::middleware(['auth:sanctum', 'role:doctor', 'permission:appointment.view_o
         Route::put('prescriptions/{prescription}', [DoctorPrescriptionController::class, 'update']); // مع _method=PUT
         Route::delete('prescriptions/{prescription}', [DoctorPrescriptionController::class, 'destroy']);
 
-    Route::get('availability', [DoctorAvailabilityController::class, 'index']);
-    Route::post('availability', [DoctorAvailabilityController::class, 'store']);
-    Route::delete('availability/{doctorAvailability}', [DoctorAvailabilityController::class, 'destroy']);
     Route::apiResource('availabilities', DoctorAvailabilityController::class)->only(['index', 'store', 'destroy']);
     Route::apiResource('services', DoctorServiceController::class)->except(['show']);
     Route::apiResource('clinics', DoctorClinicController::class)->except(['show']);

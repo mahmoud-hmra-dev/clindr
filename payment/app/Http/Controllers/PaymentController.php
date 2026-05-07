@@ -35,14 +35,24 @@ class PaymentController extends Controller
     // make hash for payment
     public function makeHash(Request $request)
     {
-        $payment_details = $request->all();
-        $project_id = $payment_details['project_id'] ?? null;
+        $validated = $request->validate([
+            'project_id'      => ['required', 'string', 'uuid'],
+            'price'           => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'currency'        => ['required', 'string', 'size:3'],
+            'user_id'         => ['nullable', 'integer'],
+            'firstName'       => ['nullable', 'string', 'max:100'],
+            'lastName'        => ['nullable', 'string', 'max:100'],
+            'email'           => ['nullable', 'email', 'max:255'],
+            'successCallback' => ['required', 'url', 'max:500'],
+            'errorCallback'   => ['required', 'url', 'max:500'],
+            'cancelCallback'  => ['required', 'url', 'max:500'],
+        ]);
 
-        if (!$project_id || !Project::where('uuid', $project_id)->exists()) {
+        if (!Project::where('uuid', $validated['project_id'])->exists()) {
             return response()->json(['error' => 'project id is not valid'], 400);
         }
 
-        $jsonEncodedData = json_encode($payment_details, JSON_UNESCAPED_SLASHES);
+        $jsonEncodedData = json_encode($validated, JSON_UNESCAPED_SLASHES);
         $base64EncodedData = base64_encode($jsonEncodedData);
 
         $app_url = URL::to('/');
@@ -179,7 +189,7 @@ class PaymentController extends Controller
         }
 
         if (empty($this->allowedRedirectDomains)) {
-            return true; // No restriction configured — allow all (should be configured)
+            return false; // No domains configured — deny all redirects for safety
         }
 
         $host = strtolower($parsed['host']);

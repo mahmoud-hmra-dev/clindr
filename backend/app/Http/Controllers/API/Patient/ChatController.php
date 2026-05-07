@@ -54,10 +54,12 @@ class ChatController extends Controller
                 ->where('patient_id', $patient->id)->firstOrFail();
         } elseif (!empty($validated['doctor_id'])) {
             $doctor = Doctor::findOrFail($validated['doctor_id']);
-            $conversation = Conversation::firstOrCreate(
-                ['doctor_id' => $doctor->id, 'patient_id' => $patient->id],
-                ['last_message_at' => now()]
-            );
+            $conversation = DB::transaction(function () use ($doctor, $patient) {
+                return Conversation::firstOrCreate(
+                    ['doctor_id' => $doctor->id, 'patient_id' => $patient->id],
+                    ['last_message_at' => now()]
+                );
+            });
         } else {
             abort(422, 'doctor_id or conversation_id is required');
         }

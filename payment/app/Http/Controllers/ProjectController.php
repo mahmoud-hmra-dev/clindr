@@ -35,19 +35,22 @@ class ProjectController extends Controller
      */
 public function store(Request $request)
 {
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'min:1', 'max:255'],
+    ]);
+
     try {
         $project = Project::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => $request->name,
-            'status' => 1
+            'uuid'   => (string) Str::uuid(),
+            'name'   => $validated['name'],
+            'status' => 1,
         ]);
     } catch (\Exception $e) {
-        dd($e->getMessage());
+        \Illuminate\Support\Facades\Log::error('Failed to create project: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to create project'], 500);
     }
 
-    return response()->json([
-        'project' => $project
-    ]);
+    return response()->json(['project' => $project], 201);
 }
 
     /**

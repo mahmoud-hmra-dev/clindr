@@ -20,6 +20,7 @@ class DoctorPublicController extends Controller
     {
         $query = Doctor::query()
             ->with([
+                'user',
                 'services.specialty',
                 'clinics',
                 'availabilities',
@@ -29,8 +30,6 @@ class DoctorPublicController extends Controller
                 'insurances',
                 'memberships',
                 'socialLinks',
-
-
             ]);
 
         if ($name = $request->get('name')) {

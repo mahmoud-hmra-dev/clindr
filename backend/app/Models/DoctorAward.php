@@ -16,6 +16,10 @@ class DoctorAward extends Model
         'description',
     ];
 
+    protected $casts = [
+        'year' => 'integer',
+    ];
+
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
