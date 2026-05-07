@@ -10,6 +10,7 @@ use App\Models\Specialty;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class DoctorPublicController extends Controller
 {
@@ -72,6 +73,31 @@ class DoctorPublicController extends Controller
                     });
                 }
             });
+        }
+
+        if ($availability = $request->get('availability')) {
+            $range = $this->resolveAvailabilityRange($availability);
+
+            if ($range) {
+                [$from, $to] = $range;
+                $hasDateColumn = Schema::hasColumn('doctor_availabilities', 'date');
+                $hasStatusColumn = Schema::hasColumn('doctor_availabilities', 'status');
+                $days = $hasDateColumn ? [] : $this->daysBetween($from, $to);
+
+                $query->whereHas('availabilities', function ($q) use ($from, $to, $hasDateColumn, $hasStatusColumn, $days) {
+                    $q->whereNotNull('start_time');
+
+                    if ($hasDateColumn) {
+                        $q->whereBetween('date', [$from->toDateString(), $to->toDateString()]);
+                    } elseif (! empty($days)) {
+                        $q->whereIn('day_of_week', $days);
+                    }
+
+                    if ($hasStatusColumn) {
+                        $q->where('status', 'active');
+                    }
+                });
+            }
         }
 
         $doctors = $query->paginate($request->get('per_page', 9));
@@ -157,6 +183,47 @@ class DoctorPublicController extends Controller
         return response()->json([
             'data' => $specialties
         ]);
+    }
+
+    private function resolveAvailabilityRange(string $availability): ?array
+    {
+        $today = Carbon::today();
+
+        switch ($availability) {
+            case 'today':
+                $from = $today->copy();
+                $to = $today->copy();
+                break;
+            case 'tomorrow':
+                $from = $today->copy()->addDay();
+                $to = $from->copy();
+                break;
+            case 'next_7':
+                $from = $today->copy();
+                $to = $today->copy()->addDays(7);
+                break;
+            case 'next_30':
+                $from = $today->copy();
+                $to = $today->copy()->addDays(30);
+                break;
+            default:
+                return null;
+        }
+
+        return [$from, $to];
+    }
+
+    private function daysBetween(Carbon $from, Carbon $to): array
+    {
+        $days = [];
+        $cursor = $from->copy();
+
+        while ($cursor->lte($to)) {
+            $days[] = strtolower($cursor->englishDayOfWeek);
+            $cursor->addDay();
+        }
+
+        return array_values(array_unique($days));
     }
 
     private function filterBookedOutSlots(Collection $availabilities, int $doctorId): Collection
